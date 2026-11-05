@@ -3,6 +3,7 @@
 Les mods sont telecharges depuis Modrinth pour calculer leurs empreintes, puis leurs liens
 sont remplaces par les liens officiels Modrinth : seuls les fichiers Forge sont publies ici.
 """
+import glob
 import hashlib
 import json
 import os
@@ -58,6 +59,17 @@ def main():
         liens[m['file']] = m['url']
         print('mod OK', m['file'])
 
+    # Mods Astralys construits dans ce depot (publies ici, eux)
+    locaux = set()
+    for jar in sorted(glob.glob(os.path.join(ICI, '..', 'mod', 'build', 'libs', '*.jar'))):
+        if jar.endswith('-sources.jar'):
+            continue
+        shutil.copy(jar, requis)
+        locaux.add(os.path.basename(jar))
+        print('mod local', os.path.basename(jar))
+    if not locaux:
+        sys.exit('Le mod Astralys - Carte n a pas ete construit')
+
     shutil.copy(os.path.join(ICI, 'icon.png'), os.path.join(dossier, 'icon.png'))
 
     meta_path = os.path.join(dossier, 'servermeta.json')
@@ -90,7 +102,9 @@ def main():
     def parcourir(modules):
         for mod in modules:
             nom = urllib.parse.unquote(mod['artifact']['url'].rsplit('/', 1)[-1])
-            if mod.get('type') == 'ForgeMod':
+            if mod.get('type') == 'ForgeMod' and nom in locaux:
+                vus.add(nom)
+            elif mod.get('type') == 'ForgeMod':
                 if nom not in liens:
                     sys.exit(f'Mod inattendu dans la distribution : {nom}')
                 mod['artifact']['url'] = liens[nom]
@@ -99,7 +113,7 @@ def main():
 
     for serveur in distro['servers']:
         parcourir(serveur['modules'])
-    manquants = set(liens) - vus
+    manquants = (set(liens) | locaux) - vus
     if manquants:
         sys.exit(f'Mods absents de la distribution : {manquants}')
     json.dump(distro, open(distro_path, 'w'), indent=2, ensure_ascii=False)
@@ -113,6 +127,10 @@ def main():
                         ignore=shutil.ignore_patterns('work'))
     shutil.copytree(os.path.join(ROOT, 'servers'), os.path.join(SORTIE, 'servers'),
                     ignore=shutil.ignore_patterns('forgemods'))
+    for nom in locaux:
+        rel = os.path.relpath(os.path.join(requis, nom), ROOT)
+        os.makedirs(os.path.dirname(os.path.join(SORTIE, rel)), exist_ok=True)
+        shutil.copy(os.path.join(requis, nom), os.path.join(SORTIE, rel))
     print('Distribution prete :', len(vus), 'mods')
 
 

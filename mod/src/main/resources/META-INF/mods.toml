@@ -1,0 +1,18 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+
+[[mods]]
+modId="astralyscarte"
+version="1.0.0"
+displayName="Astralys - Carte"
+description="La carte des trois mondes d'Astralys : Sylvaria, Pyrélune et Azuréa."
+# Mod cote joueur uniquement : le serveur n'a pas besoin de l'avoir.
+displayTest="IGNORE_ALL_VERSION"
+
+[[dependencies.astralyscarte]]
+modId="forge"
+mandatory=true
+versionRange="[47,)"
+ordering="NONE"
+side="CLIENT"

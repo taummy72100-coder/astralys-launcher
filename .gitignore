@@ -3,4 +3,6 @@
 /.vscode/
 /target/
 /logs/
-/dist/
+/dist//mod/build/
+/mod/.gradle/
+/mod/run/
