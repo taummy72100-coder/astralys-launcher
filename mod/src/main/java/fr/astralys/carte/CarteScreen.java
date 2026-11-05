@@ -24,9 +24,9 @@ public class CarteScreen extends Screen {
     record Monde(int id, String nom, int couleur, String texte, int x, int y, int w, int h) {}
 
     private static final List<Monde> MONDES = List.of(
-            new Monde(1, "Sylvaria", 0x7CE07C, "Forêt enchantée, arbres géants et champignons.", 252, 314, 222, 140),
-            new Monde(2, "Pyrélune", 0xFF8A3D, "Volcan et forteresse de pierre noire.", 730, 126, 230, 138),
-            new Monde(3, "Azuréa", 0x8FD8FF, "Château de glace et cristaux bleus.", 1262, 410, 212, 130));
+            new Monde(1, "Sylvaria", 0x7CE07C, "Forêt enchantée, arbre géant et champignons.", 220, 390, 600, 330),
+            new Monde(2, "Pyrélune", 0xFF8A3D, "Volcan, lave et forteresse de pierre noire.", 500, 140, 600, 290),
+            new Monde(3, "Azuréa", 0x8FD8FF, "Château de glace et cristaux bleus.", 900, 430, 610, 310));
 
     private int ox, oy;
     private float echelle;
