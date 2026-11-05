@@ -74,9 +74,9 @@ def main():
     with open(os.path.join(cache, 'launcher_profiles.json'), 'w') as f:
         f.write('{}')
     installeur = os.path.join(cache, f'forge-{MC}-{FORGE}-installer.jar')
-    urllib.request.urlretrieve(
-        f'https://maven.minecraftforge.net/net/minecraftforge/forge/{MC}-{FORGE}/forge-{MC}-{FORGE}-installer.jar',
-        installeur)
+    subprocess.run(['curl', '-fsSL', '-A', 'Mozilla/5.0 astralys-launcher-ci', '-o', installeur,
+                    f'https://maven.minecraftforge.net/net/minecraftforge/forge/{MC}-{FORGE}/forge-{MC}-{FORGE}-installer.jar'],
+                   check=True)
     subprocess.run([java, '-Djava.awt.headless=true', '-jar', installeur, '--installClient', cache],
                    cwd=cache, check=True)
 
