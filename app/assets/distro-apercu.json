@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "rss": "",
+  "servers": [
+    {
+      "id": "astralys",
+      "name": "Astralys",
+      "description": "Serveur Astralys",
+      "icon": "",
+      "version": "0.0.1",
+      "address": "gm57-dc02.ouiheberg.com:3218",
+      "minecraftVersion": "1.20.1",
+      "discord": null,
+      "mainServer": true,
+      "autoconnect": false,
+      "modules": []
+    }
+  ]
+}

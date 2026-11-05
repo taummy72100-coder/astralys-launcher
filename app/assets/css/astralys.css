@@ -1,0 +1,68 @@
+/* Habillage Astralys, charge apres launcher.css. */
+body { background-size: cover; background-position: center; }
+#frameBar { background-color: rgba(12, 7, 34, 0.85) !important; }
+#landingContainer > #upper > #content { position: relative; align-items: flex-start; justify-content: center; }
+#astralysTitle {
+    margin: 150px 0 0;
+    font-family: 'Cinzel Decorative', Georgia, serif;
+    font-size: 84px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #FFF7E3;
+    text-shadow: 0 2px 0 #5A2EA6, 0 4px 0 #2A1260, 0 0 24px #B57BFF;
+}
+#landingContainer > #lower { background: none; }
+#launch_button {
+    padding: 8px 34px;
+    font-family: Georgia, serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: #FFF7E3;
+    background: #4A1FA0;
+    border: 2px solid #F0C576;
+    border-radius: 12px;
+    box-shadow: 0 0 22px rgba(240, 197, 118, 0.7);
+}
+#launch_button:disabled { opacity: 0.75; }
+#launch_progress[value]::-webkit-progress-value { background: #B57BFF; }
+#externalMedia, #mojangStatusWrapper, #lower .bot_divider, #newsButtonAlert { display: none !important; }
+#landingContainer > #lower > #left, #landingContainer > #lower > #right,
+#landingContainer > #lower > #left .bot_wrapper, #landingContainer > #lower > #right .bot_wrapper,
+#landingContainer > #lower > #left #content { position: static; }
+#server_status_wrapper, #server_selection_button {
+    position: absolute;
+    top: 322px;
+    width: 200px;
+    height: 56px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #F6F0FF;
+    background: rgba(16, 9, 42, 0.92);
+    border: 1px solid rgba(214, 190, 255, 0.45);
+    border-radius: 10px;
+}
+#server_status_wrapper { left: 74px; }
+#server_selection_button { right: 74px; top: 16px; }
+#landingContainer > #lower > #right #launch_content {
+    position: absolute;
+    top: 306px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+}
+#launch_button, #server_selection_button { pointer-events: auto; }
+#launch_button { width: 240px; height: 76px; font-size: 32px; }
+#launch_details {
+    position: absolute;
+    top: 448px;
+    left: 110px;
+    right: 110px;
+}
+#launch_details_left { display: none; }
+#landingContainer > #lower > #center #content { top: 62px; }

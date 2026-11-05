@@ -1,0 +1,52 @@
+name: Distribution Astralys
+
+# Genere la liste des fichiers que le launcher installe (Forge + mods) et la publie
+# sur la branche "distribution". Se relance a chaque modification du dossier distribution/.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['distribution/**', '.github/workflows/distribution.yml']
+
+permissions:
+  contents: write
+
+concurrency: distribution
+
+jobs:
+  distribution:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Installer Nebula
+        run: |
+          git clone --depth 1 https://github.com/dscalzi/Nebula.git /tmp/nebula
+          cd /tmp/nebula && npm ci && npm run build
+
+      - name: Generer la distribution
+        env:
+          BASE_URL: https://raw.githubusercontent.com/${{ github.repository }}/distribution/
+        run: python3 distribution/build.py
+
+      - name: Publier sur la branche distribution
+        run: |
+          cd /tmp/publication
+          git init -q -b distribution
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -qm "Distribution ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" distribution
+
+      - name: Verifier les telechargements
+        run: python3 distribution/verifier.py "https://raw.githubusercontent.com/${{ github.repository }}/distribution/distribution.json"

@@ -1,0 +1,25 @@
+# Custom Language File for Launcher Customizer
+
+[ejs.app]
+title = "Astralys"
+
+[ejs.landing]
+launchButton = "JOUER"
+newsButton = "ACTUALITÉS"
+serverStatus = "SERVEUR"
+usernamePlaceholder = "Aucun compte"
+launchButtonPlaceholder = "Choisir un serveur"
+mediaGitHubURL = "#"
+mediaXURL = "#"
+mediaInstagramURL = "#"
+mediaYouTubeURL = "#"
+mediaDiscordURL = "#"
+
+[ejs.settings]
+sourceGithubLink = "https://github.com/dscalZi/HeliosLauncher"
+supportLink = "https://github.com/dscalZi/HeliosLauncher/issues"
+
+[ejs.welcome]
+welcomeHeader = "BIENVENUE SUR ASTRALYS"
+welcomeDescription = "Un monde de magie, de créatures et de terres oubliées t'attend."
+welcomeDescCTA = "Encore quelques clics avant l'aventure."

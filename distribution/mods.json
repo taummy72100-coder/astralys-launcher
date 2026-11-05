@@ -1,0 +1,14 @@
+{
+  "_note": "Mods telecharges depuis Modrinth (liens officiels). Doit rester identique au dossier /mods du serveur.",
+  "mods": [
+    {"file": "create-1.20.1-6.0.8.jar", "sha1": "b13d912b9247a38d66d11598c121442585a1c1e9", "url": "https://cdn.modrinth.com/data/LNytGWDc/versions/8amzvn9x/create-1.20.1-6.0.8.jar"},
+    {"file": "citadel-2.6.3-1.20.1.jar", "sha1": "fb0b1fa96ce28e4be77b38ad95d83c3da7ec8316", "url": "https://cdn.modrinth.com/data/jJfV67b1/versions/lTAAe4sZ/citadel-2.6.3-1.20.1.jar"},
+    {"file": "alexsmobs-1.22.9.jar", "sha1": "dbf93d2f1da19e16739e91e8ea0fc6f4bc2f228f", "url": "https://cdn.modrinth.com/data/2cMuAZAp/versions/XoIASRVU/alexsmobs-1.22.9.jar"},
+    {"file": "alexscaves-2.0.2.jar", "sha1": "a1e5c7b7c7eadda4c8e954acbcbaf75a7b500d53", "url": "https://cdn.modrinth.com/data/U6GY0xp0/versions/lC8HHXOF/alexscaves-2.0.2.jar"},
+    {"file": "worldedit-mod-7.2.15.jar", "sha1": "9c52765ca56f917ef8cbafc20e9a4f45c346508f", "url": "https://cdn.modrinth.com/data/1u6JkXh5/versions/Wrlqaul6/worldedit-mod-7.2.15.jar"},
+    {"file": "moonlight-1.20-2.16.38B-forge.jar", "sha1": "7394cf9cbc30015b50f794ae9a85aa0b18ab152b", "url": "https://cdn.modrinth.com/data/twkfQtEc/versions/ibsm7pYC/moonlight-1.20-2.16.38B-forge.jar"},
+    {"file": "immersive_weathering-1.20.1-2.0.5-forge.jar", "sha1": "d89ad3793ffb97df27f415ac6cc07c61460dd9f3", "url": "https://cdn.modrinth.com/data/jkskOO9i/versions/Fl2lADP9/immersive_weathering-1.20.1-2.0.5-forge.jar"},
+    {"file": "born_in_chaos_[Forge]1.20.1_1.7.5.jar", "sha1": "4d616e1ccef4c55e14b04ca63228d826f4fdda5e", "url": "https://cdn.modrinth.com/data/1kcHy4de/versions/8wmEhUSt/born_in_chaos_%5BForge%5D1.20.1_1.7.5.jar"},
+    {"file": "geckolib-forge-1.20.1-4.8.4.jar", "sha1": "50e1407869ef0e909e3bdda9328b8bd7db03fdc0", "url": "https://cdn.modrinth.com/data/8BmcQJ2H/versions/aC5KMoNg/geckolib-forge-1.20.1-4.8.4.jar"}
+  ]
+}

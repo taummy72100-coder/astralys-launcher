@@ -1,0 +1,38 @@
+name: Launcher Windows
+
+# Construit l'installateur Windows du launcher et le met en telechargement dans "Releases".
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      - name: Installer les dependances
+        run: npm ci
+
+      - name: Construire l'installateur
+        run: npx electron-builder --win --publish never
+
+      - name: Publier dans Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || 'test' }}
+          name: Astralys Launcher ${{ github.ref_type == 'tag' && github.ref_name || '(test)' }}
+          prerelease: ${{ github.ref_type != 'tag' }}
+          files: dist/*.exe
