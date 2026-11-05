@@ -4,10 +4,10 @@ license="MIT"
 
 [[mods]]
 modId="astralyscarte"
-version="1.3.1"
+version="1.4.0"
 displayName="Astralys - Carte"
 description="La carte des trois mondes d'Astralys : Sylvaria, Pyrélune et Azuréa."
-# Mod cote joueur uniquement : le serveur n'a pas besoin de l'avoir.
+# Chez le joueur : la carte. Sur le serveur : le reset de Sylvaria. Chaque cote peut l'avoir sans l'autre.
 displayTest="IGNORE_ALL_VERSION"
 
 [[dependencies.astralyscarte]]
@@ -15,4 +15,4 @@ modId="forge"
 mandatory=true
 versionRange="[47,)"
 ordering="NONE"
-side="CLIENT"
+side="BOTH"
