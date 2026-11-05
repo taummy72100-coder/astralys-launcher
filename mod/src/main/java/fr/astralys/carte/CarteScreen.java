@@ -21,6 +21,9 @@ public class CarteScreen extends Screen {
     private static final ResourceLocation IMAGE = new ResourceLocation(AstralysCarte.MODID, "textures/gui/carte.png");
     private static final ResourceLocation HALO = new ResourceLocation(AstralysCarte.MODID, "textures/gui/halo.png");
     private static final ResourceLocation ANNEAU = new ResourceLocation(AstralysCarte.MODID, "textures/gui/anneau.png");
+    // Cadre en bois feerique : la carte + M pixels de chaque cote.
+    private static final ResourceLocation CADRE = new ResourceLocation(AstralysCarte.MODID, "textures/gui/cadre.png");
+    private static final int M = 70;
     // Repere de l'image (1672 x 941) : position des badges.
     private static final int W = 1672, H = 941;
 
@@ -53,7 +56,7 @@ public class CarteScreen extends Screen {
 
     @Override
     protected void init() {
-        echelle = Math.min(width * .97f / W, height * .97f / H);
+        echelle = Math.min(width * .97f / (W + 2 * M), height * .97f / (H + 2 * M));
         iw = Math.round(W * echelle); ih = Math.round(H * echelle);
         ox = (width - iw) / 2; oy = (height - ih) / 2;
         if (debut == 0) {
@@ -106,6 +109,20 @@ public class CarteScreen extends Screen {
 
     private void animer(float dt) {
         for (Monde m : MONDES) creer(m, dt);
+        // lucioles qui voltigent sur le cadre en bois
+        if (rnd.nextFloat() < dt * 7) {
+            Particule p = new Particule();
+            float bord = -M / 2f, k = rnd.nextFloat();
+            switch (rnd.nextInt(4)) {
+                case 0 -> { p.x = k * W; p.y = bord; }
+                case 1 -> { p.x = k * W; p.y = H - bord; }
+                case 2 -> { p.x = bord; p.y = k * H; }
+                default -> { p.x = W - bord; p.y = k * H; }
+            }
+            p.vx = (rnd.nextFloat() - .5f) * 16; p.vy = (rnd.nextFloat() - .5f) * 16; p.duree = 2.5f + rnd.nextFloat() * 2;
+            p.couleur = rnd.nextBoolean() ? 0xE8FF7A : 0xB6FF9A; p.taille = 3; p.lueur = true;
+            particules.add(p);
+        }
         // etincelles dorees sur toute la carte
         if (rnd.nextFloat() < dt * 10) {
             Particule p = new Particule();
@@ -156,6 +173,10 @@ public class CarteScreen extends Screen {
         RenderSystem.enableBlend();
         teinte(0xFFFFFF, a);
         g.blit(IMAGE, ox, oy, iw, ih, 0, 0, W, H, W, H);
+        int m0 = Math.round(M * echelle);
+        g.blit(CADRE, ox - m0, oy - m0, iw + 2 * m0, ih + 2 * m0, 0, 0, W + 2 * M, H + 2 * M, W + 2 * M, H + 2 * M);
+        g.drawCenteredString(font, Component.literal("✦ Les Mondes ✦").withStyle(s -> s.withColor(0xF0C576).withBold(true)),
+                width / 2, Math.round(oy - m0 + 44 * echelle) - font.lineHeight / 2, 0xFFFFFF);
 
         Monde m = sous(mx, my);
         if (m != survole && m != null) son(SoundEvents.AMETHYST_BLOCK_CHIME, 1.3f + rnd.nextFloat() * .3f);

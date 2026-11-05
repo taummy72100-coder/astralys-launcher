@@ -23,8 +23,8 @@ final class Calendrier {
     static final LocalTime HEURE = LocalTime.of(5, 0);
     /** Marge : un redemarrage a 4 h 59 compte deja pour le reset de 5 h. */
     static final Duration MARGE = Duration.ofMinutes(30);
-    /** Village du spawn : tous les chunks a moins de GARDE blocs de (CX, CZ) sont gardes. */
-    static final int CX = -12, CZ = 3, GARDE = 215;
+    /** Spawn de Sylvaria (schema colle de -222,-207 a 198,213) + 16 blocs de marge : jamais efface. */
+    static final int X0 = -238, X1 = 214, Z0 = -223, Z1 = 229;
     private static final Pattern REGION = Pattern.compile("r\\.(-?\\d+)\\.(-?\\d+)\\.mca");
 
     private Calendrier() {}
@@ -45,15 +45,14 @@ final class Calendrier {
         return Math.floorMod(ChronoUnit.DAYS.between(DEPART, jour), 14) == 0;
     }
 
-    /** Le carre de blocs [x0,x1]x[z0,z1] touche-t-il le cercle garde ? */
+    /** Le carre de blocs [x0,x1]x[z0,z1] touche-t-il la zone du spawn ? */
     static boolean garde(int x0, int x1, int z0, int z1) {
-        long dx = Math.max(0, Math.max(x0 - CX, CX - x1)), dz = Math.max(0, Math.max(z0 - CZ, CZ - z1));
-        return dx * dx + dz * dz <= (long) GARDE * GARDE;
+        return x0 <= X1 && x1 >= X0 && z0 <= Z1 && z1 >= Z0;
     }
 
     /**
      * Efface Sylvaria sauf le village : supprime les fichiers de region qui ne le touchent pas,
-     * et dans les autres retire du sommaire les chunks hors du cercle (Minecraft les regenere).
+     * et dans les autres retire du sommaire les chunks hors du spawn (Minecraft les regenere).
      */
     static void effacer(Path dimension, Consumer<String> journal) throws IOException {
         for (String dossier : List.of("region", "entities", "poi")) {
@@ -73,7 +72,7 @@ final class Calendrier {
         }
     }
 
-    /** Met a zero l'entree du sommaire (position + date) des chunks hors du cercle. */
+    /** Met a zero l'entree du sommaire (position + date) des chunks hors du spawn. */
     static int vider(Path f, int rx, int rz) throws IOException {
         int n = 0;
         try (RandomAccessFile raf = new RandomAccessFile(f.toFile(), "rw")) {
