@@ -34,6 +34,7 @@ public class AstralysCarte {
 
     /** Ouverture demandee par /carte : faite au tick suivant, une fois le chat ferme. */
     private boolean ouvrir;
+    private boolean clavierVerifie;
 
     public AstralysCarte() {
         // Mod cote joueur : rien a faire sur un serveur dedie.
@@ -63,10 +64,26 @@ public class AstralysCarte {
 
     private void tick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
+        if (!clavierVerifie) { clavierVerifie = true; toucheMSurAzerty(); }
         while (TOUCHE.consumeClick()) carte();
         if (ouvrir && Minecraft.getInstance().screen == null) {
             ouvrir = false;
             carte();
+        }
+    }
+
+    // GLFW nomme les touches selon un clavier QWERTY : sur un AZERTY, la touche "M" du QWERTY est la virgule.
+    // Si le joueur n'a pas change la touche, on la place sur la touche qui affiche vraiment "m" sur son clavier.
+    private static void toucheMSurAzerty() {
+        if (!TOUCHE.isDefault()) return;
+        for (int k = GLFW.GLFW_KEY_SPACE; k <= GLFW.GLFW_KEY_GRAVE_ACCENT; k++) {
+            if (!"m".equalsIgnoreCase(GLFW.glfwGetKeyName(k, 0))) continue;
+            if (k != GLFW.GLFW_KEY_M) {
+                TOUCHE.setKey(InputConstants.Type.KEYSYM.getOrCreate(k));
+                KeyMapping.resetMapping();
+                Minecraft.getInstance().options.save();
+            }
+            return;
         }
     }
 
