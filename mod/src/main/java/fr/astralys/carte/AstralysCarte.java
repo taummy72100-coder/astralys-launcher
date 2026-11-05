@@ -75,7 +75,10 @@ public class AstralysCarte {
     }
 
     static boolean estAstralys(ServerData s) {
-        return s.ip != null && s.ip.toLowerCase(Locale.ROOT).startsWith("gm57-dc02.ouiheberg.com");
+        if (s.ip == null) return false;
+        String ip = s.ip.toLowerCase(Locale.ROOT).trim();
+        // le nom d'hote ou son adresse IP (certains joueurs l'ont enregistre ainsi)
+        return ip.startsWith("gm57-dc02.ouiheberg.com") || ip.equals("45.140.164.235:3218");
     }
 
     // Liste des serveurs : ASTRALYS y est toujours, sous son nom.
