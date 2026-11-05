@@ -67,6 +67,19 @@ def main():
     meta['meta'].pop('icon', None)
     json.dump(meta, open(meta_path, 'w'), indent=2, ensure_ascii=False)
 
+    # L'installateur Forge ouvre une fenetre quand Nebula le lance : on le lance avant, sans fenetre,
+    # dans le cache que Nebula reutilise ensuite.
+    cache = os.path.join(ROOT, 'cache', 'forge', f'{MC}-{FORGE}')
+    os.makedirs(cache, exist_ok=True)
+    with open(os.path.join(cache, 'launcher_profiles.json'), 'w') as f:
+        f.write('{}')
+    installeur = os.path.join(cache, f'forge-{MC}-{FORGE}-installer.jar')
+    urllib.request.urlretrieve(
+        f'https://maven.minecraftforge.net/net/minecraftforge/forge/{MC}-{FORGE}/forge-{MC}-{FORGE}-installer.jar',
+        installeur)
+    subprocess.run([java, '-Djava.awt.headless=true', '-jar', installeur, '--installClient', cache],
+                   cwd=cache, check=True)
+
     nebula('g', 'distro')
 
     # Liens des mods -> Modrinth (rien n'est redistribue ici)
