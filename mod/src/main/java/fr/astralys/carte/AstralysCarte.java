@@ -1,14 +1,23 @@
 package fr.astralys.carte;
 
+import java.util.List;
+import java.util.Locale;
+
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
+import net.minecraft.client.multiplayer.ServerData;
+import net.minecraft.client.multiplayer.ServerList;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.InputEvent;
+import net.minecraftforge.client.event.RegisterClientCommandsEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
+import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLEnvironment;
@@ -17,37 +26,85 @@ import org.lwjgl.glfw.GLFW;
 @Mod(AstralysCarte.MODID)
 public class AstralysCarte {
     public static final String MODID = "astralyscarte";
+    static final String NOM_SERVEUR = "ASTRALYS";
+    static final String ADRESSE = "gm57-dc02.ouiheberg.com:3218";
 
     static final KeyMapping TOUCHE = new KeyMapping("key.astralyscarte.carte",
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_M, "key.categories.astralys");
+
+    /** Ouverture demandee par /carte : faite au tick suivant, une fois le chat ferme. */
+    private boolean ouvrir;
 
     public AstralysCarte() {
         // Mod cote joueur : rien a faire sur un serveur dedie.
         if (FMLEnvironment.dist != Dist.CLIENT) return;
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::touches);
         MinecraftForge.EVENT_BUS.addListener(this::tick);
-        MinecraftForge.EVENT_BUS.addListener(this::clicDroit);
+        MinecraftForge.EVENT_BUS.addListener(this::touche);
+        MinecraftForge.EVENT_BUS.addListener(this::commande);
+        MinecraftForge.EVENT_BUS.addListener(this::listeAvant);
+        MinecraftForge.EVENT_BUS.addListener(this::listeRendu);
     }
 
     private void touches(RegisterKeyMappingsEvent event) {
         event.register(TOUCHE);
     }
 
+    private static void carte() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null && mc.screen == null) mc.setScreen(new CarteScreen());
+    }
+
+    // Lecture directe de la touche : marche meme si un autre mod utilise deja M.
+    private void touche(InputEvent.Key event) {
+        InputConstants.Key k = TOUCHE.getKey();
+        if (event.getAction() == GLFW.GLFW_PRESS && k.getType() == InputConstants.Type.KEYSYM && k.getValue() == event.getKey()) carte();
+    }
+
     private void tick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
-        Minecraft mc = Minecraft.getInstance();
-        while (TOUCHE.consumeClick()) {
-            if (mc.player != null && mc.screen == null) mc.setScreen(new CarteScreen());
+        while (TOUCHE.consumeClick()) carte();
+        if (ouvrir && Minecraft.getInstance().screen == null) {
+            ouvrir = false;
+            carte();
         }
     }
 
-    // L'objet "Carte d'Astralys" donne par le serveur porte le tag astralys_carte.
-    private void clicDroit(PlayerInteractEvent.RightClickItem event) {
-        if (!event.getLevel().isClientSide()) return;
-        var tag = event.getItemStack().getTag();
-        if (tag == null || !tag.getBoolean("astralys_carte")) return;
-        Minecraft.getInstance().setScreen(new CarteScreen());
-        event.setCancellationResult(InteractionResult.SUCCESS);
-        event.setCanceled(true);
+    private void commande(RegisterClientCommandsEvent event) {
+        event.getDispatcher().register(Commands.literal("carte").executes(c -> { ouvrir = true; return 1; }));
+    }
+
+    static boolean estAstralys(ServerData s) {
+        return s.ip != null && s.ip.toLowerCase(Locale.ROOT).startsWith("gm57-dc02.ouiheberg.com");
+    }
+
+    // Liste des serveurs : ASTRALYS y est toujours, sous son nom.
+    private void listeAvant(ScreenEvent.Init.Pre event) {
+        if (!(event.getScreen() instanceof JoinMultiplayerScreen)) return;
+        ServerList liste = new ServerList(Minecraft.getInstance());
+        liste.load();
+        boolean change = false, present = false;
+        for (int i = 0; i < liste.size(); i++) {
+            ServerData s = liste.get(i);
+            if (!estAstralys(s)) continue;
+            present = true;
+            if (!NOM_SERVEUR.equals(s.name)) { s.name = NOM_SERVEUR; change = true; }
+        }
+        if (!present) { liste.add(new ServerData(NOM_SERVEUR, ADRESSE, false), false); change = true; }
+        if (change) liste.save();
+    }
+
+    // Le nombre de joueurs (et la liste au survol) n'est pas affiche pour ASTRALYS.
+    private void listeRendu(ScreenEvent.Render.Pre event) {
+        if (!(event.getScreen() instanceof JoinMultiplayerScreen ecran)) return;
+        ServerList liste = ecran.getServers();
+        if (liste == null) return;
+        for (int i = 0; i < liste.size(); i++) {
+            ServerData s = liste.get(i);
+            if (!estAstralys(s)) continue;
+            s.name = NOM_SERVEUR;
+            s.status = Component.empty();
+            s.playerList = List.of();
+        }
     }
 }
