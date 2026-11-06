@@ -1,0 +1,23 @@
+{
+  "$schema": "file:///tmp/astralys-root/schemas/ServerMetaSchema.schema.json",
+  "meta": {
+    "version": "1.0.0",
+    "name": "Astralys",
+    "description": "Le royaume des trois mondes — Forge 1.20.1",
+    "address": "gm57-dc02.ouiheberg.com:3218",
+    "mainServer": true,
+    "autoconnect": true,
+    "javaOptions": {
+      "supported": ">=17.x",
+      "suggestedMajor": 17,
+      "ram": {
+        "recommended": 6144,
+        "minimum": 4096
+      }
+    }
+  },
+  "forge": {
+    "version": "47.4.10"
+  },
+  "untrackedFiles": []
+}
