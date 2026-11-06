@@ -44,6 +44,7 @@ public class FactionScreen extends EcranAstralys {
         hexBord(g, cx, cy, taille, c);
         MetiersScreen.teinte(EcranAstralys.melange(c, 0x000000, .45f), a);
         g.pose().pushPose(); g.pose().translate(cx - taille * .36f, cy - taille * .36f, 0); g.pose().scale(taille * .72f / 128f, taille * .72f / 128f, 1);
+        RenderSystem.enableBlend();
         g.blit(new ResourceLocation(AstralysCarte.MODID, "textures/gui/hex.png"), 0, 0, 0, 0, 128, 128, 128, 128);
         g.pose().popPose();
         RenderSystem.setShaderColor(1, 1, 1, a);
@@ -125,12 +126,13 @@ public class FactionScreen extends EcranAstralys {
         for (int i = 0; i < Math.min(10, f.membres().size()); i++) {
             float x = 432 + (i / 5) * 96, y = 202 + (i % 5) * 12;
             boolean on = f.enLigne().get(i);
+            RenderSystem.enableBlend();
             RenderSystem.setShaderColor(1, 1, 1, on ? a : .4f * a);
             PlayerFaceRenderer.draw(g, peau(f.membres().get(i)), Math.round(x), Math.round(y), 9);
             RenderSystem.setShaderColor(1, 1, 1, a);
             rect(g, x + 7, y + 7, x + 10, y + 10, argb(on ? 0x22C55E : 0x55555E, a));
             boolean chef = f.membres().get(i).equals(f.chef());
-            texte(g, (chef ? "♔ " : "") + f.membres().get(i), x + 13, y + 1, .65f, on ? (chef ? OR : 0xFFFFFF) : 0x8A8A92, -1, chef);
+            texte(g, (chef ? "★ " : "") + f.membres().get(i), x + 13, y + 1, .65f, on ? (chef ? OR : 0xFFFFFF) : 0x8A8A92, -1, chef);
         }
         if (f.membres().size() > 10) texte(g, "+" + (f.membres().size() - 10) + " autres", 612, 188, .6f, 0x8A8A92, 1, false);
 

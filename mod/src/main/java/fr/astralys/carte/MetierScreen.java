@@ -43,6 +43,7 @@ public class MetierScreen extends EcranAstralys {
         halo(g, 142, 140, 88, c, (.25f + .15f * puls) * a);
         RenderSystem.defaultBlendFunc();
         hexBord(g, 142, 140, 112, c);
+        RenderSystem.enableBlend();
         MetiersScreen.teinte(c, a);
         g.pose().pushPose(); g.pose().translate(142 - 47, 140 - 47, 0); g.pose().scale(94 / 128f, 94 / 128f, 1);
         g.blit(new ResourceLocation(AstralysCarte.MODID, "textures/gui/hex_degrade.png"), 0, 0, 0, 0, 128, 128, 128, 128);

@@ -63,6 +63,7 @@ public class MetiersScreen extends Screen {
     }
 
     private static void tex(GuiGraphics g, ResourceLocation r, float x, float y, float t, int rgb, float a) {
+        RenderSystem.enableBlend();   // renderItem le coupe : sans lui, lueurs pleines et hexagones crenelés
         teinte(rgb, a);
         g.pose().pushPose();
         g.pose().translate(x, y, 0);
@@ -204,7 +205,9 @@ public class MetiersScreen extends Screen {
             hexa(g, x + 13, y + 16, 38, fini ? 0x22C55E : c, a);
             RenderSystem.setShaderColor(1, 1, 1, a);
             objet(g, QUETE[q.metier()], x + 24, y + 27, 1);
-            texte(g, q.titre().toUpperCase(Locale.FRANCE), x + 62, y + 12, .8f, 0xFFFFFF, false, true);
+            String ti = q.titre().toUpperCase(Locale.FRANCE);
+            float et = Math.min(.8f, 74f / Math.max(1, font.width(Component.literal(ti).withStyle(st -> st.withBold(true)))));
+            texte(g, ti, x + 62, y + 12, et, 0xFFFFFF, false, true);
             List<net.minecraft.util.FormattedCharSequence> l = font.split(Component.literal(q.desc().toUpperCase(Locale.FRANCE)), 150);
             for (int j = 0; j < Math.min(2, l.size()); j++) {
                 g.pose().pushPose(); g.pose().translate(x + 62, y + 25 + j * 8, 0); g.pose().scale(.75f, .75f, 1);

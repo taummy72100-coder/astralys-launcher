@@ -97,6 +97,7 @@ abstract class EcranAstralys extends Screen {
     }
 
     void halo(GuiGraphics g, float cx, float cy, float r, int c, float al) {
+        RenderSystem.enableBlend();
         MetiersScreen.teinte(c, al);
         g.pose().pushPose(); g.pose().translate(cx - r, cy - r, 0); g.pose().scale(r * 2 / 64f, r * 2 / 64f, 1);
         g.blit(HALO, 0, 0, 0, 0, 64, 64, 64, 64); g.pose().popPose();
@@ -159,10 +160,12 @@ abstract class EcranAstralys extends Screen {
         contenu(g);
         // etincelles de la couleur de l'ecran qui montent du bas
         if (rnd.nextFloat() < dt * 18) etincelles.add(new float[] {rnd.nextFloat() * VW, VH - rnd.nextFloat() * 40, 0, 2 + rnd.nextFloat() * 2, 1.5f + rnd.nextFloat() * 1.5f, rnd.nextInt(4) == 0 ? 1 : 0});
+        RenderSystem.enableBlend();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
         etincelles.removeIf(p -> {
             p[2] += dt; p[1] -= dt * 14;
             float kk = p[2] / p[3], al = (kk < .2f ? kk / .2f : 1 - (kk - .2f) / .8f) * a * .8f;
+            RenderSystem.enableBlend();
             MetiersScreen.teinte(p[5] > 0 ? 0xFFF0C8 : couleur, al);
             g.pose().pushPose(); g.pose().translate(p[0] - p[4] * 4, p[1] - p[4] * 4, 0); g.pose().scale(p[4] * 8 / 64f, p[4] * 8 / 64f, 1);
             g.blit(HALO, 0, 0, 0, 0, 64, 64, 64, 64); g.pose().popPose();
