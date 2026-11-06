@@ -49,6 +49,7 @@ public class PetsScreen extends EcranAstralys {
 
         // apercu 3D
         halo(g, cx, y + 62, 40, c, .25f * a);
+        com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1, 1, 1, 1);   // le halo laisse sa teinte : sinon tout le reste de la carte est grise
         var p = apercu(t);
         if (p != null) {
             p.tickCount = (int) (t * 7 + this.t * 20);

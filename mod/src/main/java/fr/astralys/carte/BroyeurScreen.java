@@ -51,7 +51,7 @@ public class BroyeurScreen extends AbstractContainerScreen<Machines.BroyeurMenu>
     protected void renderLabels(GuiGraphics g, int mx, int my) {
         g.drawString(font, "✦ " + title.getString().toUpperCase(java.util.Locale.FRANCE), 8, 7, OR, true);
         g.drawString(font, "minerai → lingots ×2", 8, 18, 0xB8AEDA, false);
-        g.drawString(font, "poussière", 138, 55, 0xC9A0FF, false);
+        g.drawString(font, "bonus", 140, 55, 0xC9A0FF, false);
         g.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0xC8C8D0, false);
     }
 
