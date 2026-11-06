@@ -51,6 +51,7 @@ final class ClientMetiers {
         boutons.add(new Bouton("MÉTIERS", "niveaux & quêtes", 0xE8322B, -1, MetiersScreen::new));
         boutons.add(new Bouton("BOUTIQUE", "acheter & vendre", 0xF0B429, 1, ShopScreen::new));
         boutons.add(new Bouton("FACTION", "alliés & défis", 0xB46CFF, 2, FactionScreen::new));
+        boutons.add(new Bouton("MARCHÉ", "ventes entre joueurs", 0x3DD6C5, 3, HdvScreen::new));
         boutons.forEach(e::addListener);
         placer(s);
     }
@@ -119,7 +120,7 @@ final class ClientMetiers {
     private static final class Bouton extends Button {
         static final int L = 104, H = 26;
         private static final ResourceLocation LOS = new ResourceLocation(AstralysCarte.MODID, "textures/gui/losange.png");
-        private static final ItemStack[] ICONES = {null, new ItemStack(Items.EMERALD), new ItemStack(Items.WHITE_BANNER)};
+        private static final ItemStack[] ICONES = {null, new ItemStack(Items.EMERALD), new ItemStack(Items.WHITE_BANNER), new ItemStack(Items.CHEST)};
         private final String titre, sous;
         private final int couleur, icone;
         private float survol;

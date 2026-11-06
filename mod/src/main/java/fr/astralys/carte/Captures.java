@@ -28,6 +28,14 @@ final class Captures {
         ETAPES.add(new Etape("faction_vide", () -> { exemple(); ClientEco.faction = new Economie.FactionVue("", "", List.of(), List.of(), 0, 0, 0, 0, 0, List.of(),
                 List.of("Dragons|1840", "Lumina|1320", "Givre|960", "Braises|410", "Sylves|120")); }, FactionScreen::new));
         ETAPES.add(new Etape("carte", Captures::exemple, CarteScreen::new));
+        ETAPES.add(new Etape("classement", () -> { exemple(); ClientEco.classement = new Economie.Classement(List.of(
+                List.of("Lyra|63|512000", "Dev|47|48000", "Kaelen|31|120400", "Nox|12|9100", "Mira|4|820"),
+                List.of("Mira|22|60100", "Tobias|9|6000"), List.of("Nox|38|199000", "Lyra|30|116000", "Dev|8|2300", "Sora|2|300"), List.of())); }, ClassementScreen::new));
+        ETAPES.add(new Etape("hdv", () -> { exemple(); var o = new java.util.ArrayList<HotelVentes.OffreVue>();
+                String[] it = {"diamond_sword", "netherite_ingot", "elytra", "golden_apple", "oak_log", "beacon", "enchanted_book", "totem_of_undying", "iron_block", "ender_pearl", "shulker_box"};
+                for (int k = 0; k < it.length; k++) o.add(new HotelVentes.OffreVue(java.util.UUID.randomUUID(), new net.minecraft.world.item.ItemStack(
+                        net.minecraftforge.registries.ForgeRegistries.ITEMS.getValue(new net.minecraft.resources.ResourceLocation(it[k])), k == 4 ? 64 : 1), 150L * (k + 1) * (k + 3), k % 3 == 0 ? "Lyra" : "Nox", 3000 - k * 200, false));
+                ClientEco.hdv = new HotelVentes.Vue(o, 2); }, HdvScreen::new));
         MinecraftForge.EVENT_BUS.addListener(Captures::tick);
     }
 
@@ -43,7 +51,7 @@ final class Captures {
             double f = 1 + Math.sin(n++ * 1.7) * .12;
             l.add(new Economie.Ligne(a.item(), a.categorie(), Economie.achat(a.base(), f), Economie.vente(a.base(), f), (float) (Math.sin(n * 2.3) * 6)));
         }
-        ClientEco.marche = new Economie.Marche(l);
+        ClientEco.marche = new Economie.Marche(List.of(Economie.CATEGORIES), l);
         ClientEco.faction = new Economie.FactionVue("Dragons", "Dev", List.of("Dev", "Lyra", "Kaelen", "Nox", "Mira", "Tobias", "Sora"),
                 List.of(true, true, false, true, false, false, true), 84250, 1840, 14, 26, 4000,
                 List.of(new Economie.DefiVue("Mine collective", "Casser 1500 minerais", 1500, 1500, 20000, 100),

@@ -92,7 +92,7 @@ public class FactionScreen extends EcranAstralys {
         for (int i = 0; i < 4; i++) {
             float x = 38 + i * 148;
             carte(g, x, 134, 140, 36, 0);
-            hexBord(g, x + 18, 152, 22, 0x2E2E36);
+            hexBord(g, x + 18, 152, 22, 0x3A2C66);
             objet(g, STATS[i], x + 10, 144, 1);
             texte(g, st[i][0], x + 36, 141, .58f, 0x8A8A92, -1, true);
             texte(g, st[i][1], x + 36, 152, 1.05f, sc[i], -1, true);
@@ -106,7 +106,7 @@ public class FactionScreen extends EcranAstralys {
             Economie.DefiVue d = f.defis().get(i);
             float y = 204 + i * 45;
             boolean fini = d.avance() >= d.nombre(), s = dans(46, y, 402, y + 40);
-            rect(g, 46, y, 402, y + 40, argb(s ? 0x2E2E36 : 0x1A1A1F, a));
+            rect(g, 46, y, 402, y + 40, argb(s ? 0x3A2C66 : 0x211838, a));
             int dc = fini ? 0x22C55E : VIOLET;
             hexBord(g, 68, y + 20, 28, dc);
             objet(g, icone(d.titre()), 60, y + 12, 1);
@@ -152,7 +152,7 @@ public class FactionScreen extends EcranAstralys {
                 {"Remplir la banque", "/f deposit <montant>"}, {"Acheter des chunks", "/f claim  (à Pyrélune ou Azuréa)"}};
         for (int i = 0; i < etapes.length; i++) {
             float y = 164 + i * 40;
-            rect(g, 50, y, 398, y + 32, argb(0x1A1A1F, a));
+            rect(g, 50, y, 398, y + 32, argb(0x211838, a));
             hexBord(g, 70, y + 16, 22, VIOLET);
             texte(g, String.valueOf(i + 1), 70, y + 12, .9f, 0xFFFFFF, 0, true);
             texte(g, etapes[i][0].toUpperCase(Locale.FRANCE), 92, y + 6, .75f, 0xFFFFFF, -1, true);

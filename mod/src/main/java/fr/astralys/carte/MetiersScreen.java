@@ -108,6 +108,15 @@ public class MetiersScreen extends Screen {
         g.drawString(font, n, 0, 0, 0xFFFFFF, true); g.pose().popPose();
     }
 
+    /** Un objet dessine centre en (cx, cy) a l'echelle e, attenue si al < 1. */
+    static void illustrationObjet(GuiGraphics g, ItemStack s, float cx, float cy, float e, float al) {
+        RenderSystem.setShaderColor(1, 1, 1, al);
+        g.pose().pushPose(); g.pose().translate(cx - 8 * e, cy - 8 * e, 0); g.pose().scale(e, e, 1);
+        g.renderItem(s, 0, 0);
+        g.pose().popPose();
+        RenderSystem.setShaderColor(1, 1, 1, 1);
+    }
+
     static void hexa(GuiGraphics g, float x, float y, float t, int rgb, float a) {
         tex(g, HEX, x, y, t, rgb, a);
     }
@@ -185,9 +194,7 @@ public class MetiersScreen extends Screen {
         RenderSystem.enableBlend();
 
         // panneau
-        rect(g, -4, -4, VW + 4, VH + 4, argb(0x0B0B0D, .95f * a));
-        rect(g, 0, 0, VW, VH, argb(0x1B1B1F, .97f * a));
-        rect(g, 0, 0, VW, 2, argb(0x2C2C33, a));
+        EcranAstralys.fond(g, a);
         // hexagone d'Astralys sur le bord gauche
         hexa(g, -34, 128, 66, 0x0E0E10, a);
         hexa(g, -28, 134, 54, 0xE8322B, a);
@@ -196,6 +203,12 @@ public class MetiersScreen extends Screen {
         // titre
         texte(g, "MÉTIERS", 38, 26, 3.2f, 0xE8322B, false, true);
         // fermer
+        // bouton du classement
+        boolean surC = vx >= 500 && vx <= 598 && vy >= 16 && vy <= 34;
+        rect(g, 499, 15, 599, 35, argb(0x0A0714, a));
+        g.fillGradient(500, 16, 598, 34, argb(surC ? 0x4A3880 : 0x33255F, a), argb(surC ? 0x33255F : 0x241A46, a));
+        rect(g, 500, 16, 598, 17, argb(0xE2B65C, (surC ? .9f : .5f) * a));
+        texte(g, "★ CLASSEMENT", 549, 21, .8f, surC ? 0xFFECAA : 0xF0D28A, true, true);
         boolean surX = vx >= 604 && vx <= 622 && vy >= 16 && vy <= 34;
         rect(g, 604, 16, 622, 34, argb(surX ? 0xFF5A50 : 0xE8322B, a));
         texte(g, "✕", 613, 21, 1, 0xFFFFFF, true, true);
@@ -211,7 +224,7 @@ public class MetiersScreen extends Screen {
             float puls = (float) Math.sin(t * 2.2f + m) * .5f + .5f;
             texte(g, Metiers.NOMS[m], CX[m], 84, 2, 0xFFFFFF, true, true);
             // petite icone sur un rond sombre
-            tex(g, ROND, CX[m] - 13, 103, 26, 0x111114, a);
+            tex(g, ROND, CX[m] - 13, 103, 26, 0x0E0A1C, a);
             RenderSystem.setShaderColor(1, 1, 1, a);
             objet(g, PETITE[m], CX[m] - 8, 109, 1);
             // halo additif qui respire
@@ -231,7 +244,7 @@ public class MetiersScreen extends Screen {
             medaillon(g, font, CX[m], 218, 17, c, "NIVEAU", String.valueOf(nv), a);
             // barre d'XP du niveau en cours
             float f = nv >= Metiers.NIVEAU_MAX ? 1 : Metiers.reste(xp) / (float) Metiers.cout(nv);
-            rect(g, CX[m] - 40, 242, CX[m] + 40, 245, argb(0x34343B, a));
+            rect(g, CX[m] - 40, 242, CX[m] + 40, 245, argb(0x3B2F5E, a));
             rect(g, CX[m] - 40, 242, CX[m] - 40 + 80 * f, 245, argb(c, a));
         }
 
@@ -242,7 +255,7 @@ public class MetiersScreen extends Screen {
         texte(g, droite, 604 - font.width(droite) * .8f, 263, .8f, 0xD8D8DE, false, false);
         for (int i = 0; i < 3; i++) {
             float x = 30 + i * 196, y = 280;
-            rect(g, x, y, x + 188, y + 70, argb(0x222228, a));
+            rect(g, x, y, x + 188, y + 70, argb(0x2A1F4D, a));
             if (v == null || i >= v.quetes().size()) { texte(g, "Chargement…", x + 94, y + 30, 1, 0x8A8A92, true, false); continue; }
             Metiers.QueteVue q = v.quetes().get(i);
             int c = Metiers.COULEURS[q.metier()];
@@ -259,11 +272,11 @@ public class MetiersScreen extends Screen {
                 g.drawString(font, l.get(j), 0, 0, 0xC8C8D0, false); g.pose().popPose();
             }
             float f = q.avance() / (float) q.nombre();
-            rect(g, x + 62, y + 52, x + 152, y + 55, argb(0x3A3A42, a));
+            rect(g, x + 62, y + 52, x + 152, y + 55, argb(0x3B2F5E, a));
             rect(g, x + 62, y + 52, x + 62 + 90 * f, y + 55, argb(0x22C55E, a));
             texte(g, fini ? "✔" : q.avance() + "/" + q.nombre(), x + 158, y + 50, .75f, fini ? 0x22C55E : 0xFFFFFF, false, true);
             // recompense
-            rect(g, x + 140, y + 6, x + 182, y + 18, argb(0x34343B, a));
+            rect(g, x + 140, y + 6, x + 182, y + 18, argb(0x3B2F5E, a));
             texte(g, "✦ " + q.recompense(), x + 161, y + 8, .7f, c, true, true);
         }
 
@@ -301,6 +314,11 @@ public class MetiersScreen extends Screen {
     public boolean mouseClicked(double mx, double my, int b) {
         float vx = (float) (mx - x0) / k, vy = (float) (my - y0) / k;
         if (vx >= 604 && vx <= 622 && vy >= 16 && vy <= 34) { onClose(); return true; }
+        if (vx >= 500 && vx <= 598 && vy >= 16 && vy <= 34) {
+            Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), 1.2f));
+            Minecraft.getInstance().setScreen(new ClassementScreen());
+            return true;
+        }
         for (int m = 0; m < 4; m++)
             if (Math.abs(vx - CX[m]) < 52 && vy > 80 && vy < 250) {
                 Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), 1.2f));

@@ -23,6 +23,9 @@ public class ShopScreen extends EcranAstralys {
 
     public ShopScreen() { super("Boutique", OR); ClientEco.demander(0); }
 
+    // categories envoyees par le serveur : jamais d'onglet vide si le serveur a une autre version du catalogue
+    private static List<String> cats() { return ClientEco.marche == null ? List.of() : ClientEco.marche.categories(); }
+
     private List<Economie.Ligne> lignes() {
         List<Economie.Ligne> l = new ArrayList<>();
         if (ClientEco.marche != null) for (Economie.Ligne x : ClientEco.marche.lignes()) if (x.categorie() == categorie) l.add(x);
@@ -38,19 +41,20 @@ public class ShopScreen extends EcranAstralys {
     void contenu(GuiGraphics g) {
         texte(g, "✦ " + Economie.format(ClientEco.solde) + " $", 596, 40, 1.4f, OR, 1, true);
         // categories
-        for (int i = 0; i < Economie.CATEGORIES.length; i++) {
+        for (int i = 0; i < cats().size(); i++) {
             float y = 70 + i * PAS;
             boolean sel = i == categorie, s = dans(30, y, 152, y + 25);
-            rect(g, 30, y, 152, y + 25, argb(sel ? 0x2E2A1E : s ? 0x2A2A31 : 0x222228, a));
+            rect(g, 30, y, 152, y + 25, argb(sel ? 0x3D2E1E : s ? 0x33265C : 0x2A1F4D, a));
             if (sel) rect(g, 30, y, 33, y + 25, argb(OR, a));
-            objet(g, ICONES[i], 40, y + 4, 1);
-            texte(g, Economie.CATEGORIES[i].toUpperCase(Locale.FRANCE), 62, y + 9, .85f, sel ? OR : 0xE8E8EE, -1, true);
+            objet(g, ICONES[Math.min(i, ICONES.length - 1)], 40, y + 4, 1);
+            texte(g, cats().get(i).toUpperCase(Locale.FRANCE), 62, y + 9, .85f, sel ? OR : 0xE8E8EE, -1, true);
         }
         texte(g, "Clic G : acheter 1  •  Maj : 16     Clic D : vendre 1  •  Maj : tout     Molette : défiler", 392, 340, .62f, 0x9A9AA4, 0, false);
         // articles
         List<Economie.Ligne> l = lignes();
         survol = null;
         if (ClientEco.marche == null) { texte(g, "Chargement des cours…", 392, 190, 1, 0x8A8A92, 0, false); return; }
+        if (l.isEmpty()) texte(g, "Aucun objet dans cette catégorie sur ce serveur.", 392, 190, .8f, 0x9A9AA4, 0, false);
         defile = Math.max(0, Math.min(defile, (l.size() - 1) / COLS - LIGNES + 1));
         for (int i = defile * COLS; i < Math.min(l.size(), (defile + LIGNES) * COLS); i++) {
             int c = i % COLS, r = i / COLS - defile;
@@ -58,7 +62,7 @@ public class ShopScreen extends EcranAstralys {
             Economie.Ligne e = l.get(i);
             boolean s = dans(x, y, x + 72, y + 62);
             if (s) survol = e;
-            rect(g, x, y, x + 72, y + 62, argb(s ? 0x2E2E36 : 0x222228, a));
+            rect(g, x, y, x + 72, y + 62, argb(s ? 0x3A2C66 : 0x2A1F4D, a));
             if (s) { rect(g, x, y, x + 72, y + 1, argb(OR, a)); rect(g, x, y + 61, x + 72, y + 62, argb(OR, a)); }
             float bob = s ? (float) Math.sin(t * 5) * 1.2f : 0;
             objet(g, pile(e.item()), x + 20, y + 6 + bob, 2);
@@ -71,7 +75,7 @@ public class ShopScreen extends EcranAstralys {
         int pages = (l.size() + COLS - 1) / COLS;
         if (pages > LIGNES) {
             float h = 262f * LIGNES / pages, y = 72 + 262f * defile / pages;
-            rect(g, 624, 72, 627, 334, argb(0x2A2A31, a));
+            rect(g, 624, 72, 627, 334, argb(0x33265C, a));
             texte(g, l.size() + " objets", 622, 60, .6f, 0x6E6E78, 1, false);
             rect(g, 624, y, 627, y + h, argb(OR, a));
         }
@@ -89,7 +93,7 @@ public class ShopScreen extends EcranAstralys {
 
     @Override
     boolean clic(int b, boolean maj) {
-        for (int i = 0; i < Economie.CATEGORIES.length; i++)
+        for (int i = 0; i < cats().size(); i++)
             if (dans(30, 70 + i * PAS, 152, 95 + i * PAS)) { categorie = i; defile = 0; son(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 1.2f); return true; }
         if (survol == null || (b != 0 && b != 1)) return false;
         boolean achat = b == 0;

@@ -50,7 +50,7 @@ final class Metiers {
     static final String[] NOMS = {"MINEUR", "FARMEUR", "HUNTER", "ALCHIMISTE"};
     static final int MINEUR = 0, FARMEUR = 1, HUNTER = 2, ALCHIMISTE = 3, NIVEAU_MAX = 100;
     private static final ZoneId PARIS = ZoneId.of("Europe/Paris");
-    private static final String VERSION = "1";
+    private static final String VERSION = "2";   // a changer a chaque modification d'un paquet : client et serveur doivent avoir le meme mod
     // Les joueurs sans le mod peuvent toujours se connecter (ils n'ont simplement pas l'ecran).
     static final SimpleChannel CANAL = NetworkRegistry.newSimpleChannel(new ResourceLocation(AstralysCarte.MODID, "metiers"),
             () -> VERSION, NetworkRegistry.acceptMissingOr(VERSION), NetworkRegistry.acceptMissingOr(VERSION));
@@ -122,6 +122,7 @@ final class Metiers {
 
     // ------------------------------------------------------------------ donnees sauvegardees
     static final class Joueur {
+        String nom = "?";
         final long[] xp = new long[4];
         long jour = -1;
         final int[] avance = new int[3];
@@ -138,6 +139,7 @@ final class Metiers {
                 long[] xp = c.getLongArray("xp");
                 System.arraycopy(xp, 0, j.xp, 0, Math.min(4, xp.length));
                 j.jour = c.getLong("jour");
+                if (c.contains("nom")) j.nom = c.getString("nom");
                 int[] av = c.getIntArray("avance");
                 System.arraycopy(av, 0, j.avance, 0, Math.min(3, av.length));
                 d.joueurs.put(UUID.fromString(k), j);
@@ -152,6 +154,7 @@ final class Metiers {
                 c.putLongArray("xp", j.xp);
                 c.putLong("jour", j.jour);
                 c.putIntArray("avance", j.avance);
+                c.putString("nom", j.nom);
                 t.put(id.toString(), c);
             });
             return t;
@@ -169,6 +172,7 @@ final class Metiers {
         Joueur j = d.joueurs.computeIfAbsent(p.getUUID(), k -> new Joueur());
         long jour = aujourdhui();
         if (j.jour != jour) { j.jour = jour; java.util.Arrays.fill(j.avance, 0); d.setDirty(); }
+        if (!j.nom.equals(p.getGameProfile().getName())) { j.nom = p.getGameProfile().getName(); d.setDirty(); }
         return j;
     }
 
@@ -184,10 +188,55 @@ final class Metiers {
         int nv = niveau(j.xp[metier]);
         if (nv > niveau(avant)) {
             niveauSup(p, metier, nv);
+            for (int pal = niveau(avant) / 10 + 1; pal <= nv / 10; pal++) palier(p, metier, pal);
             Economie.crediter(p, 100L * nv, NOMS[metier] + " niveau " + nv);
             Economie.defi(p, Economie.Defi.NIVEAU, nv - niveau(avant));
         }
         aEnvoyer.add(p.getUUID());
+    }
+
+    // ------------------------------------------------------------------ paliers (niveaux 10, 20 ... 100)
+    // shortcut: objets du jeu en attendant les recompenses custom faites avec Blockbench, a remplacer palier par palier.
+    static final String[][] PALIERS = {
+            {"minecraft:iron_pickaxe", "minecraft:iron_ingot*16", "minecraft:diamond_pickaxe", "minecraft:diamond*8", "minecraft:gold_block*4",
+             "minecraft:diamond_block*2", "minecraft:emerald_block*4", "minecraft:netherite_scrap*4", "minecraft:netherite_ingot", "minecraft:netherite_block"},
+            {"minecraft:iron_hoe", "minecraft:bone_meal*32", "minecraft:golden_carrot*16", "minecraft:diamond_hoe", "minecraft:golden_apple*8",
+             "minecraft:hay_block*32", "minecraft:enchanted_golden_apple", "minecraft:golden_apple*16", "minecraft:netherite_ingot", "minecraft:enchanted_golden_apple*3"},
+            {"minecraft:iron_sword", "minecraft:bow", "minecraft:arrow*64", "minecraft:diamond_sword", "minecraft:crossbow",
+             "minecraft:golden_apple*4", "minecraft:totem_of_undying", "minecraft:totem_of_undying*2", "minecraft:trident", "minecraft:netherite_ingot"},
+            {"minecraft:brewing_stand", "minecraft:blaze_powder*16", "minecraft:nether_wart*16", "minecraft:glowstone_dust*32", "minecraft:ghast_tear*8",
+             "minecraft:experience_bottle*16", "minecraft:experience_bottle*32", "minecraft:dragon_breath*4", "minecraft:enchanting_table", "minecraft:experience_bottle*64"}};
+
+    static long argentPalier(int palier) { return 1000L * palier * 10; }
+
+    /** "ns:id*n" -> pile d'objets (ou vide si l'objet n'existe pas). */
+    static net.minecraft.world.item.ItemStack pile(String s) {
+        String[] p = s.split("\\*");
+        var it = ForgeRegistries.ITEMS.getValue(new ResourceLocation(p[0]));
+        return it == null ? net.minecraft.world.item.ItemStack.EMPTY : new net.minecraft.world.item.ItemStack(it, p.length > 1 ? Integer.parseInt(p[1]) : 1);
+    }
+
+    private static void palier(ServerPlayer p, int metier, int palier) {
+        var obj = pile(PALIERS[metier][palier - 1]);
+        if (!obj.isEmpty() && !p.getInventory().add(obj.copy())) p.drop(obj.copy(), false);
+        Economie.crediter(p, argentPalier(palier), "palier " + palier * 10 + " " + NOMS[metier]);
+        p.sendSystemMessage(Component.literal("★ PALIER " + palier * 10 + " " + NOMS[metier] + " : " + obj.getCount() + "× ").withStyle(st -> st.withColor(COULEURS[metier]).withBold(true))
+                .append(obj.getHoverName()));
+        p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1, 1);
+    }
+
+    // ------------------------------------------------------------------ classement par metier
+    /** Top 10 de chaque metier : lignes "nom|niveau|xp". */
+    static List<List<String>> classement(MinecraftServer s) {
+        List<List<String>> out = new ArrayList<>();
+        for (int m = 0; m < 4; m++) {
+            final int mm = m;
+            List<String> l = new ArrayList<>();
+            donnees(s).joueurs.values().stream().filter(j -> j.xp[mm] > 0).sorted((a, b) -> Long.compare(b.xp[mm], a.xp[mm])).limit(10)
+                    .forEach(j -> l.add(j.nom + "|" + niveau(j.xp[mm]) + "|" + j.xp[mm]));
+            out.add(l);
+        }
+        return out;
     }
 
     private static void niveauSup(ServerPlayer p, int metier, int nv) {

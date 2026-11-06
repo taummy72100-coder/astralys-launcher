@@ -66,6 +66,27 @@ abstract class EcranAstralys extends Screen {
         if (retour != null) minecraft.setScreen(retour.get()); else super.onClose();
     }
 
+    // Etoiles du fond, fixes d'une ouverture a l'autre.
+    private static final float[][] ETOILES = new float[90][];
+    static {
+        Random r = new Random(7);
+        for (int i = 0; i < ETOILES.length; i++) ETOILES[i] = new float[] {r.nextFloat() * VW, r.nextFloat() * VH, .3f + r.nextFloat() * .7f};
+    }
+
+    /** Fond au style du grimoire (meme que l'inventaire) : bord noir, filet dore, indigo en degrade, etoiles, losanges d'or aux coins. */
+    static void fond(GuiGraphics g, float a) {
+        g.fill(-5, -5, VW + 5, VH + 5, argb(0x0A0714, .97f * a));
+        g.fill(-3, -3, VW + 3, VH + 3, argb(0xE2B65C, a));
+        g.fill(-2, -2, VW + 2, VH + 2, argb(0x845C28, a));
+        g.fillGradient(-1, -1, VW + 1, VH + 1, argb(0x2C1F55, .98f * a), argb(0x150F2C, .98f * a));
+        for (float[] e : ETOILES) g.fill(Math.round(e[0]), Math.round(e[1]), Math.round(e[0]) + 1, Math.round(e[1]) + 1, argb(0xC8BEFF, e[2] * .5f * a));
+        for (int[] c : new int[][] {{3, 3}, {VW - 4, 3}, {3, VH - 4}, {VW - 4, VH - 4}}) {
+            g.fill(c[0] - 1, c[1] - 2, c[0] + 2, c[1] + 3, argb(0xE2B65C, a));
+            g.fill(c[0] - 2, c[1] - 1, c[0] + 3, c[1] + 2, argb(0xE2B65C, a));
+            g.fill(c[0], c[1], c[0] + 1, c[1] + 1, argb(0xFFECAA, a));
+        }
+    }
+
     /** Bande de couleur qui s'estompe vers la droite. */
     void ligne(GuiGraphics g, float x, float y, float w, float h, int c, float al) {
         int n = 24;
@@ -74,16 +95,17 @@ abstract class EcranAstralys extends Screen {
 
     /** Carte en relief : degrade, liseré clair en haut, ombre en bas, barre d'accent a gauche si accent != 0. */
     void carte(GuiGraphics g, float x, float y, float w, float h, int accent) {
-        rect(g, x - 1, y - 1, x + w + 1, y + h + 1, argb(0x0E0E11, a));
-        g.fillGradient(Math.round(x), Math.round(y), Math.round(x + w), Math.round(y + h), argb(0x2A2A31, a), argb(0x202026, a));
-        rect(g, x, y, x + w, y + 1, argb(0xFFFFFF, .06f * a));
+        rect(g, x - 1, y - 1, x + w + 1, y + h + 1, argb(0x0A0714, a));
+        g.fillGradient(Math.round(x), Math.round(y), Math.round(x + w), Math.round(y + h), argb(0x33255F, a), argb(0x241A46, a));
+        rect(g, x, y, x + w, y + 1, argb(0xE2B65C, .35f * a));
+        rect(g, x, y + h - 1, x + w, y + h, argb(0x845C28, .5f * a));
         if (accent != 0) { rect(g, x, y, x + 2, y + h, argb(accent, a)); ligne(g, x + 2, y, w * .6f, 1, accent, .6f); }
     }
 
     /** Barre de progression : rail sombre, remplissage en degrade, reflet et point lumineux au bout. */
     void barre(GuiGraphics g, float x, float y, float w, float h, float f, int c) {
         f = Math.max(0, Math.min(1, f));
-        rect(g, x, y, x + w, y + h, argb(0x111114, a));
+        rect(g, x, y, x + w, y + h, argb(0x0E0A1C, a));
         rect(g, x, y + h - 1, x + w, y + h, argb(0xFFFFFF, .04f * a));
         if (f <= 0) return;
         int clair = melange(c, 0xFFFFFF, .35f);
@@ -138,11 +160,7 @@ abstract class EcranAstralys extends Screen {
         g.pose().translate(x0, y0 + (1 - a) * 12, 0);
         g.pose().scale(k, k, 1);
         RenderSystem.enableBlend();
-        rect(g, -4, -4, VW + 4, VH + 4, argb(0x0B0B0D, .95f * a));
-        g.fillGradient(0, 0, VW, VH, argb(0x212128, .97f * a), argb(0x151519, .97f * a));
-        ligne(g, 0, 0, VW, 2, couleur, .9f);
-        // fines lignes de fond, a peine visibles
-        for (int y = 64; y < VH; y += 24) rect(g, 0, y, VW, y + 1, argb(0xFFFFFF, .012f * a));
+        fond(g, a);
         ligne(g, 38, 58, 584, 1, couleur, .35f);
         MetiersScreen.hexa(g, -34, 128, 66, 0x0E0E10, a);
         MetiersScreen.hexa(g, -28, 134, 54, couleur, a);
@@ -151,7 +169,7 @@ abstract class EcranAstralys extends Screen {
         texte(g, titre.toUpperCase(java.util.Locale.FRANCE), 38, 26, 3.2f, couleur, -1, true);
         if (retour != null) {
             boolean s = dans(536, 16, 598, 34);
-            rect(g, 536, 16, 598, 34, argb(s ? 0x34343C : 0x26262D, a));
+            rect(g, 536, 16, 598, 34, argb(s ? 0x3A2C66 : 0x2E2257, a));
             texte(g, "‹ RETOUR", 567, 21, .8f, s ? 0xFFFFFF : 0xC8C8D0, 0, true);
         }
         boolean surX = dans(604, 16, 622, 34);

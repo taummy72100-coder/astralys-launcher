@@ -71,7 +71,7 @@ public class MetierScreen extends EcranAstralys {
         for (int i = 0; i < src.length; i++) {
             float x = 270 + (i / 5) * 176, y = 94 + (i % 5) * 23;
             boolean s = dans(x - 2, y - 2, x + 170, y + 19);
-            rect(g, x - 2, y - 2, x + 170, y + 19, argb(s ? 0x34343C : 0x1A1A1F, a));
+            rect(g, x - 2, y - 2, x + 170, y + 19, argb(s ? 0x3A2C66 : 0x211838, a));
             objet(g, pile((String) src[i][0]), x, y, 1);
             texte(g, (String) src[i][1], x + 21, y + 5, .75f, 0xE8E8EE, -1, false);
             long gain = Math.max(1, Math.round(((Number) src[i][2]).intValue() * (1 + bonus / 100)));
@@ -84,7 +84,7 @@ public class MetierScreen extends EcranAstralys {
         section(g, "Paliers", 270, 234, c);
         texte(g, "chaque niveau : +100 $ × niveau  •  +0,1 % de bonus", 610, 235, .62f, 0x9A9AA4, 1, false);
         float x1 = 284, x2 = 600, yy = 282;
-        rect(g, x1, yy - 1, x2, yy + 2, argb(0x111114, a));
+        rect(g, x1, yy - 1, x2, yy + 2, argb(0x0E0A1C, a));
         float f = Math.min(1, nv / 100f);
         g.fillGradient(Math.round(x1), Math.round(yy - 1), Math.round(x1 + (x2 - x1) * f), Math.round(yy + 2), argb(EcranAstralys.melange(c, 0xFFFFFF, .3f), a), argb(c, a));
         palierSurvol = -1;
@@ -98,10 +98,10 @@ public class MetierScreen extends EcranAstralys {
                 halo(g, x, yy, 16, c, (.35f + .2f * puls) * a);
                 RenderSystem.defaultBlendFunc();
             }
-            MetiersScreen.losange(g, x, yy, s ? 22 : 18, ok ? c : 0x3A3A42, a);
+            MetiersScreen.losange(g, x, yy, s ? 22 : 18, ok ? c : 0x3B2F5E, a);
             texte(g, ok ? "✔" : String.valueOf(i + 1), x, yy - 3, .6f, 0xFFFFFF, 0, true);
             texte(g, String.valueOf(p), x, yy - 22, .7f, ok ? c : 0x8A8A92, 0, true);
-            texte(g, "+" + (p * 100 >= 1000 ? p / 10 + "k" : String.valueOf(p * 100)) + "$", x, yy + 16, .55f, ok ? 0xF0B429 : 0x6E6E78, 0, true);
+            MetiersScreen.illustrationObjet(g, Metiers.pile(Metiers.PALIERS[m][i]), x, yy + 20, .6f, ok ? 1 : .45f);
         }
         // curseur du niveau actuel
         float xc = x1 + (x2 - x1) * f;
@@ -120,6 +120,10 @@ public class MetierScreen extends EcranAstralys {
         for (int n = 0; n < p; n++) xpTotal += Metiers.cout(n);
         g.renderComponentTooltip(font, List.of(
                 Component.literal("Palier " + p).withStyle(st -> st.withColor(c).withBold(true)),
+                Component.literal("★ Récompense : ").withStyle(st -> st.withColor(c).withBold(true))
+                        .append(Component.literal(Metiers.pile(Metiers.PALIERS[m][p / 10 - 1]).getCount() + "× ").withStyle(st -> st.withColor(0xFFFFFF)))
+                        .append(Metiers.pile(Metiers.PALIERS[m][p / 10 - 1]).getHoverName()),
+                Component.literal("   + " + Economie.format(Metiers.argentPalier(p / 10)) + " $ de prime de palier").withStyle(st -> st.withColor(0xF0B429)),
                 Component.literal("Récompense du niveau : +" + Economie.format(100L * p) + " $").withStyle(st -> st.withColor(0xF0B429)),
                 Component.literal("Argent cumulé jusqu'ici : " + Economie.format(total) + " $").withStyle(st -> st.withColor(0xE8E8EE)),
                 Component.literal("Bonus apporté : +" + String.format(Locale.FRANCE, "%.1f", p * .1f) + " %").withStyle(st -> st.withColor(0xE8E8EE)),

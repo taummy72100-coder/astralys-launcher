@@ -252,7 +252,7 @@ final class Economie {
         envoyerSolde(p);
     }
 
-    private static boolean debiter(UUID u, long n) {
+    static boolean debiter(UUID u, long n) {
         long s = solde(u);
         if (n < 0 || s < n) return false;
         d().argent.put(u, s - n); d().setDirty();
@@ -335,15 +335,19 @@ final class Economie {
 
     record Ligne(String item, int categorie, long achat, long vente, float tendance) {}
 
-    record Marche(List<Ligne> lignes) {
+    /** Le catalogue vient du serveur, categories comprises : le client n'affiche que ce qui existe vraiment. */
+    record Marche(List<String> categories, List<Ligne> lignes) {
         void ecrire(FriendlyByteBuf b) {
+            b.writeVarInt(categories.size()); categories.forEach(b::writeUtf);
             b.writeVarInt(lignes.size());
             for (Ligne l : lignes) { b.writeUtf(l.item); b.writeVarInt(l.categorie); b.writeVarLong(l.achat); b.writeVarLong(l.vente); b.writeFloat(l.tendance); }
         }
         static Marche lire(FriendlyByteBuf b) {
-            int n = Math.min(b.readVarInt(), 1000); List<Ligne> l = new ArrayList<>();
+            int nc = Math.min(b.readVarInt(), 32); List<String> c = new ArrayList<>();
+            for (int i = 0; i < nc; i++) c.add(b.readUtf());
+            int n = Math.min(b.readVarInt(), 4000); List<Ligne> l = new ArrayList<>();
             for (int i = 0; i < n; i++) l.add(new Ligne(b.readUtf(), b.readVarInt(), b.readVarLong(), b.readVarLong(), b.readFloat()));
-            return new Marche(l);
+            return new Marche(c, l);
         }
     }
 
@@ -382,7 +386,17 @@ final class Economie {
         static Transaction lire(FriendlyByteBuf b) { return new Transaction(b.readUtf(256), b.readVarInt(), b.readBoolean()); }
     }
 
-    /** Serveur -> client : ouvrir un ecran (0 boutique, 1 faction, 2 metiers). */
+    /** Serveur -> client : top 10 de chaque metier ("nom|niveau|xp"). */
+    record Classement(List<List<String>> metiers) {
+        void ecrire(FriendlyByteBuf b) { b.writeVarInt(metiers.size()); for (List<String> l : metiers) { b.writeVarInt(l.size()); l.forEach(b::writeUtf); } }
+        static Classement lire(FriendlyByteBuf b) {
+            int n = Math.min(b.readVarInt(), 8); List<List<String>> out = new ArrayList<>();
+            for (int i = 0; i < n; i++) { int k = Math.min(b.readVarInt(), 20); List<String> l = new ArrayList<>(); for (int j = 0; j < k; j++) l.add(b.readUtf()); out.add(l); }
+            return new Classement(out);
+        }
+    }
+
+    /** Serveur -> client : ouvrir un ecran (0 boutique, 1 faction, 2 metiers, 3 classement, 4 hotel des ventes). */
     record Ouvrir(int ecran) {
         void ecrire(FriendlyByteBuf b) { b.writeVarInt(ecran); }
         static Ouvrir lire(FriendlyByteBuf b) { return new Ouvrir(b.readVarInt()); }
@@ -390,7 +404,7 @@ final class Economie {
 
     private static boolean aLeMod(ServerPlayer p) { return Metiers.CANAL.isRemotePresent(p.connection.connection); }
 
-    private static void envoyer(ServerPlayer p, Object m) { if (aLeMod(p)) Metiers.CANAL.send(PacketDistributor.PLAYER.with(() -> p), m); }
+    static void envoyer(ServerPlayer p, Object m) { if (aLeMod(p)) Metiers.CANAL.send(PacketDistributor.PLAYER.with(() -> p), m); }
 
     static void envoyerSolde(ServerPlayer p) { envoyer(p, new Solde(solde(p.getUUID()))); }
 
@@ -401,7 +415,7 @@ final class Economie {
             double[] c = cours(a.item);
             l.add(new Ligne(a.item, a.categorie, achat(a.base, c[0]), vente(a.base, c[0]), (float) ((c[0] / c[1] - 1) * 100)));
         }
-        envoyer(p, new Marche(l));
+        envoyer(p, new Marche(List.of(CATEGORIES), l));
         envoyerSolde(p);
     }
 
@@ -496,6 +510,8 @@ final class Economie {
         for (String n : new String[] {"shop", "boutique"})
             dsp.register(Commands.literal(n).executes(c -> ouvrir(joueur(c), 0)));
         dsp.register(Commands.literal("metiers").executes(c -> ouvrir(joueur(c), 2)));
+        dsp.register(Commands.literal("classement").executes(c -> ouvrir(joueur(c), 3)));
+        for (String n : new String[] {"hdv", "marche", "ventes"}) dsp.register(Commands.literal(n).executes(c -> ouvrir(joueur(c), 4)));
         for (String n : new String[] {"f", "faction"}) dsp.register(Commands.literal(n)
                 .executes(c -> ouvrir(joueur(c), 1))
                 .then(Commands.literal("create").then(Commands.argument("nom", StringArgumentType.word()).executes(c -> creer(joueur(c), StringArgumentType.getString(c, "nom")))))
@@ -638,7 +654,12 @@ final class Economie {
                 .consumerMainThread((m, ctx) -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientEco.ouvrir(m.ecran()))).add();
         Metiers.CANAL.messageBuilder(Demande.class, 5, NetworkDirection.PLAY_TO_SERVER).encoder(Demande::ecrire).decoder(Demande::lire)
                 .consumerMainThread((m, ctx) -> { ServerPlayer p = ctx.get().getSender(); if (p == null) return;
-                    if (m.quoi() == 0) envoyerMarche(p); else if (m.quoi() == 1) envoyerFaction(p); }).add();
+                    if (m.quoi() == 0) envoyerMarche(p); else if (m.quoi() == 1) envoyerFaction(p);
+                    else if (m.quoi() == 2) envoyer(p, new Classement(Metiers.classement(p.server)));
+                    else if (m.quoi() == 3) HotelVentes.envoyerVue(p); }).add();
+        Metiers.CANAL.messageBuilder(Classement.class, 7, NetworkDirection.PLAY_TO_CLIENT).encoder(Classement::ecrire).decoder(Classement::lire)
+                .consumerMainThread((m, ctx) -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientEco.classement(m))).add();
+        HotelVentes.init();
         Metiers.CANAL.messageBuilder(Transaction.class, 6, NetworkDirection.PLAY_TO_SERVER).encoder(Transaction::ecrire).decoder(Transaction::lire)
                 .consumerMainThread((m, ctx) -> { ServerPlayer p = ctx.get().getSender(); if (p != null) transaction(p, m); }).add();
 
