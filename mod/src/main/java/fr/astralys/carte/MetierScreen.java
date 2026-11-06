@@ -47,7 +47,7 @@ public class MetierScreen extends EcranAstralys {
         objet(g, MetiersScreen.ART[m][1], 136, 112 + bob, 2.8f);
         objet(g, MetiersScreen.ART[m][0], 96, 98 - bob, 3.4f);
         // niveau : medaillon sur la pointe basse
-        MetiersScreen.medaillon(g, font, 142, 204, 21, c, "NIVEAU", String.valueOf(nv), a);
+        MetiersScreen.medaillon(g, font, 142, 204, 21, c, "NV.", String.valueOf(nv), a);
         // barre et chiffres
         texte(g, max ? "NIVEAU MAXIMUM" : "PROGRESSION", 50, 242, .65f, 0x9A9AA4, -1, true);
         texte(g, max ? "" : String.format(Locale.FRANCE, "%d %%", Math.round(100f * reste / cout)), 234, 242, .65f, c, 1, true);
