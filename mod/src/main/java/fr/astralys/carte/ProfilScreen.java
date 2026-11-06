@@ -120,12 +120,12 @@ public class ProfilScreen extends EcranAstralys {
         switch (m.id()) {
             case "etoiles" -> { for (int i = 0; i < 70; i++) { float px = x + r.nextFloat() * w, py = y + r.nextFloat() * h, k = .3f + .5f * (float) Math.abs(Math.sin(t * 1.5 + i)); rect(g, px, py, px + 1, py + 1, argb(c, k * a)); if (i % 7 == 0) texte(g, "✦", px, py - 3, .5f, c, 0, false); } }
             case "vagues" -> { for (int l = 0; l < 4; l++) for (int i = 0; i < w; i += 2) { float py = y + 14 + l * 20 + (float) Math.sin(i * .05 + l + t) * 4; rect(g, x + i, py, x + i + 2, py + 1, argb(c, .18f * a)); } }
-            case "runes" -> { String[] rs = {"ᚠ", "ᚢ", "ᚦ", "ᚨ", "ᚱ", "ᚲ", "ᚷ", "ᚹ"}; for (int i = 0; i < 26; i++) texte(g, rs[r.nextInt(rs.length)], x + 90 + r.nextFloat() * (w - 100), y + 6 + r.nextFloat() * (h - 16), 1.2f, c, 0, false); }
+            case "runes" -> { String[] rs = {"ᚠ", "ᚢ", "ᚦ", "ᚨ", "ᚱ", "ᚲ", "ᚷ", "ᚹ"}; for (int i = 0; i < 26; i++) texte(g, rs[r.nextInt(rs.length)], x + w * .42f + r.nextFloat() * (w * .56f), y + 6 + r.nextFloat() * (h - 16), 1.2f, c, 0, false); }
             case "flammes" -> { for (int i = 0; i < w; i += 6) { float fh = 10 + (float) Math.abs(Math.sin(i * .37 + t * 3)) * 20 + r.nextFloat() * 6; g.fillGradient(Math.round(x + i), Math.round(y + h - fh), Math.round(x + i + 4), Math.round(y + h), argb(c, 0), argb(c, .4f * a)); } }
-            case "cristaux" -> { for (int i = 0; i < 16; i++) { float px = x + 100 + r.nextFloat() * (w - 110), py = y + 10 + r.nextFloat() * (h - 20); MetiersScreen.losange(g, px, py, 6 + r.nextFloat() * 10, c, .35f * a); } RenderSystem.setShaderColor(1, 1, 1, 1); }
+            case "cristaux" -> { for (int i = 0; i < 16; i++) { float px = x + w * .42f + r.nextFloat() * (w * .56f), py = y + 10 + r.nextFloat() * (h - 20); MetiersScreen.losange(g, px, py, 6 + r.nextFloat() * 10, c, .35f * a); } RenderSystem.setShaderColor(1, 1, 1, 1); }
             default -> {   // constellation : etoiles reliees
                 float[][] p = new float[9][];
-                for (int i = 0; i < p.length; i++) p[i] = new float[] {x + 110 + i * (w - 140) / 8f, y + 12 + r.nextFloat() * (h - 30)};
+                for (int i = 0; i < p.length; i++) p[i] = new float[] {x + w * .42f + i * (w * .55f) / 8f, y + 12 + r.nextFloat() * (h - 30)};
                 for (int i = 0; i + 1 < p.length; i++) {
                     int st = 12;
                     for (int k = 0; k < st; k++) { float px = p[i][0] + (p[i + 1][0] - p[i][0]) * k / st, py = p[i][1] + (p[i + 1][1] - p[i][1]) * k / st; rect(g, px, py, px + 1, py + 1, argb(c, .35f * a)); }
@@ -247,7 +247,7 @@ public class ProfilScreen extends EcranAstralys {
             if (sur) { survol = o; survolEmote = o; }
             carte(g, x, y, 100, 56, fav ? 0xF0B429 : sur ? o.c1() : 0);
             texte(g, o.nom(), x + 8, y + 8, .75f, o.c1(), -1, true);
-            if (fav) texte(g, "★ favorite", x + 92, y + 8, .5f, 0xF0B429, 1, true);
+            if (fav) texte(g, "★ favorite", x + 92, y + 46, .5f, 0xF0B429, 1, true);
             if (a(o)) {
                 texte(g, "clic : jouer", x + 8, y + 24, .55f, 0x3DD6C5, -1, false);
                 texte(g, "maj + clic : favorite", x + 8, y + 34, .45f, 0x9A9AA4, -1, false);

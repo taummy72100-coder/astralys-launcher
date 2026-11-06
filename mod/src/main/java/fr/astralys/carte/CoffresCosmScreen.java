@@ -28,7 +28,7 @@ public class CoffresCosmScreen extends EcranAstralys {
         String s = Economie.format(CosmetiqueScreen.rubis());
         texte(g, s, 528, 22, 1.3f, BLEU, 1, true);
         objet(g, CosmetiqueScreen.RUBIS_BLEU, 528 - font.width(net.minecraft.network.chat.Component.literal(s).withStyle(st -> st.withBold(true))) * 1.3f - 18, 18, 1);
-        texte(g, "Chaque coffre donne un cosmétique que tu n'as pas encore • aucun objet de jeu • chances garanties ci-dessous", 320, 50, .55f, 0x9A9AA4, 0, false);
+        texte(g, "Un cosmétique que tu n'as pas encore • aucun objet de jeu • chances garanties", 528, 40, .5f, 0x9A9AA4, 1, false);
         if (choisi >= 0 && System.currentTimeMillis() - choisiA > 4000) choisi = -1;
         List<String> pos = ClientCosm.vue == null ? List.of() : ClientCosm.vue.possedes();
         int restant = 0;

@@ -127,7 +127,7 @@ public class CosmetiqueScreen extends EcranAstralys {
         if (m != null) {
             m.emote = null;
             m.habiller(pack.stream().map(Cosmetiques.Cosm::id).toArray(String[]::new));
-            ClientCosm.dessiner(g, 130, 170, 40, (float) Math.sin(t * .6f) * .6f + .3f, m);
+            ClientCosm.dessiner(g, 130, 172, 46, (float) Math.sin(t * .6f) * .6f + .3f, m);
         }
         g.disableScissor();
         // encart prix
@@ -203,30 +203,20 @@ public class CosmetiqueScreen extends EcranAstralys {
         if (s) survol = c;
         int rc = Cosmetiques.COULEURS_RARETE[c.rarete()];
         rect(g, x - 1, y - 1, x + 89, y + 65, argb(sel ? 0xF0B429 : s ? rc : 0x0A0714, a));
-        g.fillGradient(Math.round(x), Math.round(y), Math.round(x + 88), Math.round(y + 44), argb(EcranAstralys.melange(CARTE, rc, s ? .22f : .1f), a), argb(CARTE, a));
-        // mannequin cadre sur la partie portee
-        decoupe(g, x, y, x + 88, y + 44);
-        ClientCosm.Mannequin m = ClientCosm.mannequin();
-        if (m != null) {
-            m.emote = null; m.habiller(c.id());
-            float ang = s ? (float) Math.sin(t * 2) * .8f + .45f : .45f;
-            if (c.partie() == 0) ClientCosm.dessiner(g, x + 44, y + 92, 42, ang, m);
-            else if (c.partie() >= 2) ClientCosm.dessiner(g, x + 44, y + 40, 34, ang, m);
-            else ClientCosm.dessiner(g, x + 44, y + 70, 28, ang, m);
-        }
-        g.disableScissor();
+        g.fillGradient(Math.round(x), Math.round(y), Math.round(x + 88), Math.round(y + 40), argb(EcranAstralys.melange(CARTE, rc, s ? .22f : .1f), a), argb(CARTE, a));
+        lot(g, Cosmetiques.pile(c), x, y, 88, 40, s ? (float) Math.sin(t * 2) * .8f + .6f : .6f);   // mannequin cadre sur la partie portee
         gemme(g, x + 80, y + 8, c.rarete());
-        // bandeau du bas
-        rect(g, x, y + 44, x + 88, y + 64, argb(0x120E22, a));
+        // bandeau du bas : modele, variante (couleur de la rarete), prix
+        rect(g, x, y + 40, x + 88, y + 64, argb(0x120E22, a));
         String nom = c.nom();
         int tiret = nom.indexOf(" — ");
-        texte(g, tiret > 0 ? nom.substring(0, tiret) : nom, x + 4, y + 47, .45f, 0xE8E8EE, -1, false);
-        if (tiret > 0) texte(g, nom.substring(tiret + 3), x + 84, y + 47, .45f, rc, 1, true);
-        if (por) texte(g, "PORTÉ ✔", x + 4, y + 55, .6f, 0x22C55E, -1, true);
-        else if (pos) texte(g, "ÉQUIPER", x + 4, y + 55, .6f, 0x3DD6C5, -1, true);
-        else if (sel) texte(g, "CONFIRMER ?", x + 4, y + 55, .6f, 0xF0B429, -1, true);
+        texte(g, tiret > 0 ? nom.substring(0, tiret) : nom, x + 4, y + 42, .45f, 0xE8E8EE, -1, false);
+        if (tiret > 0) texte(g, nom.substring(tiret + 3), x + 4, y + 48.5f, .45f, rc, -1, true);
+        if (por) texte(g, "PORTÉ ✔", x + 4, y + 56, .55f, 0x22C55E, -1, true);
+        else if (pos) texte(g, "ÉQUIPER", x + 4, y + 56, .55f, 0x3DD6C5, -1, true);
+        else if (sel) texte(g, "CONFIRMER ?", x + 4, y + 56, .55f, 0xF0B429, -1, true);
         else {
-            prix(g, c.prix(), x + 4, y + 55, .6f, rubis() >= c.prix() ? 0xFFFFFF : 0xF0645A);
+            prix(g, c.prix(), x + 4, y + 56, .55f, rubis() >= c.prix() ? 0xFFFFFF : 0xF0645A);
             chariot(g, x + 76, y + 53, 0xFF9A3C);
         }
     }

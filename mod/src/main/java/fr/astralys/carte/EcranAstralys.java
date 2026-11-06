@@ -69,16 +69,21 @@ abstract class EcranAstralys extends Screen {
     }
 
     /** Un objet, ou le mannequin qui porte le cosmetique si la pile en designe un (roulette des coffres cosmetiques). */
-    void lot(GuiGraphics g, ItemStack s, float x, float y, float w, float h) {
+    void lot(GuiGraphics g, ItemStack s, float x, float y, float w, float h) { lot(g, s, x, y, w, h, .6f); }
+
+    /** Le mannequin est cadre sur la partie portee : tete et coiffe entieres, ou jambes et pieds, ou le corps entier. */
+    void lot(GuiGraphics g, ItemStack s, float x, float y, float w, float h, float angle) {
         String id = s.hasTag() ? s.getTag().getString("astralys_cosm") : "";
         Cosmetiques.Cosm c = id.isEmpty() ? null : Cosmetiques.get(id);
         ClientCosm.Mannequin m = c == null ? null : ClientCosm.mannequin();
         if (m == null) { float e = Math.min(w, h) / 16 * .62f; objet(g, s, x + w / 2 - 8 * e, y + h / 2 - 8 * e, e); return; }
         m.emote = null; m.habiller(id);
         decoupe(g, x, y, x + w, y + h);
-        if (c.partie() == 0) ClientCosm.dessiner(g, x + w / 2, y + h * 2.1f, Math.round(h * .95f), .45f, m);
-        else if (c.partie() >= 2) ClientCosm.dessiner(g, x + w / 2, y + h * .92f, Math.round(h * .78f), .45f, m);
-        else ClientCosm.dessiner(g, x + w / 2, y + h * 1.4f, Math.round(h * .64f), .45f, m);
+        // hauteur du mannequin ~ 1,8 x taille ; la tete en occupe le quart du haut, une haute coiffe un quart de plus
+        float tl;
+        if (c.partie() == 0) { tl = (.8f * h - 3) / .9f; ClientCosm.dessiner(g, x + w / 2, y + 3 + 2.25f * tl, Math.round(tl), angle, m); }
+        else if (c.partie() >= 2) { tl = (h - 4) / 1.05f; ClientCosm.dessiner(g, x + w / 2, y + h - 2, Math.round(tl), angle, m); }
+        else { tl = (h - 4) / 1.8f; ClientCosm.dessiner(g, x + w / 2, y + h - 2, Math.round(tl), angle, m); }
         g.disableScissor();
     }
 

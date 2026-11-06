@@ -39,7 +39,7 @@ public class ShopScreen extends EcranAstralys {
     void contenu(GuiGraphics g) {
         String solde = Economie.format(ClientEco.solde) + " $";
         texte(g, solde, 596, 40, 1.4f, OR, 1, true);
-        objet(g, RUBIS, 576 - font.width(solde) * 1.4f, 35, 1.1f);
+        objet(g, RUBIS, 576 - font.width(Component.literal(solde).withStyle(st -> st.withBold(true))) * 1.4f, 35, 1.1f);
         bouton(g, 18, "⚿ COFFRES", 0xF0B429, 0x7A4A10);
         bouton(g, 39, "✧ COSMÉTIQUES", 0xD23CB4, 0x6E1E64);
         // categories
