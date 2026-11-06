@@ -101,7 +101,8 @@ public class MetiersScreen extends Screen {
         float e = r / 17f;
         Component h = Component.literal(haut).withStyle(st -> st.withBold(true)), n = Component.literal(nombre).withStyle(st -> st.withBold(true));
         float en = Math.min(1.7f * e, (2 * r - 8) / Math.max(1, font.width(n)));
-        g.pose().pushPose(); g.pose().translate(cx - font.width(h) * .6f * e / 2, cy - r * .62f, 0); g.pose().scale(.6f * e, .6f * e, 1);
+        float eh = Math.min(.6f * e, (2 * r - 12) / Math.max(1, font.width(h)));   // "NIVEAU" reste dans le cercle
+        g.pose().pushPose(); g.pose().translate(cx - font.width(h) * eh / 2, cy - r * .58f, 0); g.pose().scale(eh, eh, 1);
         g.drawString(font, h, 0, 0, 0xFFFFFF, true); g.pose().popPose();
         g.pose().pushPose(); g.pose().translate(cx - font.width(n) * en / 2, cy - r * .22f, 0); g.pose().scale(en, en, 1);
         g.drawString(font, n, 0, 0, 0xFFFFFF, true); g.pose().popPose();
