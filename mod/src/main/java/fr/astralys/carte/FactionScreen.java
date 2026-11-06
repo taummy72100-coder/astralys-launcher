@@ -146,6 +146,10 @@ public class FactionScreen extends EcranAstralys {
         carte(g, 38, 68, 372, 274, VIOLET);
         blason(g, 88, 118, 58, 0x4A4A55, "?");
         texte(g, "PAS ENCORE DE FACTION", 130, 98, 1.5f, 0xFFFFFF, -1, true);
+        var vj = ClientMetiers.vue;
+        int nvj = vj == null ? 0 : Metiers.niveauJoueur(vj.xpJoueur());
+        if (nvj < Metiers.NIVEAU_FACTION)
+            texte(g, "🔒 Débloqué au niveau " + Metiers.NIVEAU_FACTION + " du joueur (toi : " + nvj + ")", 130, 140, .75f, 0xF0645A, -1, true);
         texte(g, "Fonde la tienne ou rejoins tes amis :", 130, 118, .75f, 0xB8B8C2, -1, false);
         texte(g, "banque commune, chunks protégés, défis et classement.", 130, 129, .75f, 0xB8B8C2, -1, false);
         String[][] etapes = {{"Fonder ta faction", "/f create <nom>"}, {"Inviter des joueurs", "/f invite <joueur>"},

@@ -41,9 +41,10 @@ final class FamilierRendu extends MobRenderer<Familiers.Pet, FamilierRendu.Model
     @Override public ResourceLocation getTextureLocation(Familiers.Pet e) { return TEXTURES[e.sorte()]; }
     @Override protected int getBlockLightLevel(Familiers.Pet e, BlockPos p) { return 15; }
     @Override protected boolean shouldShowName(Familiers.Pet e) { return false; }
+    @Override protected void scale(Familiers.Pet e, PoseStack ps, float pt) { ps.scale(.75f, .75f, .75f); }
 
     static final class Modele extends EntityModel<Familiers.Pet> {
-        private final ModelPart racine, corps, ag, ad;
+        private final ModelPart racine, corps, ag, ad, debris;
         private final float ay, agz, adz;
         private final int sorte;
 
@@ -52,6 +53,7 @@ final class FamilierRendu extends MobRenderer<Familiers.Pet, FamilierRendu.Model
             corps = r.hasChild("corps") ? r.getChild("corps") : null;
             ag = r.hasChild("aile_g") ? r.getChild("aile_g") : null;
             ad = r.hasChild("aile_d") ? r.getChild("aile_d") : null;
+            debris = r.hasChild("debris") ? r.getChild("debris") : null;
             ay = r.y; agz = ag == null ? 0 : ag.zRot; adz = ad == null ? 0 : ad.zRot;
         }
 
@@ -60,8 +62,14 @@ final class FamilierRendu extends MobRenderer<Familiers.Pet, FamilierRendu.Model
             racine.y = ay + (float) Math.sin(age * .15f) * 1.2f;
             float vitesse = sorte == 1 ? 2.2f : sorte == 0 ? .3f : .8f, ampl = sorte == 0 ? .15f : .7f;
             float battement = (float) Math.sin(age * vitesse) * ampl;
-            if (ag != null) ag.zRot = agz - battement;
-            if (ad != null) ad.zRot = adz + battement;
+            if (sorte == 3) {   // ailes de fee : verticales, elles battent d'avant en arriere
+                if (ag != null) ag.yRot = -.35f - Math.abs(battement);
+                if (ad != null) ad.yRot = .35f + Math.abs(battement);
+            } else {
+                if (ag != null) ag.zRot = agz - battement;
+                if (ad != null) ad.zRot = adz + battement;
+            }
+            if (debris != null) debris.yRot = age * .06f;   // eclats et etincelles en orbite
             if (corps != null) corps.yRot = sorte == 0 ? age * .03f : 0;
         }
 

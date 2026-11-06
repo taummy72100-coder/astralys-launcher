@@ -572,12 +572,17 @@ final class Economie {
 
     private static int creer(ServerPlayer p, String nom) {
         if (factionDe(p.getUUID()) != null) return dire(p, "Tu es déjà dans une faction", ChatFormatting.RED);
+        if (Metiers.niveauJoueur(p) < Metiers.NIVEAU_FACTION) return dire(p, verrouFaction(p), ChatFormatting.RED);
         if (!NOM.matcher(nom).matches()) return dire(p, "Nom : 3 à 16 lettres, chiffres ou _", ChatFormatting.RED);
         if (d().factions.containsKey(nom.toLowerCase())) return dire(p, "Ce nom est déjà pris", ChatFormatting.RED);
         Faction f = new Faction(); f.nom = nom; f.chef = p.getUUID(); f.membres.put(p.getUUID(), p.getGameProfile().getName()); f.semaine = semaine();
         d().factions.put(nom.toLowerCase(), f); d().setDirty();
         serveur.getPlayerList().broadcastSystemMessage(Component.literal("★ " + p.getGameProfile().getName() + " a fondé la faction " + nom + " !").withStyle(ChatFormatting.LIGHT_PURPLE), false);
         return 1;
+    }
+
+    private static String verrouFaction(ServerPlayer p) {
+        return "🔒 Les factions se débloquent au niveau " + Metiers.NIVEAU_FACTION + " du joueur (tu es niveau " + Metiers.niveauJoueur(p) + "). Inventaire → NIVEAU";
     }
 
     private static Faction chefDe(ServerPlayer p) {
@@ -599,6 +604,7 @@ final class Economie {
 
     private static int rejoindre(ServerPlayer p, String nom) {
         if (factionDe(p.getUUID()) != null) return dire(p, "Quitte d'abord ta faction : /f leave", ChatFormatting.RED);
+        if (Metiers.niveauJoueur(p) < Metiers.NIVEAU_FACTION) return dire(p, verrouFaction(p), ChatFormatting.RED);
         Faction f = d().factions.get(nom.toLowerCase());
         if (f == null || !f.invites.remove(p.getUUID())) return dire(p, "Tu n'as pas d'invitation de cette faction", ChatFormatting.RED);
         f.membres.put(p.getUUID(), p.getGameProfile().getName()); d().setDirty();

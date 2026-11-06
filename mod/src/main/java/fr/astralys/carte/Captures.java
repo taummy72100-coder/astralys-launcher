@@ -21,6 +21,7 @@ final class Captures {
 
     static void init() {
         ETAPES.add(new Etape("metiers", Captures::exemple, MetiersScreen::new));
+        ETAPES.add(new Etape("niveau", Captures::exemple, NiveauScreen::new));
         ETAPES.add(new Etape("metier_mineur", Captures::exemple, () -> new MetierScreen(0)));
         ETAPES.add(new Etape("metier_hunter", Captures::exemple, () -> new MetierScreen(2)));
         ETAPES.add(new Etape("boutique", Captures::exemple, ShopScreen::new));
@@ -43,7 +44,7 @@ final class Captures {
         ClientMetiers.vue = new Metiers.Vue(new long[] {48000, 9100, 2300, 450}, 4.6f, List.of(
                 new Metiers.QueteVue("Mineur de fer", "Casser 32 minerais de fer", 21, 32, 0, 150),
                 new Metiers.QueteVue("Nettoyeur", "Tuer 30 monstres", 30, 30, 2, 200),
-                new Metiers.QueteVue("Apprenti alchimiste", "Préparer 3 potions", 1, 3, 3, 200)));
+                new Metiers.QueteVue("Apprenti alchimiste", "Préparer 3 potions", 1, 3, 3, 200)), 150_000);
         ClientEco.solde = 125430;
         List<Economie.Ligne> l = new ArrayList<>();
         int n = 0;
@@ -155,7 +156,7 @@ final class Captures {
         }
         // ecran des pets, ecran du broyeur, puis machines et pets poses dans le monde
         if (phase == 2 && attenteMonde == 1040) {
-            ClientMetiers.vue = new Metiers.Vue(new long[] {250000, 9100, 2300, 450}, 4.6f, List.of()); Verrous.xpClient = ClientMetiers.vue.xp();
+            ClientMetiers.vue = new Metiers.Vue(new long[] {250000, 9100, 2300, 450}, 4.6f, List.of(), 150_000); Verrous.xpClient = ClientMetiers.vue.xp();
             mc.setScreen(new PetsScreen());
         }
         if (phase == 2 && attenteMonde == 1050) PetsScreen.vue = new Familiers.Vue(0b0001, 0);

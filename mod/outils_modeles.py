@@ -926,52 +926,162 @@ OEUFS = {'oeuf_golem': ((150, 140, 170), (190, 120, 255), (200, 140, 255)), 'oeu
 
 
 # ====================================================================== familiers (pets) : petites creatures volantes
+def plumes(c, fonce=None, barres=True):
+    """Plumage : rangees de plumes qui se chevauchent (haut clair, bout sombre), barres fines facon rapace."""
+    fonce = fonce or clair(c, .62)
+    def p(w, h, f):
+        a = _base(w, h, c, 4)
+        for y in range(h):
+            for x in range(w):
+                rang = (y + (x // 2) % 2) % 3
+                if rang == 0: a[y, x, :3] = np.array(clair(c, 1.15), float)
+                elif rang == 2: a[y, x, :3] = np.array(mel(c, fonce, .7), float)
+                if barres and f in ('avant', 'bas') and (y % 4 == 1) and x % 2 == 0: a[y, x, :3] = np.array(fonce, float)
+        return a
+    return p
+
+
+def membrane(c1, c2, veine=None):
+    """Aile translucide d'insecte ou de fee : degrade, nervures, bord sombre."""
+    veine = veine or clair(c1, .6)
+    def p(w, h, f):
+        a = np.zeros((h, w, 4)); a[..., 3] = 255
+        for x in range(w):
+            for y in range(h):
+                t = (x / max(1, w - 1) + y / max(1, h - 1)) / 2
+                a[y, x, :3] = mel(c1, c2, t)
+        for x in range(w):
+            for y in range(h):
+                if (x + 2 * y) % 5 == 0 or (x - y) % 7 == 0: a[y, x, :3] = mel(a[y, x, :3], veine, .55)
+        a[0, :, :3] = np.array(veine, float) * 1.0; a[-1, :, :3] = np.array(veine, float); a[:, 0, :3] = np.array(veine, float); a[:, -1, :3] = np.array(veine, float)
+        if w > 2 and h > 2: a[1, 1, :3] = (255, 255, 255)
+        return a
+    return p
+
+
+def roche(c, veine):
+    """Roche fissuree, avec des veines de cristal qui luisent."""
+    def p(w, h, f):
+        a = _base(w, h, c, 9)
+        for _ in range(max(1, w * h // 18)):           # taches de mousse / ombres
+            x, y = R.integers(w), R.integers(h); a[y, x, :3] *= .72
+        x, y = int(R.integers(w)), 0
+        for _ in range(h + w // 2):                      # une fissure qui serpente
+            if 0 <= x < w and 0 <= y < h: a[y, x, :3] = np.array(veine, float)
+            y += 1; x += int(R.integers(-1, 2))
+        return a
+    return p
+
+
+def oeil(c=(18, 14, 24), reflet=(255, 255, 255)):
+    def p(w, h, f):
+        a = _base(w, h, c, 2)
+        if w > 1 and h > 1: a[0, 0, :3] = reflet; a[-1, -1, :3] = mel(c, (90, 120, 200), .5)
+        return a
+    return p
+
+
 def golem_cristal():
-    roc, crist = (110, 104, 120), (190, 120, 255)
-    def yeux(a): P(a, 1, 2, (220, 240, 255)); P(a, 4, 2, (220, 240, 255)); P(a, 2, 4, (40, 30, 50)); P(a, 3, 4, (40, 30, 50))
-    corps = Os('corps', (0, 18, 0))
-    corps.c((-3, -3, -3), (6, 6, 6), metal(roc, rivets=True, reflet=False), deco={'avant': yeux})
-    corps.c((-2, -6, -1), (2, 3, 2), gemme(crist), lum=True).c((0.5, -5, 0), (2, 2, 2), gemme(crist), lum=True).c((-1, -8, -0.5), (1, 2, 1), gemme((230, 200, 255)), lum=True)
-    bg = Os('aile_g', (4, 18, 0)); bg.c((0, -1, -1), (2, 3, 2), metal(roc))
-    bd = Os('aile_d', (-4, 18, 0)); bd.c((-2, -1, -1), (2, 3, 2), metal(roc))
-    return [corps, bg, bd]
+    roc, veine = (104, 98, 116), (200, 140, 255)
+    crist = [(190, 120, 255), (230, 150, 255), (160, 220, 255)]
+    def yeux(a):
+        for x in (1, 3): P(a, x, 2, (170, 240, 255)); P(a, x, 1, (60, 40, 80))
+        P(a, 2, 3, (40, 30, 50))
+    corps = Os('corps', (0, 16, 0))
+    corps.c((-4, -4, -3), (8, 7, 6), roche(roc, veine), deco={'avant': lambda a: [P(a, x, 0, clair(roc, .7)) for x in range(8)]})
+    corps.c((-3, 3, -2.5), (6, 2, 5), roche(clair(roc, .85), veine))
+    corps.c((-1.5, -2, -3.6), (3, 3, 1), gemme(crist[0]), lum=True)                                   # coeur de cristal
+    corps.c((-6, -4.5, -2), (2, 3, 4), roche(clair(roc, 1.1), veine)).c((4, -4.5, -2), (2, 3, 4), roche(clair(roc, 1.1), veine))   # epaules
+    corps.c((-6, -6.5, -1), (1, 2, 1), gemme(crist[1]), lum=True).c((5, -6.5, 0), (1, 2, 1), gemme(crist[2]), lum=True)
+    for mn, t, k in (((-3, -9, 1), (2, 5, 2), 0), ((0, -10, 1.5), (2, 6, 2), 1), ((2, -7, 0.5), (1, 3, 1), 2), ((-1, -7, 2.5), (1, 3, 1), 0), ((-4, -6, 0), (1, 2, 1), 1)):
+        corps.c(mn, t, gemme(crist[k]), lum=True)                                                       # amas de cristaux dans le dos
+    tete = corps.os('tete', (0, -4, -1))
+    tete.c((-2.5, -4, -2.5), (5, 4, 5), roche(roc, veine), deco={'avant': yeux})
+    tete.c((-3, -4.5, -3), (6, 1, 2), roche(clair(roc, .8), veine))                                    # arcade
+    tete.c((-2, -6, -1), (1, 2, 1), gemme(crist[2]), lum=True).c((1, -6, -1), (1, 2, 1), gemme(crist[2]), lum=True)
+    bg = Os('aile_g', (5, 14, 0)); bg.c((-1, 0, -1.5), (3, 4, 3), roche(roc, veine)).c((-1.5, 4, -2), (4, 3, 4), roche(clair(roc, .8), veine)).c((0, 6.5, -2.5), (1, 1, 1), gemme(crist[0]), lum=True)
+    bd = Os('aile_d', (-5, 14, 0)); bd.c((-2, 0, -1.5), (3, 4, 3), roche(roc, veine)).c((-2.5, 4, -2), (4, 3, 4), roche(clair(roc, .8), veine)).c((-1, 6.5, -2.5), (1, 1, 1), gemme(crist[0]), lum=True)
+    debris = Os('debris', (0, 14, 0))
+    debris.c((6, -6, 2), (2, 2, 2), roche(roc, veine)).c((-8, -1, 3), (1, 1, 1), gemme(crist[1]), lum=True).c((6, 3, -4), (1, 2, 1), roche(roc, veine)).c((-7, -7, -3), (1, 1, 1), gemme(crist[2]), lum=True)
+    return [corps, bg, bd, debris]
 
 
 def bourdon_dore():
+    or_b, noir, ambre = (236, 178, 40), (44, 30, 18), (255, 190, 60)
     def rayures(a):
-        for y in range(1, a.shape[0], 2): a[y, :, :3] = (50, 34, 20)
-    def yeux(a): P(a, 0, 1, (20, 20, 30)); P(a, 3, 1, (20, 20, 30)); P(a, 0, 0, (255, 255, 255))
-    corps = Os('corps', (0, 17, 0))
-    corps.c((-2.5, -2, -3), (5, 4, 6), uni((240, 190, 50)), deco={'droite': rayures, 'gauche': rayures, 'haut': rayures})
-    corps.c((-2, -2, -5), (4, 3, 2), uni((60, 40, 24)), deco={'avant': yeux}).c((-0.5, -0.5, 3), (1, 1, 2), uni((40, 30, 20)))
-    corps.c((-1.5, -4, -4.5), (1, 2, 1), uni((40, 30, 20))).c((0.5, -4, -4.5), (1, 2, 1), uni((40, 30, 20)))
-    ag = Os('aile_g', (1, 15, -0.5)); ag.c((0, 0, -1), (5, 1, 4), uni((220, 240, 255)))
-    ad = Os('aile_d', (-1, 15, -0.5)); ad.c((-5, 0, -1), (5, 1, 4), uni((220, 240, 255)))
+        for x in range(a.shape[1]):
+            if x % 3 == 1: a[:, x, :3] = np.array(noir, float) + R.normal(0, 6, (a.shape[0], 1))
+    def rayures_dessus(a):
+        for y in range(a.shape[0]):
+            if y % 3 == 1: a[y, :, :3] = np.array(noir, float) + R.normal(0, 6, (a.shape[1], 1))
+    corps = Os('corps', (0, 16, 0))
+    corps.c((-2.5, -2.5, -2), (5, 5, 4), fourrure((150, 100, 40)))                                     # thorax duveteux
+    corps.c((-3, -2, 2), (6, 5, 6), fourrure(or_b), deco={'droite': rayures, 'gauche': rayures, 'haut': rayures_dessus, 'bas': rayures_dessus})
+    corps.c((-2, -1.5, 8), (4, 4, 1), uni(noir)).c((-0.5, 0, 9), (1, 1, 2), uni((30, 20, 14)))         # bout et dard
+    for x in (-2, 1):
+        for z in (-1, 1, 3): corps.c((x, 2.5, z), (1, 3, 1), uni(noir))                                 # 6 pattes
+    tete = corps.os('tete', (0, 0, -2))
+    tete.c((-2, -2, -3), (4, 4, 3), fourrure((70, 48, 24)))
+    tete.c((-3, -1.5, -2.5), (1, 3, 2), oeil()).c((2, -1.5, -2.5), (1, 3, 2), oeil())                  # gros yeux brillants
+    tete.c((-1.5, -4, -2.5), (1, 2, 1), uni(noir)).c((0.5, -4, -2.5), (1, 2, 1), uni(noir))
+    tete.c((-2, -5, -3), (1, 1, 1), uni(noir)).c((1, -5, -3), (1, 1, 1), uni(noir))                    # antennes
+    tete.c((-1, 1.5, -3.5), (2, 1, 1), uni(ambre))
+    mb = membrane((235, 245, 255), (190, 220, 245), (120, 140, 170))
+    ag = Os('aile_g', (1.5, 13.5, 0)); ag.c((0, -0.5, -1), (7, 1, 4), mb).c((0, -0.4, 3), (4, 1, 3), mb)
+    ad = Os('aile_d', (-1.5, 13.5, 0)); ad.c((-7, -0.5, -1), (7, 1, 4), mb).c((-4, -0.4, 3), (4, 1, 3), mb)
     return [corps, ag, ad]
 
 
 def faucon_spectral():
-    sp = (150, 200, 240)
-    def yeux(a): P(a, 0, 1, (255, 255, 255)); P(a, 2, 1, (255, 255, 255))
-    corps = Os('corps', (0, 17, 0))
-    corps.c((-2, -2, -3), (4, 4, 6), tissu(sp, motif='etoiles', mc=(230, 245, 255), dens=.08))
-    corps.c((-1.5, -4, -5), (3, 3, 3), uni(clair(sp, 1.1)), deco={'avant': yeux}).c((-0.5, -2.5, -6), (1, 1, 1), dore())
-    corps.c((-1.5, -1, 3), (3, 1, 3), uni(clair(sp, .85))).c((-1, 2, -1), (1, 1, 1), dore()).c((0, 2, -1), (1, 1, 1), dore())
-    ag = Os('aile_g', (2, 15.5, -1)); ag.c((0, 0, -2), (6, 1, 5), tissu(sp, plis=False))
-    ad = Os('aile_d', (-2, 15.5, -1)); ad.c((-6, 0, -2), (6, 1, 5), tissu(sp, plis=False))
+    sp, fonce, or_b = (150, 196, 236), (60, 90, 140), (230, 190, 70)
+    def oeil_rapace(a):
+        P(a, 0, 1, (255, 220, 80)); P(a, 1, 1, (20, 16, 24)); P(a, 0, 0, clair(sp, .7)); P(a, 1, 0, clair(sp, .7))
+    corps = Os('corps', (0, 16, 0))
+    corps.c((-2, -2.5, -3), (4, 5, 6), plumes(sp, fonce))
+    corps.c((-1.5, -1.5, -3.5), (3, 4, 1), plumes(clair(sp, 1.2), fonce))                              # poitrail barre
+    corps.c((-2.5, -3, -1), (5, 1, 5), plumes(clair(sp, .8), fonce, False))                           # dos
+    corps.c((-1.5, 2.5, -1), (1, 2, 1), uni(or_b)).c((0.5, 2.5, -1), (1, 2, 1), uni(or_b))
+    corps.c((-2, 4, -2), (2, 1, 2), uni((60, 50, 30))).c((0, 4, -2), (2, 1, 2), uni((60, 50, 30)))      # serres
+    tete = corps.os('tete', (0, -2.5, -3))
+    tete.c((-1.5, -3, -2.5), (3, 3, 3), plumes(clair(sp, 1.1), fonce, False), deco={'droite': oeil_rapace, 'gauche': oeil_rapace})
+    tete.c((-0.5, -1.8, -4), (1, 1, 2), uni(or_b)).c((-0.5, -1, -4.5), (1, 1, 1), uni(clair(or_b, .7)))   # bec crochu
+    tete.c((-0.5, -4.5, -0.5), (1, 2, 2), gemme((190, 240, 255)), lum=True)                           # aigrette spectrale
+    queue = corps.os('queue', (0, -1, 3))
+    queue.c((-2, 0, 0), (4, 1, 5), plumes(sp, fonce)).c((-1, -0.2, 4), (2, 1, 2), plumes(clair(sp, .85), fonce))
+    ag = Os('aile_g', (2, 14, -1))
+    ag.c((0, 0, -2), (4, 1, 6), plumes(sp, fonce)).c((4, 0.2, -1.5), (3, 1, 5), plumes(clair(sp, .9), fonce)).c((7, 0.4, -1), (2, 1, 4), gemme((200, 240, 255)), lum=True)
+    ad = Os('aile_d', (-2, 14, -1))
+    ad.c((-4, 0, -2), (4, 1, 6), plumes(sp, fonce)).c((-7, 0.2, -1.5), (3, 1, 5), plumes(clair(sp, .9), fonce)).c((-9, 0.4, -1), (2, 1, 4), gemme((200, 240, 255)), lum=True)
     return [corps, ag, ad]
 
 
 def fee_ether():
-    pc, ch, robe = (250, 220, 200), (200, 140, 255), (120, 230, 210)
-    def visage_fee(a): P(a, 0, 1, (60, 40, 120)); P(a, 2, 1, (60, 40, 120)); P(a, 1, 2, (230, 120, 150))
-    corps = Os('corps', (0, 16, 0))
-    corps.c((-1.5, -6, -1.5), (3, 3, 3), tete(pc, ch, 1, 1), deco={'avant': visage_fee}, contour=False)
-    corps.c((-2, -6.5, -2), (4, 1, 4), cheveux(ch)).c((-1, -3, -1), (2, 3, 2), tissu(robe)).c((-1.5, 0, -1.5), (3, 2, 3), tissu(clair(robe, .9)), dechire=1)
-    corps.c((-0.5, -8, -0.5), (1, 1, 1), gemme((255, 240, 150)), lum=True)
-    ag = Os('aile_g', (1, 13, 1)); ag.c((0, -3, 0), (4, 5, 1), gemme((180, 240, 255)), lum=True)
-    ad = Os('aile_d', (-1, 13, 1)); ad.c((-4, -3, 0), (4, 5, 1), gemme((255, 190, 240)), lum=True)
-    return [corps, ag, ad]
+    pc, ch, robe = (250, 222, 204), (196, 130, 255), (110, 226, 206)
+    def visage_fee(a):
+        for x in (0, 2): P(a, x, 1, (70, 50, 140)); P(a, x, 0, (255, 255, 255))
+        P(a, 1, 2, (220, 110, 140)); P(a, 0, 2, mel(pc, (240, 140, 160), .4)); P(a, 3, 2, mel(pc, (240, 140, 160), .4))
+        P(a, 3, 1, (70, 50, 140))
+    def lacage(a):
+        for y in range(a.shape[0]): P(a, a.shape[1] // 2, y, (240, 220, 120))
+    corps = Os('corps', (0, 15, 0))
+    corps.c((-1.5, -3, -1), (3, 3, 2), tissu(robe), deco={'avant': lacage})
+    corps.c((-2, 0, -1.5), (4, 2, 3), tissu(clair(robe, .9)), dechire=1).c((-2.5, 2, -2), (5, 2, 4), tissu(clair(robe, .8), motif='etoiles', mc=(255, 250, 220)), dechire=1)
+    corps.c((-1, 4, -0.5), (1, 3, 1), peau(pc)).c((0, 4, -0.5), (1, 3, 1), peau(pc))
+    corps.c((-2.5, -3, -0.5), (1, 3, 1), peau(pc)).c((1.5, -3, -0.5), (1, 3, 1), peau(pc))             # bras
+    corps.c((-3.5, -6, -0.5), (1, 4, 1), dore()).c((-4, -7, -1), (2, 1, 2), gemme((255, 240, 150)), lum=True)   # baguette etoilee
+    tt = corps.os('tete', (0, -3, 0))
+    tt.c((-2, -4, -2), (4, 4, 4), tete(pc, ch, 1, 2), deco={'avant': visage_fee}, contour=False)
+    tt.c((-2.5, -4.5, -2.5), (5, 1, 5), cheveux(ch)).c((-2.5, -4, 2), (5, 6, 1), cheveux(ch), dechire=1)
+    tt.c((-1, -6.5, 0), (2, 2, 2), cheveux(clair(ch, 1.1))).c((-2.5, -3, -2.5), (1, 4, 2), cheveux(ch)).c((1.5, -3, -2.5), (1, 4, 2), cheveux(ch))
+    tt.c((-0.5, -5, -2.6), (1, 1, 1), gemme((150, 255, 230)), lum=True)
+    tt.c((-3, -2.5, 0), (1, 1, 1), peau(pc)).c((2, -2.5, 0), (1, 1, 1), peau(pc))                    # oreilles pointues
+    ag = Os('aile_g', (0.5, 12.5, 1.2))
+    ag.c((0, -5, 0), (5, 6, 1), membrane((190, 240, 255), (255, 190, 240), (150, 120, 220)), lum=True).c((0, 1, 0), (3, 3, 1), membrane((255, 200, 240), (190, 240, 255), (150, 120, 220)), lum=True)
+    ad = Os('aile_d', (-0.5, 12.5, 1.2))
+    ad.c((-5, -5, 0), (5, 6, 1), membrane((190, 240, 255), (255, 190, 240), (150, 120, 220)), lum=True).c((-3, 1, 0), (3, 3, 1), membrane((255, 200, 240), (190, 240, 255), (150, 120, 220)), lum=True)
+    debris = Os('debris', (0, 12, 0))
+    debris.c((4, -6, 2), (1, 1, 1), gemme((255, 250, 200)), lum=True).c((-5, -2, -3), (1, 1, 1), gemme((200, 255, 240)), lum=True).c((3, 3, -4), (1, 1, 1), gemme((255, 200, 250)), lum=True)
+    return [corps, ag, ad, debris]
 
 
 FAMILIERS = {'golem_cristal': golem_cristal, 'bourdon_dore': bourdon_dore, 'faucon_spectral': faucon_spectral, 'fee_ether': fee_ether}
@@ -1044,11 +1154,11 @@ if __name__ == '__main__':
     for nom, f in FAMILIERS.items():
         racine = f()
         cubes = [c for o in racine for c in o.tous()]
-        pos, img = atlas(cubes, 64, 64)
+        pos, img = atlas(cubes, 128)
         pos_de = {id(c): pos[i] for i, c in enumerate(cubes)}
         Image.fromarray(img, 'RGBA').save(f'{A}/textures/entity/familier/{nom}.png'); Image.fromarray(img, 'RGBA').save(f'{bb}/pets/{nom}.png')
         json.dump(bbmodel_entite(nom, racine, pos_de, img), open(f'{bb}/pets/{nom}.bbmodel', 'w'))
-        javaf.append(java_modele(nom, racine, pos_de, 64, 64))
+        javaf.append(java_modele(nom, racine, pos_de, img.shape[1], img.shape[0]))
     srcf = ('package fr.astralys.carte;\n\nimport net.minecraft.client.model.geom.PartPose;\nimport net.minecraft.client.model.geom.builders.CubeListBuilder;\n'
             'import net.minecraft.client.model.geom.builders.LayerDefinition;\nimport net.minecraft.client.model.geom.builders.MeshDefinition;\n'
             'import net.minecraft.client.model.geom.builders.PartDefinition;\n\n'

@@ -48,6 +48,7 @@ final class ClientMetiers {
         if (s instanceof InventoryScreen)
             for (var w : List.copyOf(e.getListenersList())) if (w instanceof net.minecraft.client.gui.components.ImageButton) e.removeListener(w);
         boutons.clear();
+        boutons.add(new Bouton("NIVEAU", "joueur & paliers", 0x7FE0FF, 5, NiveauScreen::new));
         boutons.add(new Bouton("MÉTIERS", "niveaux & quêtes", 0xE8322B, -1, MetiersScreen::new));
         boutons.add(new Bouton("BOUTIQUE", "acheter & vendre", 0xF0B429, 1, ShopScreen::new));
         boutons.add(new Bouton("FACTION", "alliés & défis", 0xB46CFF, 2, FactionScreen::new));
@@ -61,7 +62,7 @@ final class ClientMetiers {
     private static void placer(EffectRenderingInventoryScreen<?> s) {
         boolean droite = s.getGuiLeft() + 176 + 6 + Bouton.L <= s.width;
         int x = droite ? s.getGuiLeft() + 176 + 6 : s.getGuiLeft() - 6 - Bouton.L;
-        for (int i = 0; i < boutons.size(); i++) boutons.get(i).setPosition(x, s.getGuiTop() + 8 + i * 30);
+        for (int i = 0; i < boutons.size(); i++) boutons.get(i).setPosition(x, s.getGuiTop() + 4 + i * 27);
     }
 
     private static void suivre(ScreenEvent.Render.Pre e) {
@@ -121,7 +122,7 @@ final class ClientMetiers {
     private static final class Bouton extends Button {
         static final int L = 104, H = 26;
         private static final ResourceLocation LOS = new ResourceLocation(AstralysCarte.MODID, "textures/gui/losange.png");
-        private static final ItemStack[] ICONES = {null, new ItemStack(Items.EMERALD), new ItemStack(Items.WHITE_BANNER), new ItemStack(Items.CHEST), Metiers.pile("astralyscarte:oeuf_fee")};
+        private static final ItemStack[] ICONES = {null, new ItemStack(Items.EMERALD), new ItemStack(Items.WHITE_BANNER), new ItemStack(Items.CHEST), Metiers.pile("astralyscarte:oeuf_fee"), new ItemStack(Items.NETHER_STAR)};
         private final String titre, sous;
         private final int couleur, icone;
         private float survol;

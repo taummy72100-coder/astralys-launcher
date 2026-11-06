@@ -197,6 +197,7 @@ final class Bosses {
             donner(p, Metiers.pile("astralyscarte:" + type.materiau() + "*" + (1 + rnd.nextInt(3))));
             String r = u.equals(meilleur) ? "legendaire" : "epique";
             donner(p, Metiers.pile("astralyscarte:coffre_" + r)); donner(p, Metiers.pile("astralyscarte:cle_" + r));
+            Metiers.gagnerJoueur(p, u.equals(meilleur) ? 5000 : 3000);
             if (rnd.nextFloat() < .1f) { donner(p, Metiers.pile("astralyscarte:coffre_special")); donner(p, Metiers.pile("astralyscarte:cle_special")); }
             long argent = 2000 + (long) (8000 * d / total);
             Economie.crediter(p, argent, "boss " + type.nom());

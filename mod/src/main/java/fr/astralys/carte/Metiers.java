@@ -14,6 +14,7 @@ import java.util.UUID;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -50,7 +51,7 @@ final class Metiers {
     static final String[] NOMS = {"MINEUR", "FARMEUR", "HUNTER", "ALCHIMISTE"};
     static final int MINEUR = 0, FARMEUR = 1, HUNTER = 2, ALCHIMISTE = 3, NIVEAU_MAX = 100;
     private static final ZoneId PARIS = ZoneId.of("Europe/Paris");
-    private static final String VERSION = "5";   // a changer a chaque modification d'un paquet : client et serveur doivent avoir le meme mod
+    private static final String VERSION = "6";   // a changer a chaque modification d'un paquet : client et serveur doivent avoir le meme mod
     // Les joueurs sans le mod peuvent toujours se connecter (ils n'ont simplement pas l'ecran).
     static final SimpleChannel CANAL = NetworkRegistry.newSimpleChannel(new ResourceLocation(AstralysCarte.MODID, "metiers"),
             () -> VERSION, NetworkRegistry.acceptMissingOr(VERSION), NetworkRegistry.acceptMissingOr(VERSION));
@@ -126,6 +127,7 @@ final class Metiers {
         final long[] xp = new long[4];
         long jour = -1;
         final int[] avance = new int[3];
+        long xpJoueur;   // niveau du joueur (tous metiers, quetes, boss, temps de jeu)
     }
 
     static final class Donnees extends SavedData {
@@ -140,6 +142,7 @@ final class Metiers {
                 System.arraycopy(xp, 0, j.xp, 0, Math.min(4, xp.length));
                 j.jour = c.getLong("jour");
                 if (c.contains("nom")) j.nom = c.getString("nom");
+                j.xpJoueur = c.getLong("xpj");
                 int[] av = c.getIntArray("avance");
                 System.arraycopy(av, 0, j.avance, 0, Math.min(3, av.length));
                 d.joueurs.put(UUID.fromString(k), j);
@@ -155,6 +158,7 @@ final class Metiers {
                 c.putLong("jour", j.jour);
                 c.putIntArray("avance", j.avance);
                 c.putString("nom", j.nom);
+                c.putLong("xpj", j.xpJoueur);
                 t.put(id.toString(), c);
             });
             return t;
@@ -185,7 +189,9 @@ final class Metiers {
         if (p.isCreative() || p.isSpectator() || base <= 0) return;
         Joueur j = joueur(p);
         long avant = j.xp[metier];
-        j.xp[metier] += Math.max(1, Math.round(base * (1 + bonus(j.xp) / 100) * Familiers.bonusXp(p, metier)));
+        long gain = Math.max(1, Math.round(base * (1 + bonus(j.xp) / 100) * Familiers.bonusXp(p, metier)));
+        j.xp[metier] += gain;
+        gagnerJoueur(p, gain);
         donnees(p.server).setDirty();
         int nv = niveau(j.xp[metier]);
         if (nv > niveau(avant)) {
@@ -195,6 +201,66 @@ final class Metiers {
             Economie.defi(p, Economie.Defi.NIVEAU, nv - niveau(avant));
         }
         aEnvoyer.add(p.getUUID());
+    }
+
+    // ------------------------------------------------------------------ niveau du joueur (1 a 100), factions au niveau 30
+    static final int NIVEAU_FACTION = 30;
+
+    /** Encore plus long que les metiers : ~2,2 millions d'XP pour le niveau 100. */
+    static long coutJoueur(int n) { return 200 + 50L * n + 6L * n * n; }
+
+    static int niveauJoueur(long xp) {
+        int n = 0;
+        while (n < NIVEAU_MAX && xp >= coutJoueur(n)) { xp -= coutJoueur(n); n++; }
+        return n;
+    }
+
+    static long resteJoueur(long xp) {
+        int n = 0;
+        while (n < NIVEAU_MAX && xp >= coutJoueur(n)) { xp -= coutJoueur(n); n++; }
+        return xp;
+    }
+
+    static int niveauJoueur(ServerPlayer p) { return niveauJoueur(joueur(p).xpJoueur); }
+
+    /** Recompenses des paliers du joueur (niveaux 10 a 100) : argent + objets. */
+    static final long[] ARGENT_JOUEUR = {5_000, 10_000, 20_000, 35_000, 50_000, 75_000, 100_000, 150_000, 200_000, 500_000};
+    static final String[][] PALIERS_JOUEUR = {
+            {"astralyscarte:coffre_commun", "astralyscarte:cle_commun"},
+            {"astralyscarte:coffre_rare", "astralyscarte:cle_rare", "astralyscarte:elixir_vie*2"},
+            {"astralyscarte:coffre_rare*2", "astralyscarte:cle_rare*2", "minecraft:white_banner"},
+            {"astralyscarte:coffre_epique", "astralyscarte:cle_epique", "astralyscarte:elixir_titan*2"},
+            {"astralyscarte:coffre_epique*2", "astralyscarte:cle_epique*2", "astralyscarte:incubateur_astral"},
+            {"astralyscarte:coffre_legendaire", "astralyscarte:cle_legendaire", "astralyscarte:broyeur_astral"},
+            {"astralyscarte:coffre_legendaire", "astralyscarte:cle_legendaire", "minecraft:totem_of_undying*2"},
+            {"astralyscarte:coffre_legendaire*2", "astralyscarte:cle_legendaire*2", "minecraft:netherite_ingot*2"},
+            {"astralyscarte:coffre_special", "astralyscarte:cle_special", "minecraft:elytra"},
+            {"astralyscarte:coffre_special*3", "astralyscarte:cle_special*3", "minecraft:nether_star*2", "minecraft:beacon"}};
+
+    static void gagnerJoueur(ServerPlayer p, long n) {
+        if (n <= 0 || p.isCreative() || p.isSpectator()) return;
+        Joueur j = joueur(p);
+        int avant = niveauJoueur(j.xpJoueur);
+        j.xpJoueur += n;
+        donnees(p.server).setDirty();
+        int nv = niveauJoueur(j.xpJoueur);
+        if (nv > avant) {
+            p.sendSystemMessage(Component.literal("✦ NIVEAU " + nv + " ! ").withStyle(st -> st.withColor(0x7FE0FF).withBold(true))
+                    .append(Component.literal(nv >= NIVEAU_FACTION && avant < NIVEAU_FACTION ? "Les factions sont débloquées : /f create <nom>" : "Ton niveau de joueur monte.").withStyle(ChatFormatting.WHITE)));
+            p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.PLAYER_LEVELUP, SoundSource.PLAYERS, 1, .8f);
+            for (int pal = avant / 10 + 1; pal <= nv / 10; pal++) palierJoueur(p, pal);
+            if (nv == NIVEAU_MAX) p.server.getPlayerList().broadcastSystemMessage(Component.literal("★ " + p.getGameProfile().getName()
+                    + " a atteint le niveau 100 : c'est une Légende d'Astralys !").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD), false);
+        }
+        aEnvoyer.add(p.getUUID());
+    }
+
+    private static void palierJoueur(ServerPlayer p, int palier) {
+        for (String s : PALIERS_JOUEUR[palier - 1]) { var o = pile(s); if (!o.isEmpty() && !p.getInventory().add(o.copy())) p.drop(o.copy(), false); }
+        Economie.crediter(p, ARGENT_JOUEUR[palier - 1], "palier joueur " + palier * 10);
+        p.sendSystemMessage(Component.literal("★ PALIER JOUEUR " + palier * 10 + " : " + Economie.format(ARGENT_JOUEUR[palier - 1]) + " $ et "
+                + PALIERS_JOUEUR[palier - 1].length + " récompenses (inventaire → NIVEAU)").withStyle(st -> st.withColor(0x7FE0FF).withBold(true)));
+        p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, 1, 1.1f);
     }
 
     // ------------------------------------------------------------------ paliers (niveaux 10, 20 ... 100)
@@ -348,9 +414,10 @@ final class Metiers {
 
     // ------------------------------------------------------------------ reseau
     /** Ce que l'ecran affiche. */
-    record Vue(long[] xp, float bonus, List<QueteVue> quetes) {
+    record Vue(long[] xp, float bonus, List<QueteVue> quetes, long xpJoueur) {
         void ecrire(FriendlyByteBuf b) {
             for (long x : xp) b.writeVarLong(x);
+            b.writeVarLong(xpJoueur);
             b.writeFloat(bonus);
             b.writeVarInt(quetes.size());
             for (QueteVue q : quetes) { b.writeUtf(q.titre); b.writeUtf(q.desc); b.writeVarInt(q.avance); b.writeVarInt(q.nombre); b.writeVarInt(q.metier); b.writeVarInt(q.recompense); }
@@ -359,11 +426,12 @@ final class Metiers {
         static Vue lire(FriendlyByteBuf b) {
             long[] xp = new long[4];
             for (int i = 0; i < 4; i++) xp[i] = b.readVarLong();
+            long xpj = b.readVarLong();
             float bonus = b.readFloat();
             int n = b.readVarInt();
             List<QueteVue> q = new ArrayList<>();
             for (int i = 0; i < n; i++) q.add(new QueteVue(b.readUtf(), b.readUtf(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt()));
-            return new Vue(xp, bonus, q);
+            return new Vue(xp, bonus, q, xpj);
         }
     }
 
@@ -375,7 +443,7 @@ final class Metiers {
         Quete[] q = duJour(p.getUUID(), j.jour);
         List<QueteVue> v = new ArrayList<>();
         for (int i = 0; i < 3; i++) v.add(new QueteVue(q[i].titre, q[i].desc, j.avance[i], q[i].nombre, q[i].metier, q[i].recompense));
-        CANAL.send(PacketDistributor.PLAYER.with(() -> p), new Vue(j.xp.clone(), bonus(j.xp), v));
+        CANAL.send(PacketDistributor.PLAYER.with(() -> p), new Vue(j.xp.clone(), bonus(j.xp), v, j.xpJoueur));
     }
 
     static void init() {
@@ -390,7 +458,7 @@ final class Metiers {
         MinecraftForge.EVENT_BUS.addListener((TickEvent.ServerTickEvent e) -> {
             // envoi groupe, deux fois par seconde au plus ; et a minuit les nouvelles quetes
             if (e.phase != TickEvent.Phase.END || e.getServer().getTickCount() % 10 != 0) return;
-            if (e.getServer().getTickCount() % 1200 == 0) for (ServerPlayer p : e.getServer().getPlayerList().getPlayers()) aEnvoyer.add(p.getUUID());
+            if (e.getServer().getTickCount() % 1200 == 0) for (ServerPlayer p : e.getServer().getPlayerList().getPlayers()) { aEnvoyer.add(p.getUUID()); gagnerJoueur(p, 30); }
             for (UUID id : aEnvoyer) { ServerPlayer p = e.getServer().getPlayerList().getPlayer(id); if (p != null) envoyer(p); }
             aEnvoyer.clear();
         });
