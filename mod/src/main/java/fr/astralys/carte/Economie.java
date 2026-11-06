@@ -149,6 +149,12 @@ final class Economie {
                 "create:fluid_pipe", 12, "create:fluid_tank", 40, "create:mechanical_pump", 90, "create:electron_tube", 30, "create:precision_mechanism", 400,
                 "create:wrench", 40, "create:goggles", 60);
         // ---- alchimie
+        // ---- minerais d'Alex's Caves
+        article(0, "alexscaves:coprolith_coal_ore", 6, "alexscaves:galena_iron_ore", 14, "alexscaves:guanostone_redstone_ore", 8, "alexscaves:radrock_uranium_ore", 120,
+                "alexscaves:raw_scarlet_neodymium", 30, "alexscaves:raw_azure_neodymium", 30, "alexscaves:scarlet_neodymium_ingot", 45, "alexscaves:azure_neodymium_ingot", 45,
+                "alexscaves:block_of_scarlet_neodymium", 405, "alexscaves:block_of_azure_neodymium", 405, "alexscaves:uranium_shard", 10, "alexscaves:uranium", 90,
+                "alexscaves:block_of_uranium", 810, "alexscaves:sulfur_dust", 6, "alexscaves:sulfur", 24, "alexscaves:amber", 20, "alexscaves:pearl", 40,
+                "alexscaves:block_of_pearl", 360, "alexscaves:scrap_metal", 8, "alexscaves:occult_gem", 500);
         // ---- cles des coffres (chaque coffre a la sienne)
         article(9, "astralyscarte:cle_commun", 1500, "astralyscarte:cle_rare", 6000, "astralyscarte:cle_epique", 20000,
                 "astralyscarte:cle_legendaire", 60000, "astralyscarte:cle_special", 200000);
