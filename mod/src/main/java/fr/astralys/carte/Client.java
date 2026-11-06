@@ -6,11 +6,15 @@ import java.util.Locale;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.multiplayer.ServerList;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.RegisterClientCommandsEvent;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
@@ -38,6 +42,7 @@ class Client {
         MinecraftForge.EVENT_BUS.addListener(this::touche);
         MinecraftForge.EVENT_BUS.addListener(this::commande);
         MinecraftForge.EVENT_BUS.addListener(this::listeAvant);
+        MinecraftForge.EVENT_BUS.addListener(this::pause);
         MinecraftForge.EVENT_BUS.addListener(this::listeRendu);
     }
 
@@ -90,6 +95,17 @@ class Client {
         String ip = s.ip.toLowerCase(Locale.ROOT).trim();
         // le nom d'hote ou son adresse IP (certains joueurs l'ont enregistre ainsi)
         return ip.startsWith("gm57-dc02.ouiheberg.com") || ip.equals("45.140.164.235:3218");
+    }
+
+    // Menu Echap : pas de bouton "Mods" (la liste des mods du serveur reste privee).
+    private void pause(ScreenEvent.Init.Post event) {
+        if (!(event.getScreen() instanceof PauseScreen)) return;
+        for (GuiEventListener w : List.copyOf(event.getListenersList())) {
+            if (!(w instanceof AbstractWidget b)) continue;
+            Component m = b.getMessage();
+            boolean mods = m.getContents() instanceof TranslatableContents t ? t.getKey().equals("fml.menu.mods") : "Mods".equalsIgnoreCase(m.getString());
+            if (mods) event.removeListener(w);
+        }
     }
 
     // Liste des serveurs : ASTRALYS y est toujours, sous son nom.
