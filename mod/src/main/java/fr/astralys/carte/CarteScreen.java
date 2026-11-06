@@ -6,6 +6,7 @@ import java.util.Random;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -23,6 +24,8 @@ public class CarteScreen extends Screen {
     private static final ResourceLocation ANNEAU = new ResourceLocation(AstralysCarte.MODID, "textures/gui/anneau.png");
     // Cadre en bois feerique : la carte + M pixels de chaque cote.
     private static final ResourceLocation CADRE = new ResourceLocation(AstralysCarte.MODID, "textures/gui/cadre.png");
+    private static final ResourceLocation LUEUR = new ResourceLocation(AstralysCarte.MODID, "textures/gui/cadre_lueur.png");
+    private static final ResourceLocation FEUILLE = new ResourceLocation(AstralysCarte.MODID, "textures/gui/feuille.png");
     private static final int M = 70;
     // Repere de l'image (1672 x 941) : position des badges.
     private static final int W = 1672, H = 941;
@@ -41,6 +44,8 @@ public class CarteScreen extends Screen {
         float x, y, vx, vy, vie, duree, taille;
         int couleur;
         boolean lueur;
+        int feuille = -1;       // feuille qui tombe : numero du dessin (0..3)
+        float rot, vrot;
     }
 
     private final List<Particule> particules = new ArrayList<>();
@@ -123,6 +128,14 @@ public class CarteScreen extends Screen {
             p.couleur = rnd.nextBoolean() ? 0xE8FF7A : 0xB6FF9A; p.taille = 3; p.lueur = true;
             particules.add(p);
         }
+        // feuilles qui se detachent du cadre et tombent en tournoyant
+        if (rnd.nextFloat() < dt * 1.4f) {
+            Particule p = new Particule();
+            p.x = rnd.nextFloat() * W; p.y = -M / 2f;
+            p.vx = (rnd.nextFloat() - .5f) * 16; p.vy = 20 + rnd.nextFloat() * 18; p.duree = 7 + rnd.nextFloat() * 4;
+            p.feuille = rnd.nextInt(4); p.rot = rnd.nextFloat() * 360; p.vrot = (rnd.nextFloat() - .5f) * 120;
+            particules.add(p);
+        }
         // etincelles dorees sur toute la carte
         if (rnd.nextFloat() < dt * 10) {
             Particule p = new Particule();
@@ -133,6 +146,7 @@ public class CarteScreen extends Screen {
         particules.removeIf(p -> {
             p.vie += dt;
             p.x += p.vx * dt; p.y += p.vy * dt;
+            if (p.feuille >= 0) { p.rot += p.vrot * dt; p.x += (float) Math.sin(p.vie * 1.7f + p.vrot) * 18 * dt; }
             if (p.couleur == 0xE8FF7A || p.couleur == 0xB6FF9A) { p.vx += (rnd.nextFloat() - .5f) * 40 * dt; p.vy += (rnd.nextFloat() - .5f) * 40 * dt; }
             return p.vie >= p.duree;
         });
@@ -175,8 +189,14 @@ public class CarteScreen extends Screen {
         g.blit(IMAGE, ox, oy, iw, ih, 0, 0, W, H, W, H);
         int m0 = Math.round(M * echelle);
         g.blit(CADRE, ox - m0, oy - m0, iw + 2 * m0, ih + 2 * m0, 0, 0, W + 2 * M, H + 2 * M, W + 2 * M, H + 2 * M);
+        // lueurs des fleurs, baies et gemmes du cadre : elles respirent doucement
+        RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
+        teinte(0xFFFFFF, (.45f + .3f * (float) Math.sin(t * 1.8f)) * a);
+        g.blit(LUEUR, ox - m0, oy - m0, iw + 2 * m0, ih + 2 * m0, 0, 0, W + 2 * M, H + 2 * M, W + 2 * M, H + 2 * M);
+        RenderSystem.defaultBlendFunc();
+        teinte(0xFFFFFF, a);
         g.drawCenteredString(font, Component.literal("✦ Les Mondes ✦").withStyle(s -> s.withColor(0xF0C576).withBold(true)),
-                width / 2, Math.round(oy - m0 + 44 * echelle) - font.lineHeight / 2, 0xFFFFFF);
+                width / 2, Math.round(oy - m0 + 40 * echelle) - font.lineHeight / 2 + 1, 0xFFFFFF);
 
         Monde m = sous(mx, my);
         if (m != survole && m != null) son(SoundEvents.AMETHYST_BLOCK_CHIME, 1.3f + rnd.nextFloat() * .3f);
@@ -197,16 +217,30 @@ public class CarteScreen extends Screen {
         for (Particule p : particules) {
             float k = p.vie / p.duree;
             float al = (k < .2f ? k / .2f : 1 - (k - .2f) / .8f) * a;
-            if (p.lueur) lueur(g, HALO, sx(p.x), sy(p.y), p.taille * 3.2f * echelle * 1.6f, p.couleur, al * .55f);
+            if (p.lueur && p.feuille < 0) lueur(g, HALO, sx(p.x), sy(p.y), p.taille * 3.2f * echelle * 1.6f, p.couleur, al * .55f);
         }
         RenderSystem.defaultBlendFunc();
         RenderSystem.setShaderColor(1, 1, 1, 1);
         for (Particule p : particules) {
+            if (p.feuille >= 0) continue;
             float k = p.vie / p.duree;
             float al = (k < .2f ? k / .2f : 1 - (k - .2f) / .8f) * a;
             int px = Math.round(sx(p.x)), py = Math.round(sy(p.y)), ts = Math.max(1, Math.round(p.taille * echelle * 1.4f));
             g.fill(px, py, px + ts, py + ts, argb(p.couleur, al));
         }
+
+        for (Particule p : particules) {
+            if (p.feuille < 0) continue;
+            float k = p.vie / p.duree;
+            int ts = Math.max(6, Math.round(32 * echelle * 1.3f));
+            g.pose().pushPose();
+            g.pose().translate(sx(p.x), sy(p.y), 0);
+            g.pose().mulPose(Axis.ZP.rotationDegrees(p.rot));
+            teinte(0xFFFFFF, Math.min(1, Math.min(k * 6, (1 - k) * 3)) * a);
+            g.blit(FEUILLE, -ts / 2, -ts / 2, ts, ts, p.feuille * 32, 0, 32, 32, 128, 32);
+            g.pose().popPose();
+        }
+        RenderSystem.setShaderColor(1, 1, 1, 1);
 
         panneau(g, a);
         g.pose().popPose();
