@@ -1,6 +1,8 @@
 name: Captures des ecrans
 # Lance le jeu (sans compte, ecran virtuel) et capture chaque ecran du mod avec des donnees d'exemple.
 on: workflow_dispatch
+permissions:
+  contents: write
 jobs:
   captures:
     runs-on: ubuntu-latest
@@ -20,5 +22,9 @@ jobs:
           timeout 1500 xvfb-run -s "-screen 0 1920x1080x24" gradle -p mod runClient --no-daemon > jeu.log 2>&1 || true
           tail -40 jeu.log
           ls -la mod/run/screenshots || true
-      - uses: actions/upload-artifact@v4
-        with: { name: captures, path: 'mod/run/screenshots/*.png' }
+      - name: Publier les captures sur la branche captures
+        run: |
+          mkdir /tmp/c && cp mod/run/screenshots/*.png /tmp/c/ && cd /tmp/c
+          git init -q -b captures && git config user.name "github-actions[bot]" && git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A && git commit -qm "Captures ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" captures

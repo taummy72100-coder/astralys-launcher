@@ -78,7 +78,7 @@ class Client {
     private static void toucheMSurAzerty() {
         if (!TOUCHE.isDefault()) return;
         for (int k = GLFW.GLFW_KEY_SPACE; k <= GLFW.GLFW_KEY_GRAVE_ACCENT; k++) {
-            if (!"m".equalsIgnoreCase(GLFW.glfwGetKeyName(k, 0))) continue;
+            if (GLFW.glfwGetKeyScancode(k) <= 0 || !"m".equalsIgnoreCase(GLFW.glfwGetKeyName(k, 0))) continue;
             if (k != GLFW.GLFW_KEY_M) {
                 TOUCHE.setKey(InputConstants.Type.KEYSYM.getOrCreate(k));
                 KeyMapping.resetMapping();
