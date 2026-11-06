@@ -132,7 +132,7 @@ final class Captures {
             for (int k = 0; k < Coffres.TAILLE; k++) { var lot = Coffres.tirer(3, rnd); bande.add(Metiers.pile(lot.objet())); rar.add(lot.rarete()); }
             mc.setScreen(new CoffreScreen(new Coffres.Roulette(3, bande, rar, Coffres.GAGNANT)));
         }
-        if (phase == 2 && attenteMonde == 563) Screenshot.grab(mc.gameDirectory, "astralys_coffre_cle.png", mc.getMainRenderTarget(), c -> {});
+        if (phase == 2 && attenteMonde == 552) Screenshot.grab(mc.gameDirectory, "astralys_coffre_cle.png", mc.getMainRenderTarget(), c -> {});
         if (phase == 2 && attenteMonde == 582) Screenshot.grab(mc.gameDirectory, "astralys_coffre_tremble.png", mc.getMainRenderTarget(), c -> {});
         if (phase == 2 && attenteMonde == 594) Screenshot.grab(mc.gameDirectory, "astralys_coffre_ouvert.png", mc.getMainRenderTarget(), c -> {});
         if (phase == 2 && attenteMonde == 660) Screenshot.grab(mc.gameDirectory, "astralys_coffre_roulette.png", mc.getMainRenderTarget(), c -> {});

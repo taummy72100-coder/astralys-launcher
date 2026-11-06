@@ -107,7 +107,7 @@ public class CoffreScreen extends EcranAstralys {
         Minecraft mc = Minecraft.getInstance();
         String id = Coffres.RARETES[r.rarete()];
         BakedModel corps = mc.getModelManager().getModel(modele(id, "corps")), couv = mc.getModelManager().getModel(modele(id, "couvercle"));
-        ItemStack pile = Metiers.pile("astralyscarte:coffre_" + id);
+        ItemStack pile = new ItemStack(net.minecraft.world.item.Items.STICK);   // pile neutre : pas de reflet d'enchantement sur le modele
         PoseStack ps = g.pose();
         ps.pushPose();
         ps.translate(cx, cy, 150);
