@@ -17,7 +17,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
-/** Ecran des metiers facon Paladium : 4 badges hexagonaux, niveaux, 3 quetes quotidiennes, particules magiques. */
+/** Ecran des metiers : 4 ecussons d'Astralys (losanges a filet dore), niveaux, 3 quetes quotidiennes, particules magiques. */
 public class MetiersScreen extends Screen {
     private static final ResourceLocation HEX = new ResourceLocation(AstralysCarte.MODID, "textures/gui/hex.png");
     private static final ResourceLocation HEX_DEG = new ResourceLocation(AstralysCarte.MODID, "textures/gui/hex_degrade.png");
@@ -58,6 +58,45 @@ public class MetiersScreen extends Screen {
     }
 
     /** Hexagone plein (pointe en haut) de cote d'encadrement t, teinte rgb. */
+    private static final ResourceLocation LOS = new ResourceLocation(AstralysCarte.MODID, "textures/gui/losange.png");
+    private static final ResourceLocation LOS_DEG = new ResourceLocation(AstralysCarte.MODID, "textures/gui/losange_degrade.png");
+    private static final ResourceLocation LOS_FILET = new ResourceLocation(AstralysCarte.MODID, "textures/gui/losange_filet.png");
+    private static final ResourceLocation ROND = new ResourceLocation(AstralysCarte.MODID, "textures/gui/rond.png");
+    private static final ResourceLocation ROND_DEG = new ResourceLocation(AstralysCarte.MODID, "textures/gui/rond_degrade.png");
+    static final int FILET = 0xF0D28A;
+
+    /** Ecusson d'Astralys (losange) : bord sombre, anneau de couleur, filet dore, interieur en degrade. */
+    static void ecusson(GuiGraphics g, float cx, float cy, float b, int c, float a) {
+        tex(g, LOS, cx - b / 2 - 6, cy - b / 2 - 6, b + 12, 0x0E0E10, a);
+        tex(g, LOS, cx - b / 2, cy - b / 2, b, c, a);
+        tex(g, LOS_DEG, cx - b * .41f, cy - b * .41f, b * .82f, c, a);
+        tex(g, LOS_FILET, cx - b * .45f, cy - b * .45f, b * .9f, FILET, a * .85f);
+        RenderSystem.setShaderColor(1, 1, 1, a);
+    }
+
+    /** Petit losange plein avec bord sombre (icones de quetes, paliers). */
+    static void losange(GuiGraphics g, float cx, float cy, float b, int c, float a) {
+        tex(g, LOS, cx - b / 2 - 3, cy - b / 2 - 3, b + 6, 0x0E0E10, a);
+        tex(g, LOS, cx - b / 2, cy - b / 2, b, c, a);
+        tex(g, LOS_FILET, cx - b * .45f, cy - b * .45f, b * .9f, FILET, a * .6f);
+        RenderSystem.setShaderColor(1, 1, 1, a);
+    }
+
+    /** Medaillon rond du niveau, pose sur la pointe basse de l'ecusson. */
+    static void medaillon(GuiGraphics g, net.minecraft.client.gui.Font font, float cx, float cy, float r, int c, String haut, String nombre, float a) {
+        tex(g, ROND, cx - r - 3, cy - r - 3, 2 * r + 6, 0x0E0E10, a);
+        tex(g, ROND, cx - r, cy - r, 2 * r, FILET, a);
+        tex(g, ROND_DEG, cx - r + 2, cy - r + 2, 2 * r - 4, c, a);
+        RenderSystem.setShaderColor(1, 1, 1, a);
+        float e = r / 17f;
+        Component h = Component.literal(haut).withStyle(st -> st.withBold(true)), n = Component.literal(nombre).withStyle(st -> st.withBold(true));
+        float en = Math.min(1.7f * e, (2 * r - 8) / Math.max(1, font.width(n)));
+        g.pose().pushPose(); g.pose().translate(cx - font.width(h) * .6f * e / 2, cy - r * .62f, 0); g.pose().scale(.6f * e, .6f * e, 1);
+        g.drawString(font, h, 0, 0, 0xFFFFFF, true); g.pose().popPose();
+        g.pose().pushPose(); g.pose().translate(cx - font.width(n) * en / 2, cy - r * .22f, 0); g.pose().scale(en, en, 1);
+        g.drawString(font, n, 0, 0, 0xFFFFFF, true); g.pose().popPose();
+    }
+
     static void hexa(GuiGraphics g, float x, float y, float t, int rgb, float a) {
         tex(g, HEX, x, y, t, rgb, a);
     }
@@ -160,29 +199,26 @@ public class MetiersScreen extends Screen {
             if (s) survol = m;
             float puls = (float) Math.sin(t * 2.2f + m) * .5f + .5f;
             texte(g, Metiers.NOMS[m], CX[m], 84, 2, 0xFFFFFF, true, true);
-            // petite icone sur un hexagone sombre
-            hexa(g, CX[m] - 13, 104, 26, 0x111114, a);
+            // petite icone sur un rond sombre
+            tex(g, ROND, CX[m] - 13, 103, 26, 0x111114, a);
             RenderSystem.setShaderColor(1, 1, 1, a);
             objet(g, PETITE[m], CX[m] - 8, 109, 1);
             // halo additif qui respire
             RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
             tex(g, HALO, CX[m] - 70, 100, 140, c, (s ? .55f : .22f + puls * .12f) * a);
             RenderSystem.defaultBlendFunc();
-            // badge : bord sombre, anneau colore, interieur en degrade
-            float b = s ? 104 : 100;
-            hexa(g, CX[m] - b / 2 - 6, 170 - b / 2 - 6, b + 12, 0x0E0E10, a);
-            hexa(g, CX[m] - b / 2, 170 - b / 2, b, c, a);
-            tex(g, HEX_DEG, CX[m] - b / 2 + 9, 170 - b / 2 + 9, b - 18, c, a);
-            RenderSystem.setShaderColor(1, 1, 1, a);
+            // ecusson d'Astralys et ses etoiles aux pointes
+            float b = s ? 110 : 104;
+            ecusson(g, CX[m], 168, b, c, a);
+            for (int k = 0; k < 2; k++) {
+                float ps = .5f + .5f * (float) Math.sin(t * 3 + m + k * 2);
+                texte(g, "✦", CX[m] + (k == 0 ? -1 : 1) * (b / 2 + 10), 164, .8f + .3f * ps, argb(FILET, (.4f + .6f * ps) * a), true, false);
+            }
             float bob = (float) Math.sin(t * 1.8f + m * 1.3f) * 2;
             objet(g, ART[m][1], CX[m] - 4, 140 + bob, 2.6f);
             objet(g, ART[m][0], CX[m] - 40, 128 - bob, 3.2f);
-            // onglet du niveau
-            rect(g, CX[m] - 18, 200, CX[m] + 18, 206, argb(0x0E0E10, a));
-            rect(g, CX[m] - 26, 205, CX[m] + 26, 236, argb(0x0E0E10, a));
-            rect(g, CX[m] - 24, 207, CX[m] + 24, 234, argb(c, a));
-            texte(g, "LVL.", CX[m], 209, .7f, 0xFFFFFF, true, true);
-            texte(g, String.valueOf(nv), CX[m], 216, 2, 0xFFFFFF, true, true);
+            // medaillon du niveau sur la pointe basse
+            medaillon(g, font, CX[m], 218, 17, c, "NV.", String.valueOf(nv), a);
             // barre d'XP du niveau en cours
             float f = nv >= Metiers.NIVEAU_MAX ? 1 : Metiers.reste(xp) / (float) Metiers.cout(nv);
             rect(g, CX[m] - 40, 242, CX[m] + 40, 245, argb(0x34343B, a));
@@ -201,8 +237,7 @@ public class MetiersScreen extends Screen {
             Metiers.QueteVue q = v.quetes().get(i);
             int c = Metiers.COULEURS[q.metier()];
             boolean fini = q.avance() >= q.nombre();
-            hexa(g, x + 10, y + 13, 44, 0x0E0E10, a);
-            hexa(g, x + 13, y + 16, 38, fini ? 0x22C55E : c, a);
+            losange(g, x + 32, y + 35, 40, fini ? 0x22C55E : c, a);
             RenderSystem.setShaderColor(1, 1, 1, a);
             objet(g, QUETE[q.metier()], x + 24, y + 27, 1);
             String ti = q.titre().toUpperCase(Locale.FRANCE);

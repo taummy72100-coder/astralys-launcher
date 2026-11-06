@@ -42,21 +42,12 @@ public class MetierScreen extends EcranAstralys {
         RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
         halo(g, 142, 140, 88, c, (.25f + .15f * puls) * a);
         RenderSystem.defaultBlendFunc();
-        hexBord(g, 142, 140, 112, c);
-        RenderSystem.enableBlend();
-        MetiersScreen.teinte(c, a);
-        g.pose().pushPose(); g.pose().translate(142 - 47, 140 - 47, 0); g.pose().scale(94 / 128f, 94 / 128f, 1);
-        g.blit(new ResourceLocation(AstralysCarte.MODID, "textures/gui/hex_degrade.png"), 0, 0, 0, 0, 128, 128, 128, 128);
-        g.pose().popPose();
-        RenderSystem.setShaderColor(1, 1, 1, a);
+        MetiersScreen.ecusson(g, 142, 138, 118, c, a);
         float bob = (float) Math.sin(t * 1.8f) * 2;
         objet(g, MetiersScreen.ART[m][1], 136, 112 + bob, 2.8f);
         objet(g, MetiersScreen.ART[m][0], 96, 98 - bob, 3.4f);
-        // niveau
-        rect(g, 102, 196, 182, 230, argb(0x0E0E10, a));
-        g.fillGradient(104, 198, 180, 228, argb(EcranAstralys.melange(c, 0xFFFFFF, .2f), a), argb(c, a));
-        texte(g, "NIVEAU", 142, 201, .7f, 0xFFFFFF, 0, true);
-        texte(g, String.valueOf(nv), 142, 210, 2, 0xFFFFFF, 0, true);
+        // niveau : medaillon sur la pointe basse
+        MetiersScreen.medaillon(g, font, 142, 204, 21, c, "NIVEAU", String.valueOf(nv), a);
         // barre et chiffres
         texte(g, max ? "NIVEAU MAXIMUM" : "PROGRESSION", 50, 242, .65f, 0x9A9AA4, -1, true);
         texte(g, max ? "" : String.format(Locale.FRANCE, "%d %%", Math.round(100f * reste / cout)), 234, 242, .65f, c, 1, true);
@@ -108,7 +99,7 @@ public class MetierScreen extends EcranAstralys {
                 halo(g, x, yy, 16, c, (.35f + .2f * puls) * a);
                 RenderSystem.defaultBlendFunc();
             }
-            hexBord(g, x, yy, s ? 20 : 16, ok ? c : 0x3A3A42);
+            MetiersScreen.losange(g, x, yy, s ? 22 : 18, ok ? c : 0x3A3A42, a);
             texte(g, ok ? "✔" : String.valueOf(i + 1), x, yy - 3, .6f, 0xFFFFFF, 0, true);
             texte(g, String.valueOf(p), x, yy - 22, .7f, ok ? c : 0x8A8A92, 0, true);
             texte(g, "+" + (p * 100 >= 1000 ? p / 10 + "k" : String.valueOf(p * 100)) + "$", x, yy + 16, .55f, ok ? 0xF0B429 : 0x6E6E78, 0, true);
