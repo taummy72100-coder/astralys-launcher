@@ -256,7 +256,14 @@ final class Captures {
         if (phase == 2 && attenteMonde == 2270) Screenshot.grab(mc.gameDirectory, "astralys_emote_victoire.png", mc.getMainRenderTarget(), c -> {});
         if (phase == 2 && attenteMonde == 2300) Emotes.jouer(mc.player.getUUID(), "dab");
         if (phase == 2 && attenteMonde == 2335) Screenshot.grab(mc.gameDirectory, "astralys_emote_dab.png", mc.getMainRenderTarget(), c -> {});
-        if (phase == 2 && attenteMonde > 2350) mc.stop();
+        // HUD en survie : vie (avec absorption), armure, nourriture, experience
+        if (phase == 2 && attenteMonde == 2360) {
+            mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+            for (String c : new String[] {"gamemode survival", "effect give @s absorption 120 0", "item replace entity @s armor.chest with iron_chestplate",
+                    "item replace entity @s armor.feet with iron_boots", "xp set @s 23 levels", "xp set @s 30 points"}) mc.player.connection.sendCommand(c);
+        }
+        if (phase == 2 && attenteMonde == 2420) Screenshot.grab(mc.gameDirectory, "astralys_hud.png", mc.getMainRenderTarget(), c -> {});
+        if (phase == 2 && attenteMonde > 2440) mc.stop();
     }
 
     private static final Familiers.Pet[] MONTURES = new Familiers.Pet[Familiers.IDS.length];

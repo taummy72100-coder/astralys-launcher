@@ -66,6 +66,7 @@ class Client {
         MinecraftForge.EVENT_BUS.addListener(this::pause);
         ClientMetiers.init();
         BarreMagie.init();
+        HudMagie.init();
         if (System.getenv("ASTRALYS_CAPTURES") != null) Captures.init();
         MinecraftForge.EVENT_BUS.addListener(this::listeRendu);
     }
