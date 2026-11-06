@@ -84,8 +84,9 @@ final class Familiers {
             {"Résistance au feu", "Soigne les joueurs à 6 blocs", "Plus de faiblesse", "Régénération II + Absorption"}};
     /** Vitesse en vol quand on le monte : golem lourd, faucon le plus rapide. */
     static final float[] VITESSE = {.25f, .35f, .5f, .4f};
-    /** Hauteur de la selle (en blocs) sur le modele agrandi. */
-    static final double[] SELLE = {1.9, 1.3, 1.25, 1.6};
+    /** Taille du modele quand on le monte, et hauteur de la selle (en blocs) : le dos du corps agrandi. */
+    static final float[] TAILLE_MONTURE = {2.2f, 3.2f, 3.4f, 2.6f};
+    static final double[] SELLE = {2.0, 1.7, 1.9, 2.2};
     private static final UUID SANTE = UUID.fromString("6a7c9e1d-5b0f-4c3a-9a51-2f1e7d4b8c60");
 
     static Block bloc(String id) { return ForgeRegistries.BLOCKS.getValue(new net.minecraft.resources.ResourceLocation(id)); }
@@ -337,7 +338,7 @@ final class Familiers {
         }
         @Override protected float getRiddenSpeed(Player p) { return VITESSE[sorte()]; }
         @Override public double getPassengersRidingOffset() { return SELLE[sorte()]; }
-        @Override public EntityDimensions getDimensions(Pose pose) { return isVehicle() ? EntityDimensions.scalable(1.3f, (float) SELLE[sorte()]) : super.getDimensions(pose); }
+        @Override public EntityDimensions getDimensions(Pose pose) { return isVehicle() ? EntityDimensions.scalable(1.3f, (float) SELLE[sorte()] + .4f) : super.getDimensions(pose); }
         @Override protected void addPassenger(net.minecraft.world.entity.Entity e) { super.addPassenger(e); refreshDimensions(); }
         @Override protected void removePassenger(net.minecraft.world.entity.Entity e) {
             super.removePassenger(e);

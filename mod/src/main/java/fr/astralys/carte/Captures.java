@@ -195,7 +195,8 @@ final class Captures {
         for (int k = 0; k < Familiers.IDS.length; k++) {
             final int kk = k;
             if (phase == 2 && attenteMonde == 1210 + k * 50) {
-                mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
+                mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
+                mc.player.setYRot(-30); mc.player.setXRot(28);
                 var srv = mc.getSingleplayerServer();
                 srv.execute(() -> {
                     var j = srv.getPlayerList().getPlayers().get(0);
@@ -203,7 +204,7 @@ final class Captures {
                     if (kk > 0) MONTURES[kk - 1].discard();
                     var p = MONTURES[kk];
                     p.moveTo(origine.x - 9, origine.y + .3, origine.z, 0, 0);
-                    j.setYRot(-30); j.setXRot(10);
+                    j.setYRot(-30); j.setXRot(28);
                     j.startRiding(p, true);
                 });
             }
