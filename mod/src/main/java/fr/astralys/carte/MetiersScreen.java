@@ -235,12 +235,13 @@ public class MetiersScreen extends Screen {
         g.pose().popPose();
 
         if (survol >= 0 && v != null) {
-            long xp = v.xp()[survol];
+            final int m = survol;
+            long xp = v.xp()[m];
             int nv = Metiers.niveau(xp);
             List<Component> info = List.of(
-                    Component.literal(Metiers.NOMS[survol] + " — niveau " + nv).withStyle(st -> st.withColor(Metiers.COULEURS[survol]).withBold(true)),
+                    Component.literal(Metiers.NOMS[m] + " — niveau " + nv).withStyle(st -> st.withColor(Metiers.COULEURS[m]).withBold(true)),
                     Component.literal(nv >= Metiers.NIVEAU_MAX ? "Niveau maximum !" : "XP : " + Metiers.reste(xp) + " / " + Metiers.cout(nv)).withStyle(st -> st.withColor(0xE8E8EE)),
-                    Component.literal(COMMENT[survol]).withStyle(st -> st.withColor(0x9A9AA4).withItalic(true)));
+                    Component.literal(COMMENT[m]).withStyle(st -> st.withColor(0x9A9AA4).withItalic(true)));
             g.renderComponentTooltip(font, info, mx, my);
         }
     }
