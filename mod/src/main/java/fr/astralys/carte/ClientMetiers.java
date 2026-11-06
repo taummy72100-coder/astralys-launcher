@@ -108,7 +108,7 @@ final class ClientMetiers {
 
     // ---------------------------------------------------------------- boutons
     private static final class Bouton extends Button {
-        static final int L = 92, H = 26;
+        static final int L = 104, H = 26;
         private static final ResourceLocation LOS = new ResourceLocation(AstralysCarte.MODID, "textures/gui/losange.png");
         private static final ItemStack[] ICONES = {null, new ItemStack(Items.EMERALD), new ItemStack(Items.WHITE_BANNER)};
         private final String titre, sous;

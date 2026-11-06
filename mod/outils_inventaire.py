@@ -67,11 +67,9 @@ def case(x, y, taille=18, grande=False):
                 c = NUIT * (1 - .5 * max(0, 1 - d)) + VIOLET * .35 * max(0, 1 - d) ** 2
             px(x0 + i, y0 + j, c)
     if grande:   # anneau dore autour de la case de resultat
-        for i in range(-2, taille + 2):
-            for j in (-2, -1, taille, taille + 1):
-                px(x0 + i, y0 + j, OR if j in (-2, taille + 1) else OR_SOMBRE)
-            for j in range(-2, taille + 2):
-                if i in (-2, -1, taille, taille + 1): px(x0 + i, y0 + j, OR if i in (-2, taille + 1) else OR_SOMBRE)
+        for i in range(-1, taille + 1):     # anneau dore d'un pixel : ne touche pas le cadre du panneau
+            for j in range(-1, taille + 1):
+                if i in (-1, taille) or j in (-1, taille): px(x0 + i, y0 + j, OR)
 
 
 # ---- fenetre du joueur : portail magique (26..75, 8..78)
