@@ -182,7 +182,11 @@ final class Metiers {
         j.xp[metier] += Math.max(1, Math.round(base * (1 + bonus(j.xp) / 100)));
         donnees(p.server).setDirty();
         int nv = niveau(j.xp[metier]);
-        if (nv > niveau(avant)) niveauSup(p, metier, nv);
+        if (nv > niveau(avant)) {
+            niveauSup(p, metier, nv);
+            Economie.crediter(p, 100L * nv, NOMS[metier] + " niveau " + nv);
+            Economie.defi(p, Economie.Defi.NIVEAU, nv - niveau(avant));
+        }
         aEnvoyer.add(p.getUUID());
     }
 
@@ -212,6 +216,7 @@ final class Metiers {
                         .withStyle(st -> st.withColor(0x22C55E).withBold(true)));
                 p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, .8f, 1);
                 gagner(p, q[i].metier, q[i].recompense);
+                Economie.crediter(p, 2L * q[i].recompense, "quête " + q[i].titre);
             }
         }
     }
@@ -235,6 +240,7 @@ final class Metiers {
             double xp = 3;
             for (String[] m : MINERAIS) if (s.is(TagKey.create(Registries.BLOCK, new ResourceLocation("forge", "ores/" + m[0])))) xp = Double.parseDouble(m[1]);
             gagner(p, MINEUR, xp);
+            Economie.defi(p, Economie.Defi.MINERAI, 1);
         }
         avancer(p, Type.CASSER, c -> bloc(c, s), 1);
         // Farmeur : seulement les recoltes mures
@@ -243,6 +249,7 @@ final class Metiers {
         if (mur) {
             gagner(p, FARMEUR, b == Blocks.PUMPKIN || b == Blocks.MELON ? 3 : 2);
             avancer(p, Type.RECOLTER, c -> bloc(c, s), 1);
+            Economie.defi(p, Economie.Defi.CULTURE, 1);
         }
     }
 
@@ -251,6 +258,7 @@ final class Metiers {
         LivingEntity v = e.getEntity();
         if (v instanceof ServerPlayer) return;
         gagner(p, HUNTER, v instanceof Enemy ? Math.max(2, v.getMaxHealth() / 3) : 1);
+        if (v instanceof Enemy) Economie.defi(p, Economie.Defi.MONSTRE, 1);
         ResourceLocation id = ForgeRegistries.ENTITY_TYPES.getKey(v.getType());
         String ids = id == null ? "" : id.toString();
         avancer(p, Type.TUER, c -> c.equals("@monstre") ? v instanceof Enemy : c.endsWith(":") ? ids.startsWith(c) : ids.equals(c), 1);
@@ -266,6 +274,7 @@ final class Metiers {
     private static void potion(PlayerBrewedPotionEvent e) {
         if (!(e.getEntity() instanceof ServerPlayer p)) return;
         gagner(p, ALCHIMISTE, 6);
+        Economie.defi(p, Economie.Defi.POTION, 1);
         avancer(p, Type.PREPARER, c -> true, 1);
     }
 

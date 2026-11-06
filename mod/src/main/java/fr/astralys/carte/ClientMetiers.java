@@ -23,34 +23,44 @@ final class ClientMetiers {
         MinecraftForge.EVENT_BUS.addListener(ClientMetiers::suivre);
     }
 
-    private static Bouton bouton;
+    private static final java.util.List<Bouton> boutons = new java.util.ArrayList<>();
 
     private static void inventaire(ScreenEvent.Init.Post e) {
         if (!(e.getScreen() instanceof InventoryScreen s)) return;
-        bouton = new Bouton(s.getGuiLeft() - 30, s.getGuiTop() + 6);
-        e.addListener(bouton);
+        boutons.clear();
+        boutons.add(new Bouton("Métiers & quêtes", 0xE8322B, Items.GOLDEN_PICKAXE, () -> new MetiersScreen()));
+        boutons.add(new Bouton("Boutique", 0xF0B429, Items.EMERALD, () -> new ShopScreen()));
+        boutons.add(new Bouton("Faction", 0xB46CFF, Items.WHITE_BANNER, () -> new FactionScreen()));
+        boutons.forEach(e::addListener);
+        placer(s);
     }
 
-    // Le livre de recettes deplace l'inventaire : le bouton suit.
+    private static void placer(InventoryScreen s) {
+        for (int i = 0; i < boutons.size(); i++) boutons.get(i).setPosition(s.getGuiLeft() - 30, s.getGuiTop() + 6 + i * 30);
+    }
+
+    // Le livre de recettes deplace l'inventaire : les boutons suivent.
     private static void suivre(ScreenEvent.Render.Pre e) {
-        if (e.getScreen() instanceof InventoryScreen s && bouton != null) bouton.setPosition(s.getGuiLeft() - 30, s.getGuiTop() + 6);
+        if (e.getScreen() instanceof InventoryScreen s) placer(s);
     }
 
     private static final class Bouton extends Button {
-        private static final ItemStack ICONE = new ItemStack(Items.GOLDEN_PICKAXE);
+        private final ItemStack icone;
+        private final int couleur;
 
-        Bouton(int x, int y) {
-            super(Button.builder(Component.literal("Métiers"), b -> Minecraft.getInstance().setScreen(new MetiersScreen())).bounds(x, y, 26, 26));
-            setTooltip(Tooltip.create(Component.literal("Métiers & quêtes").withStyle(st -> st.withColor(0xE8322B).withBold(true))));
+        Bouton(String nom, int couleur, net.minecraft.world.item.Item icone, java.util.function.Supplier<net.minecraft.client.gui.screens.Screen> ecran) {
+            super(Button.builder(Component.literal(nom), b -> Minecraft.getInstance().setScreen(ecran.get())).bounds(0, 0, 26, 26));
+            this.icone = new ItemStack(icone); this.couleur = couleur;
+            setTooltip(Tooltip.create(Component.literal(nom).withStyle(st -> st.withColor(couleur).withBold(true))));
         }
 
         @Override
         protected void renderWidget(GuiGraphics g, int mx, int my, float pt) {
             RenderSystem.enableBlend();
             MetiersScreen.hexa(g, getX() - 2, getY() - 2, 30, 0x0E0E10, 1);
-            MetiersScreen.hexa(g, getX(), getY(), 26, isHovered() ? 0xFF5A50 : 0xE8322B, 1);
+            MetiersScreen.hexa(g, getX(), getY(), 26, isHovered() ? (couleur | 0x303030) : couleur, 1);
             RenderSystem.setShaderColor(1, 1, 1, 1);
-            g.renderItem(ICONE, getX() + 5, getY() + 5);
+            g.renderItem(icone, getX() + 5, getY() + 5);
         }
     }
 

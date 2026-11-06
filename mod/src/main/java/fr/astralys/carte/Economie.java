@@ -1,0 +1,599 @@
+package fr.astralys.carte;
+
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.regex.Pattern;
+
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.LongArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.ChatFormatting;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.level.BlockEvent;
+import net.minecraftforge.event.level.ExplosionEvent;
+import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.network.NetworkDirection;
+import net.minecraftforge.network.PacketDistributor;
+import net.minecraftforge.registries.ForgeRegistries;
+
+/** Argent, boutique a cours variables, factions, achat de chunks et defis de la semaine. Tout est decide par le serveur. */
+final class Economie {
+    private static final ZoneId PARIS = ZoneId.of("Europe/Paris");
+
+    // ------------------------------------------------------------------ boutique
+    static final String[] CATEGORIES = {"Minerais", "Agriculture", "Butin", "Blocs", "Create", "Alchimie"};
+
+    record Article(String item, int categorie, long base) {}
+
+    static final List<Article> ARTICLES = new ArrayList<>();
+
+    private static void article(int cat, Object... paires) {
+        for (int i = 0; i < paires.length; i += 2) ARTICLES.add(new Article((String) paires[i], cat, ((Number) paires[i + 1]).longValue()));
+    }
+
+    static {
+        article(0, "minecraft:cobblestone", 2, "minecraft:cobbled_deepslate", 2, "minecraft:coal", 4, "minecraft:raw_copper", 4, "minecraft:copper_ingot", 6,
+                "minecraft:raw_iron", 8, "minecraft:iron_ingot", 12, "minecraft:raw_gold", 14, "minecraft:gold_ingot", 20, "minecraft:redstone", 4,
+                "minecraft:lapis_lazuli", 6, "minecraft:quartz", 5, "minecraft:amethyst_shard", 8, "minecraft:obsidian", 25, "minecraft:emerald", 90,
+                "minecraft:diamond", 120, "minecraft:netherite_scrap", 600);
+        article(1, "minecraft:wheat", 3, "minecraft:carrot", 3, "minecraft:potato", 3, "minecraft:beetroot", 3, "minecraft:sugar_cane", 3,
+                "minecraft:melon_slice", 2, "minecraft:pumpkin", 6, "minecraft:apple", 5, "minecraft:cocoa_beans", 4, "minecraft:nether_wart", 5,
+                "minecraft:egg", 3, "minecraft:leather", 8, "minecraft:white_wool", 6, "minecraft:bread", 10, "minecraft:golden_apple", 300);
+        article(2, "minecraft:rotten_flesh", 2, "minecraft:bone", 4, "minecraft:string", 4, "minecraft:spider_eye", 5, "minecraft:arrow", 2,
+                "minecraft:feather", 2, "minecraft:gunpowder", 8, "minecraft:slime_ball", 10, "minecraft:phantom_membrane", 25,
+                "minecraft:blaze_rod", 30, "minecraft:ender_pearl", 40, "minecraft:ghast_tear", 60);
+        article(3, "minecraft:dirt", 2, "minecraft:sand", 2, "minecraft:gravel", 2, "minecraft:stone", 3, "minecraft:stone_bricks", 4,
+                "minecraft:glass", 4, "minecraft:terracotta", 5, "minecraft:bricks", 6, "minecraft:oak_log", 6, "minecraft:spruce_log", 6,
+                "minecraft:birch_log", 6, "minecraft:dark_oak_log", 6, "minecraft:glowstone", 18, "minecraft:quartz_block", 24, "minecraft:sea_lantern", 30);
+        article(4, "create:shaft", 6, "create:raw_zinc", 8, "create:andesite_alloy", 10, "create:zinc_ingot", 12, "create:cogwheel", 14,
+                "create:large_cogwheel", 20, "create:andesite_casing", 22, "create:brass_ingot", 24, "create:copper_casing", 30,
+                "create:belt_connector", 30, "create:brass_casing", 50, "create:water_wheel", 90, "create:mechanical_press", 180);
+        article(5, "minecraft:glass_bottle", 3, "minecraft:fermented_spider_eye", 12, "minecraft:blaze_powder", 16, "minecraft:magma_cream", 18,
+                "minecraft:golden_carrot", 25, "minecraft:glistering_melon_slice", 30, "minecraft:rabbit_foot", 40, "minecraft:experience_bottle", 50,
+                "minecraft:brewing_stand", 120, "minecraft:dragon_breath", 200);
+    }
+
+    static long achat(long base, double f) { return Math.max(1, Math.round(base * f)); }
+    static long vente(long base, double f) { return Math.max(1, Math.round(base * f * .5)); }
+
+    // ------------------------------------------------------------------ factions et defis
+    private static final Pattern NOM = Pattern.compile("[A-Za-z0-9_]{3,16}");
+    static final Set<String> MONDES_BASES = Set.of("astralys:pyrelune", "astralys:azurea");
+
+    enum Defi { MINERAI, MONSTRE, CULTURE, POTION, VENTE, NIVEAU }
+
+    record DefiModele(String titre, String desc, Defi type, long nombre, long argent, long points) {}
+
+    static final List<DefiModele> DEFIS = List.of(
+            new DefiModele("Mine collective", "Casser 1500 minerais", Defi.MINERAI, 1500, 20000, 100),
+            new DefiModele("Chasse royale", "Tuer 600 monstres", Defi.MONSTRE, 600, 18000, 100),
+            new DefiModele("Grande moisson", "Récolter 2000 cultures", Defi.CULTURE, 2000, 15000, 80),
+            new DefiModele("Cercle des alchimistes", "Préparer 150 potions", Defi.POTION, 150, 15000, 80),
+            new DefiModele("Marchands", "Vendre pour 50 000 $ au shop", Defi.VENTE, 50000, 25000, 120),
+            new DefiModele("Maîtres artisans", "Gagner 25 niveaux de métier", Defi.NIVEAU, 25, 20000, 120));
+
+    static DefiModele[] defisDeLaSemaine(long semaine) {
+        int n = DEFIS.size(), a = (int) Math.floorMod(semaine, n);
+        return new DefiModele[] {DEFIS.get(a), DEFIS.get((a + 2) % n), DEFIS.get((a + 4) % n)};
+    }
+
+    static long semaine() { return Math.floorDiv(LocalDate.now(PARIS).toEpochDay() - 4, 7); } // semaines du lundi au dimanche
+
+    static final class Faction {
+        String nom;
+        UUID chef;
+        final Map<UUID, String> membres = new LinkedHashMap<>();
+        final Set<UUID> invites = new HashSet<>();
+        long banque, points, semaine = -1;
+        final long[] defis = new long[3];
+
+        CompoundTag ecrire() {
+            CompoundTag t = new CompoundTag();
+            t.putString("nom", nom); t.putUUID("chef", chef);
+            CompoundTag m = new CompoundTag(); membres.forEach((u, n) -> m.putString(u.toString(), n)); t.put("membres", m);
+            t.putLong("banque", banque); t.putLong("points", points); t.putLong("semaine", semaine); t.putLongArray("defis", defis);
+            return t;
+        }
+
+        static Faction lire(CompoundTag t) {
+            Faction f = new Faction();
+            f.nom = t.getString("nom"); f.chef = t.getUUID("chef");
+            CompoundTag m = t.getCompound("membres"); for (String k : m.getAllKeys()) f.membres.put(UUID.fromString(k), m.getString(k));
+            f.banque = t.getLong("banque"); f.points = t.getLong("points"); f.semaine = t.getLong("semaine");
+            long[] d = t.getLongArray("defis"); System.arraycopy(d, 0, f.defis, 0, Math.min(3, d.length));
+            return f;
+        }
+
+        int maxClaims() { return Math.min(60, 5 + 3 * membres.size()); }
+    }
+
+    // ------------------------------------------------------------------ sauvegarde
+    static final class Donnees extends SavedData {
+        final Map<UUID, Long> argent = new HashMap<>();
+        final Map<String, double[]> marche = new HashMap<>();     // item -> {facteur, facteur il y a une heure}
+        final Map<String, Faction> factions = new HashMap<>();    // cle = nom en minuscules
+        final Map<String, String> claims = new HashMap<>();       // "dimension|cx|cz" -> faction
+
+        static Donnees lire(CompoundTag t) {
+            Donnees d = new Donnees();
+            CompoundTag a = t.getCompound("argent"); for (String k : a.getAllKeys()) d.argent.put(UUID.fromString(k), a.getLong(k));
+            CompoundTag m = t.getCompound("marche"); for (String k : m.getAllKeys()) { CompoundTag c = m.getCompound(k); d.marche.put(k, new double[] {c.getDouble("f"), c.getDouble("h")}); }
+            for (Tag x : t.getList("factions", Tag.TAG_COMPOUND)) { Faction f = Faction.lire((CompoundTag) x); d.factions.put(f.nom.toLowerCase(), f); }
+            CompoundTag c = t.getCompound("claims"); for (String k : c.getAllKeys()) d.claims.put(k, c.getString(k));
+            return d;
+        }
+
+        @Override
+        public CompoundTag save(CompoundTag t) {
+            CompoundTag a = new CompoundTag(); argent.forEach((u, v) -> a.putLong(u.toString(), v)); t.put("argent", a);
+            CompoundTag m = new CompoundTag(); marche.forEach((k, v) -> { CompoundTag c = new CompoundTag(); c.putDouble("f", v[0]); c.putDouble("h", v[1]); m.put(k, c); }); t.put("marche", m);
+            ListTag l = new ListTag(); factions.values().forEach(f -> l.add(f.ecrire())); t.put("factions", l);
+            CompoundTag c = new CompoundTag(); claims.forEach(c::putString); t.put("claims", c);
+            return t;
+        }
+    }
+
+    private static MinecraftServer serveur;
+
+    static Donnees d() { return serveur.overworld().getDataStorage().computeIfAbsent(Donnees::lire, Donnees::new, "astralys_economie"); }
+
+    private static double[] cours(String item) { return d().marche.computeIfAbsent(item, k -> new double[] {1, 1}); }
+
+    // ------------------------------------------------------------------ argent
+    static long solde(UUID u) { return d().argent.getOrDefault(u, 0L); }
+
+    static void crediter(ServerPlayer p, long n, String raison) {
+        if (n <= 0 || serveur == null) return;
+        d().argent.merge(p.getUUID(), n, Long::sum); d().setDirty();
+        if (raison != null) p.sendSystemMessage(Component.literal("+ " + format(n) + " $ ").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD)
+                .append(Component.literal(raison).withStyle(ChatFormatting.GRAY)));
+        envoyerSolde(p);
+    }
+
+    private static boolean debiter(UUID u, long n) {
+        long s = solde(u);
+        if (n < 0 || s < n) return false;
+        d().argent.put(u, s - n); d().setDirty();
+        return true;
+    }
+
+    static String format(long n) { return String.format(java.util.Locale.FRANCE, "%,d", n).replace(' ', ' ').replace(' ', ' '); }
+
+    // ------------------------------------------------------------------ factions : outils
+    static Faction factionDe(UUID u) {
+        for (Faction f : d().factions.values()) if (f.membres.containsKey(u)) return f;
+        return null;
+    }
+
+    private static String cle(Level l, ChunkPos c) { return l.dimension().location() + "|" + c.x + "|" + c.z; }
+
+    static Faction proprietaire(Level l, BlockPos pos) {
+        String f = d().claims.get(cle(l, new ChunkPos(pos)));
+        return f == null ? null : d().factions.get(f);
+    }
+
+    private static int nbClaims(Faction f) {
+        String k = f.nom.toLowerCase(); int n = 0;
+        for (String v : d().claims.values()) if (v.equals(k)) n++;
+        return n;
+    }
+
+    static long prixClaim(Faction f) { return 500 + 250L * nbClaims(f); }
+
+    private static void majSemaine(Faction f) {
+        long s = semaine();
+        if (f.semaine != s) { f.semaine = s; java.util.Arrays.fill(f.defis, 0); d().setDirty(); }
+    }
+
+    /** Une action d'un membre fait avancer les defis de sa faction. */
+    static void defi(ServerPlayer p, Defi type, long n) {
+        if (serveur == null || p.isCreative()) return;
+        Faction f = factionDe(p.getUUID());
+        if (f == null) return;
+        majSemaine(f);
+        DefiModele[] dm = defisDeLaSemaine(f.semaine);
+        for (int i = 0; i < 3; i++) {
+            if (dm[i].type != type || f.defis[i] >= dm[i].nombre) continue;
+            f.defis[i] = Math.min(dm[i].nombre, f.defis[i] + n); d().setDirty();
+            if (f.defis[i] >= dm[i].nombre) {
+                f.banque += dm[i].argent; f.points += dm[i].points;
+                annoncerFaction(f, Component.literal("★ Défi de la semaine réussi : " + dm[i].titre + " ! +" + format(dm[i].argent) + " $ en banque, +" + dm[i].points + " points")
+                        .withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD));
+            }
+        }
+    }
+
+    private static void annoncerFaction(Faction f, Component c) {
+        for (UUID u : f.membres.keySet()) {
+            ServerPlayer p = serveur.getPlayerList().getPlayer(u);
+            if (p != null) { p.sendSystemMessage(c); p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, .7f, 1.2f); }
+        }
+    }
+
+    // ------------------------------------------------------------------ protection des claims
+    private static final Map<UUID, Long> dernierAvis = new HashMap<>();
+
+    private static boolean interdit(ServerPlayer p, Level l, BlockPos pos) {
+        if (p.hasPermissions(2)) return false;
+        Faction f = proprietaire(l, pos);
+        if (f == null || f.membres.containsKey(p.getUUID())) return false;
+        long now = System.currentTimeMillis();
+        if (now - dernierAvis.getOrDefault(p.getUUID(), 0L) > 2000) {
+            dernierAvis.put(p.getUUID(), now);
+            p.displayClientMessage(Component.literal("⛔ Territoire de la faction " + f.nom).withStyle(ChatFormatting.RED), true);
+        }
+        return true;
+    }
+
+    // ------------------------------------------------------------------ reseau
+    record Solde(long argent) {
+        void ecrire(FriendlyByteBuf b) { b.writeVarLong(argent); }
+        static Solde lire(FriendlyByteBuf b) { return new Solde(b.readVarLong()); }
+    }
+
+    record Ligne(String item, int categorie, long achat, long vente, float tendance) {}
+
+    record Marche(List<Ligne> lignes) {
+        void ecrire(FriendlyByteBuf b) {
+            b.writeVarInt(lignes.size());
+            for (Ligne l : lignes) { b.writeUtf(l.item); b.writeVarInt(l.categorie); b.writeVarLong(l.achat); b.writeVarLong(l.vente); b.writeFloat(l.tendance); }
+        }
+        static Marche lire(FriendlyByteBuf b) {
+            int n = Math.min(b.readVarInt(), 1000); List<Ligne> l = new ArrayList<>();
+            for (int i = 0; i < n; i++) l.add(new Ligne(b.readUtf(), b.readVarInt(), b.readVarLong(), b.readVarLong(), b.readFloat()));
+            return new Marche(l);
+        }
+    }
+
+    record DefiVue(String titre, String desc, long avance, long nombre, long argent, long points) {}
+
+    record FactionVue(String nom, String chef, List<String> membres, List<Boolean> enLigne, long banque, long points, int claims, int max,
+                      long prixClaim, List<DefiVue> defis, List<String> top) {
+        void ecrire(FriendlyByteBuf b) {
+            b.writeUtf(nom); b.writeUtf(chef);
+            b.writeVarInt(membres.size()); for (int i = 0; i < membres.size(); i++) { b.writeUtf(membres.get(i)); b.writeBoolean(enLigne.get(i)); }
+            b.writeVarLong(banque); b.writeVarLong(points); b.writeVarInt(claims); b.writeVarInt(max); b.writeVarLong(prixClaim);
+            b.writeVarInt(defis.size()); for (DefiVue v : defis) { b.writeUtf(v.titre); b.writeUtf(v.desc); b.writeVarLong(v.avance); b.writeVarLong(v.nombre); b.writeVarLong(v.argent); b.writeVarLong(v.points); }
+            b.writeVarInt(top.size()); top.forEach(b::writeUtf);
+        }
+        static FactionVue lire(FriendlyByteBuf b) {
+            String nom = b.readUtf(), chef = b.readUtf();
+            int n = Math.min(b.readVarInt(), 200); List<String> m = new ArrayList<>(); List<Boolean> e = new ArrayList<>();
+            for (int i = 0; i < n; i++) { m.add(b.readUtf()); e.add(b.readBoolean()); }
+            long banque = b.readVarLong(), points = b.readVarLong(); int claims = b.readVarInt(), max = b.readVarInt(); long prix = b.readVarLong();
+            int nd = Math.min(b.readVarInt(), 10); List<DefiVue> d = new ArrayList<>();
+            for (int i = 0; i < nd; i++) d.add(new DefiVue(b.readUtf(), b.readUtf(), b.readVarLong(), b.readVarLong(), b.readVarLong(), b.readVarLong()));
+            int nt = Math.min(b.readVarInt(), 20); List<String> t = new ArrayList<>(); for (int i = 0; i < nt; i++) t.add(b.readUtf());
+            return new FactionVue(nom, chef, m, e, banque, points, claims, max, prix, d, t);
+        }
+    }
+
+    /** Client -> serveur : 0 = donnees de la boutique, 1 = donnees de la faction. */
+    record Demande(int quoi) {
+        void ecrire(FriendlyByteBuf b) { b.writeVarInt(quoi); }
+        static Demande lire(FriendlyByteBuf b) { return new Demande(b.readVarInt()); }
+    }
+
+    /** Client -> serveur : acheter ou vendre n exemplaires d'un article (n = -1 : vendre tout). */
+    record Transaction(String item, int n, boolean achat) {
+        void ecrire(FriendlyByteBuf b) { b.writeUtf(item); b.writeVarInt(n); b.writeBoolean(achat); }
+        static Transaction lire(FriendlyByteBuf b) { return new Transaction(b.readUtf(256), b.readVarInt(), b.readBoolean()); }
+    }
+
+    /** Serveur -> client : ouvrir un ecran (0 boutique, 1 faction, 2 metiers). */
+    record Ouvrir(int ecran) {
+        void ecrire(FriendlyByteBuf b) { b.writeVarInt(ecran); }
+        static Ouvrir lire(FriendlyByteBuf b) { return new Ouvrir(b.readVarInt()); }
+    }
+
+    private static boolean aLeMod(ServerPlayer p) { return Metiers.CANAL.isRemotePresent(p.connection.connection); }
+
+    private static void envoyer(ServerPlayer p, Object m) { if (aLeMod(p)) Metiers.CANAL.send(PacketDistributor.PLAYER.with(() -> p), m); }
+
+    static void envoyerSolde(ServerPlayer p) { envoyer(p, new Solde(solde(p.getUUID()))); }
+
+    private static void envoyerMarche(ServerPlayer p) {
+        List<Ligne> l = new ArrayList<>();
+        for (Article a : ARTICLES) {
+            if (!ForgeRegistries.ITEMS.containsKey(new ResourceLocation(a.item))) continue;
+            double[] c = cours(a.item);
+            l.add(new Ligne(a.item, a.categorie, achat(a.base, c[0]), vente(a.base, c[0]), (float) ((c[0] / c[1] - 1) * 100)));
+        }
+        envoyer(p, new Marche(l));
+        envoyerSolde(p);
+    }
+
+    private static void envoyerFaction(ServerPlayer p) {
+        Faction f = factionDe(p.getUUID());
+        List<String> top = new ArrayList<>();
+        d().factions.values().stream().sorted(Comparator.comparingLong((Faction x) -> -x.points)).limit(5)
+                .forEach(x -> top.add(x.nom + "|" + x.points));
+        if (f == null) { envoyer(p, new FactionVue("", "", List.of(), List.of(), 0, 0, 0, 0, 0, List.of(), top)); return; }
+        majSemaine(f);
+        List<String> m = new ArrayList<>(); List<Boolean> e = new ArrayList<>();
+        f.membres.forEach((u, n) -> { m.add(n); e.add(serveur.getPlayerList().getPlayer(u) != null); });
+        DefiModele[] dm = defisDeLaSemaine(f.semaine);
+        List<DefiVue> dv = new ArrayList<>();
+        for (int i = 0; i < 3; i++) dv.add(new DefiVue(dm[i].titre, dm[i].desc, f.defis[i], dm[i].nombre, dm[i].argent, dm[i].points));
+        envoyer(p, new FactionVue(f.nom, f.membres.getOrDefault(f.chef, "?"), m, e, f.banque, f.points, nbClaims(f), f.maxClaims(), prixClaim(f), dv, top));
+        envoyerSolde(p);
+    }
+
+    private static void transaction(ServerPlayer p, Transaction t) {
+        Article a = null;
+        for (Article x : ARTICLES) if (x.item.equals(t.item)) a = x;
+        Item item = a == null ? null : ForgeRegistries.ITEMS.getValue(new ResourceLocation(a.item));
+        if (item == null || (t.n != -1 && (t.n < 1 || t.n > 2304))) return;    // paquet invalide : ignore
+        double[] c = cours(a.item);
+        Inventory inv = p.getInventory();
+        if (t.achat) {
+            long prix = achat(a.base, c[0]) * t.n;
+            if (!debiter(p.getUUID(), prix)) { p.displayClientMessage(Component.literal("Pas assez d'argent (" + format(prix) + " $)").withStyle(ChatFormatting.RED), true); envoyerSolde(p); return; }
+            int reste = t.n;
+            while (reste > 0) {
+                int k = Math.min(reste, item.getMaxStackSize());
+                ItemStack s = new ItemStack(item, k);
+                if (!inv.add(s)) p.drop(s, false);
+                reste -= k;
+            }
+            c[0] = Math.min(3, c[0] * (1 + .003 * t.n));
+            p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, .6f, 1.4f);
+        } else {
+            int voulu = t.n == -1 ? Integer.MAX_VALUE : t.n, vendu = 0;
+            for (int i = 0; i < inv.getContainerSize() && vendu < voulu; i++) {
+                ItemStack s = inv.getItem(i);
+                if (s.getItem() != item || s.hasTag()) continue;   // objets nommes / enchantes / abimes : jamais vendus
+                int k = Math.min(s.getCount(), voulu - vendu);
+                s.shrink(k); vendu += k;
+            }
+            if (vendu == 0) { p.displayClientMessage(Component.literal("Tu n'en as pas à vendre").withStyle(ChatFormatting.RED), true); return; }
+            long gain = vente(a.base, c[0]) * vendu;
+            c[0] = Math.max(.3, c[0] * (1 - .003 * vendu));
+            d().argent.merge(p.getUUID(), gain, Long::sum);
+            defi(p, Defi.VENTE, gain);
+            p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, .8f, 1.2f);
+            p.displayClientMessage(Component.literal("+" + format(gain) + " $  (" + vendu + " vendus)").withStyle(ChatFormatting.GOLD), true);
+        }
+        d().setDirty();
+        envoyerMarche(p);
+    }
+
+    // ------------------------------------------------------------------ commandes
+    private static ServerPlayer joueur(CommandContext<CommandSourceStack> c) throws CommandSyntaxException { return c.getSource().getPlayerOrException(); }
+
+    private static int dire(ServerPlayer p, String texte, ChatFormatting... style) { p.sendSystemMessage(Component.literal(texte).withStyle(style)); return 1; }
+
+    private static void commandes(RegisterCommandsEvent e) {
+        CommandDispatcher<CommandSourceStack> dsp = e.getDispatcher();
+        for (String n : new String[] {"argent", "money", "balance"})
+            dsp.register(Commands.literal(n).executes(c -> dire(joueur(c), "✦ Ton solde : " + format(solde(joueur(c).getUUID())) + " $", ChatFormatting.GOLD, ChatFormatting.BOLD)));
+        dsp.register(Commands.literal("pay").then(Commands.argument("joueur", EntityArgument.player()).then(Commands.argument("montant", LongArgumentType.longArg(1, 1_000_000_000L)).executes(c -> {
+            ServerPlayer p = joueur(c), cible = EntityArgument.getPlayer(c, "joueur");
+            long m = LongArgumentType.getLong(c, "montant");
+            if (cible == p) return dire(p, "Tu ne peux pas te payer toi-même", ChatFormatting.RED);
+            if (!debiter(p.getUUID(), m)) return dire(p, "Pas assez d'argent", ChatFormatting.RED);
+            crediter(cible, m, "de " + p.getGameProfile().getName());
+            envoyerSolde(p);
+            return dire(p, "Tu as envoyé " + format(m) + " $ à " + cible.getGameProfile().getName(), ChatFormatting.GREEN);
+        }))));
+        dsp.register(Commands.literal("baltop").executes(c -> {
+            ServerPlayer p = joueur(c);
+            dire(p, "✦ Les plus riches d'Astralys", ChatFormatting.GOLD, ChatFormatting.BOLD);
+            int[] i = {1};
+            d().argent.entrySet().stream().sorted((a, b) -> Long.compare(b.getValue(), a.getValue())).limit(10).forEach(en -> {
+                String nom = serveur.getProfileCache().get(en.getKey()).map(g -> g.getName()).orElse("?");
+                dire(p, " " + i[0]++ + ". " + nom + " — " + format(en.getValue()) + " $", ChatFormatting.YELLOW);
+            });
+            return 1;
+        }));
+        dsp.register(Commands.literal("eco").requires(s -> s.hasPermission(2))
+                .then(Commands.literal("give").then(Commands.argument("joueur", EntityArgument.player()).then(Commands.argument("montant", LongArgumentType.longArg(1)).executes(c -> {
+                    crediter(EntityArgument.getPlayer(c, "joueur"), LongArgumentType.getLong(c, "montant"), "(admin)"); return 1; }))))
+                .then(Commands.literal("set").then(Commands.argument("joueur", EntityArgument.player()).then(Commands.argument("montant", LongArgumentType.longArg(0)).executes(c -> {
+                    ServerPlayer p = EntityArgument.getPlayer(c, "joueur"); d().argent.put(p.getUUID(), LongArgumentType.getLong(c, "montant")); d().setDirty(); envoyerSolde(p); return 1; })))));
+        for (String n : new String[] {"shop", "boutique"})
+            dsp.register(Commands.literal(n).executes(c -> ouvrir(joueur(c), 0)));
+        dsp.register(Commands.literal("metiers").executes(c -> ouvrir(joueur(c), 2)));
+        for (String n : new String[] {"f", "faction"}) dsp.register(Commands.literal(n)
+                .executes(c -> ouvrir(joueur(c), 1))
+                .then(Commands.literal("create").then(Commands.argument("nom", StringArgumentType.word()).executes(c -> creer(joueur(c), StringArgumentType.getString(c, "nom")))))
+                .then(Commands.literal("invite").then(Commands.argument("joueur", EntityArgument.player()).executes(c -> inviter(joueur(c), EntityArgument.getPlayer(c, "joueur")))))
+                .then(Commands.literal("join").then(Commands.argument("nom", StringArgumentType.word()).executes(c -> rejoindre(joueur(c), StringArgumentType.getString(c, "nom")))))
+                .then(Commands.literal("leave").executes(c -> quitter(joueur(c))))
+                .then(Commands.literal("kick").then(Commands.argument("nom", StringArgumentType.word()).executes(c -> exclure(joueur(c), StringArgumentType.getString(c, "nom")))))
+                .then(Commands.literal("disband").executes(c -> dissoudre(joueur(c))))
+                .then(Commands.literal("claim").executes(c -> claim(joueur(c))))
+                .then(Commands.literal("unclaim").executes(c -> unclaim(joueur(c))))
+                .then(Commands.literal("deposit").then(Commands.argument("montant", LongArgumentType.longArg(1)).executes(c -> deposer(joueur(c), LongArgumentType.getLong(c, "montant")))))
+                .then(Commands.literal("top").executes(c -> { ServerPlayer p = joueur(c);
+                    dire(p, "★ Classement des factions", ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD); int[] i = {1};
+                    d().factions.values().stream().sorted(Comparator.comparingLong((Faction x) -> -x.points)).limit(10)
+                            .forEach(x -> dire(p, " " + i[0]++ + ". " + x.nom + " — " + format(x.points) + " pts", ChatFormatting.LIGHT_PURPLE));
+                    return 1; })));
+    }
+
+    private static int ouvrir(ServerPlayer p, int ecran) {
+        if (!aLeMod(p)) return dire(p, "Il faut le mod Astralys (launcher) pour ouvrir cet écran.", ChatFormatting.RED);
+        envoyer(p, new Ouvrir(ecran));
+        if (ecran == 0) envoyerMarche(p); else if (ecran == 1) envoyerFaction(p);
+        return 1;
+    }
+
+    private static int creer(ServerPlayer p, String nom) {
+        if (factionDe(p.getUUID()) != null) return dire(p, "Tu es déjà dans une faction", ChatFormatting.RED);
+        if (!NOM.matcher(nom).matches()) return dire(p, "Nom : 3 à 16 lettres, chiffres ou _", ChatFormatting.RED);
+        if (d().factions.containsKey(nom.toLowerCase())) return dire(p, "Ce nom est déjà pris", ChatFormatting.RED);
+        Faction f = new Faction(); f.nom = nom; f.chef = p.getUUID(); f.membres.put(p.getUUID(), p.getGameProfile().getName()); f.semaine = semaine();
+        d().factions.put(nom.toLowerCase(), f); d().setDirty();
+        serveur.getPlayerList().broadcastSystemMessage(Component.literal("★ " + p.getGameProfile().getName() + " a fondé la faction " + nom + " !").withStyle(ChatFormatting.LIGHT_PURPLE), false);
+        return 1;
+    }
+
+    private static Faction chefDe(ServerPlayer p) {
+        Faction f = factionDe(p.getUUID());
+        if (f == null) { dire(p, "Tu n'as pas de faction : /f create <nom>", ChatFormatting.RED); return null; }
+        if (!f.chef.equals(p.getUUID())) { dire(p, "Seul le chef de la faction peut faire ça", ChatFormatting.RED); return null; }
+        return f;
+    }
+
+    private static int inviter(ServerPlayer p, ServerPlayer cible) {
+        Faction f = chefDe(p); if (f == null) return 0;
+        if (factionDe(cible.getUUID()) != null) return dire(p, cible.getGameProfile().getName() + " a déjà une faction", ChatFormatting.RED);
+        f.invites.add(cible.getUUID());
+        MutableComponent lien = Component.literal("[Rejoindre " + f.nom + "]").withStyle(st -> st.withColor(0xC9A0FF).withBold(true)
+                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/f join " + f.nom)));
+        cible.sendSystemMessage(Component.literal("★ " + p.getGameProfile().getName() + " t'invite dans la faction " + f.nom + "  ").withStyle(ChatFormatting.LIGHT_PURPLE).append(lien));
+        return dire(p, "Invitation envoyée à " + cible.getGameProfile().getName(), ChatFormatting.GREEN);
+    }
+
+    private static int rejoindre(ServerPlayer p, String nom) {
+        if (factionDe(p.getUUID()) != null) return dire(p, "Quitte d'abord ta faction : /f leave", ChatFormatting.RED);
+        Faction f = d().factions.get(nom.toLowerCase());
+        if (f == null || !f.invites.remove(p.getUUID())) return dire(p, "Tu n'as pas d'invitation de cette faction", ChatFormatting.RED);
+        f.membres.put(p.getUUID(), p.getGameProfile().getName()); d().setDirty();
+        annoncerFaction(f, Component.literal("★ " + p.getGameProfile().getName() + " a rejoint la faction !").withStyle(ChatFormatting.LIGHT_PURPLE));
+        return 1;
+    }
+
+    private static int quitter(ServerPlayer p) {
+        Faction f = factionDe(p.getUUID());
+        if (f == null) return dire(p, "Tu n'as pas de faction", ChatFormatting.RED);
+        if (f.chef.equals(p.getUUID())) return dire(p, "Tu es le chef : /f disband pour dissoudre la faction", ChatFormatting.RED);
+        f.membres.remove(p.getUUID()); d().setDirty();
+        annoncerFaction(f, Component.literal(p.getGameProfile().getName() + " a quitté la faction").withStyle(ChatFormatting.GRAY));
+        return dire(p, "Tu as quitté " + f.nom, ChatFormatting.GRAY);
+    }
+
+    private static int exclure(ServerPlayer p, String nom) {
+        Faction f = chefDe(p); if (f == null) return 0;
+        UUID u = null;
+        for (Map.Entry<UUID, String> m : f.membres.entrySet()) if (m.getValue().equalsIgnoreCase(nom)) u = m.getKey();
+        if (u == null || u.equals(f.chef)) return dire(p, "Ce joueur n'est pas un membre", ChatFormatting.RED);
+        f.membres.remove(u); d().setDirty();
+        ServerPlayer c = serveur.getPlayerList().getPlayer(u);
+        if (c != null) dire(c, "Tu as été exclu de la faction " + f.nom, ChatFormatting.RED);
+        return dire(p, nom + " a été exclu", ChatFormatting.GRAY);
+    }
+
+    private static int dissoudre(ServerPlayer p) {
+        Faction f = chefDe(p); if (f == null) return 0;
+        String k = f.nom.toLowerCase();
+        d().claims.values().removeIf(k::equals);
+        d().factions.remove(k);
+        if (f.banque > 0) d().argent.merge(p.getUUID(), f.banque, Long::sum);   // la banque revient au chef
+        d().setDirty();
+        annoncerFaction(f, Component.literal("La faction " + f.nom + " a été dissoute").withStyle(ChatFormatting.RED));
+        dire(p, "La faction " + f.nom + " a été dissoute", ChatFormatting.RED);
+        envoyerSolde(p);
+        return 1;
+    }
+
+    private static int claim(ServerPlayer p) {
+        Faction f = factionDe(p.getUUID());
+        if (f == null) return dire(p, "Tu n'as pas de faction : /f create <nom>", ChatFormatting.RED);
+        String dim = p.level().dimension().location().toString();
+        if (!MONDES_BASES.contains(dim)) return dire(p, "On ne peut acheter des chunks qu'à Pyrélune et Azuréa (mondes des bases)", ChatFormatting.RED);
+        ChunkPos c = p.chunkPosition();
+        if (Math.abs(c.x) <= 3 && Math.abs(c.z) <= 3) return dire(p, "Trop près du spawn de ce monde", ChatFormatting.RED);
+        String k = cle(p.level(), c);
+        if (d().claims.containsKey(k)) return dire(p, "Ce chunk appartient déjà à " + d().claims.get(k), ChatFormatting.RED);
+        if (nbClaims(f) >= f.maxClaims()) return dire(p, "Limite atteinte (" + f.maxClaims() + " chunks) : recrute des membres !", ChatFormatting.RED);
+        long prix = prixClaim(f);
+        if (f.banque >= prix) f.banque -= prix;
+        else if (!debiter(p.getUUID(), prix)) return dire(p, "Il faut " + format(prix) + " $ (banque de faction ou ton argent)", ChatFormatting.RED);
+        d().claims.put(k, f.nom.toLowerCase()); d().setDirty();
+        envoyerSolde(p);
+        p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.ANVIL_PLACE, SoundSource.PLAYERS, .5f, 1.3f);
+        return dire(p, "✔ Chunk acheté pour " + format(prix) + " $ (" + nbClaims(f) + "/" + f.maxClaims() + ")", ChatFormatting.GREEN);
+    }
+
+    private static int unclaim(ServerPlayer p) {
+        Faction f = factionDe(p.getUUID());
+        if (f == null) return dire(p, "Tu n'as pas de faction", ChatFormatting.RED);
+        String k = cle(p.level(), p.chunkPosition());
+        if (!f.nom.toLowerCase().equals(d().claims.get(k))) return dire(p, "Ce chunk n'est pas à ta faction", ChatFormatting.RED);
+        d().claims.remove(k); d().setDirty();
+        return dire(p, "Chunk rendu", ChatFormatting.GRAY);
+    }
+
+    private static int deposer(ServerPlayer p, long m) {
+        Faction f = factionDe(p.getUUID());
+        if (f == null) return dire(p, "Tu n'as pas de faction", ChatFormatting.RED);
+        if (!debiter(p.getUUID(), m)) return dire(p, "Pas assez d'argent", ChatFormatting.RED);
+        f.banque += m; d().setDirty(); envoyerSolde(p);
+        return dire(p, "✔ " + format(m) + " $ déposés dans la banque de " + f.nom, ChatFormatting.GREEN);
+    }
+
+    // ------------------------------------------------------------------ demarrage
+    static void init() {
+        Metiers.CANAL.messageBuilder(Solde.class, 1, NetworkDirection.PLAY_TO_CLIENT).encoder(Solde::ecrire).decoder(Solde::lire)
+                .consumerMainThread((m, ctx) -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientEco.solde(m.argent()))).add();
+        Metiers.CANAL.messageBuilder(Marche.class, 2, NetworkDirection.PLAY_TO_CLIENT).encoder(Marche::ecrire).decoder(Marche::lire)
+                .consumerMainThread((m, ctx) -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientEco.marche(m))).add();
+        Metiers.CANAL.messageBuilder(FactionVue.class, 3, NetworkDirection.PLAY_TO_CLIENT).encoder(FactionVue::ecrire).decoder(FactionVue::lire)
+                .consumerMainThread((m, ctx) -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientEco.faction(m))).add();
+        Metiers.CANAL.messageBuilder(Ouvrir.class, 4, NetworkDirection.PLAY_TO_CLIENT).encoder(Ouvrir::ecrire).decoder(Ouvrir::lire)
+                .consumerMainThread((m, ctx) -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientEco.ouvrir(m.ecran()))).add();
+        Metiers.CANAL.messageBuilder(Demande.class, 5, NetworkDirection.PLAY_TO_SERVER).encoder(Demande::ecrire).decoder(Demande::lire)
+                .consumerMainThread((m, ctx) -> { ServerPlayer p = ctx.get().getSender(); if (p == null) return;
+                    if (m.quoi() == 0) envoyerMarche(p); else if (m.quoi() == 1) envoyerFaction(p); }).add();
+        Metiers.CANAL.messageBuilder(Transaction.class, 6, NetworkDirection.PLAY_TO_SERVER).encoder(Transaction::ecrire).decoder(Transaction::lire)
+                .consumerMainThread((m, ctx) -> { ServerPlayer p = ctx.get().getSender(); if (p != null) transaction(p, m); }).add();
+
+        MinecraftForge.EVENT_BUS.addListener(Economie::commandes);
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.server.ServerStartedEvent e) -> serveur = e.getServer());
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.server.ServerStoppedEvent e) -> serveur = null);
+        MinecraftForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> { if (serveur != null && e.getEntity() instanceof ServerPlayer p) envoyerSolde(p); });
+        MinecraftForge.EVENT_BUS.addListener((BlockEvent.BreakEvent e) -> { if (serveur != null && e.getPlayer() instanceof ServerPlayer p && e.getLevel() instanceof Level l && interdit(p, l, e.getPos())) e.setCanceled(true); });
+        MinecraftForge.EVENT_BUS.addListener((BlockEvent.EntityPlaceEvent e) -> { if (serveur != null && e.getEntity() instanceof ServerPlayer p && e.getLevel() instanceof Level l && interdit(p, l, e.getPos())) e.setCanceled(true); });
+        MinecraftForge.EVENT_BUS.addListener((PlayerInteractEvent.RightClickBlock e) -> { if (serveur != null && e.getEntity() instanceof ServerPlayer p && interdit(p, e.getLevel(), e.getPos())) e.setCanceled(true); });
+        MinecraftForge.EVENT_BUS.addListener((ExplosionEvent.Detonate e) -> { if (serveur != null && !e.getLevel().isClientSide) e.getAffectedBlocks().removeIf(pos -> proprietaire(e.getLevel(), pos) != null); });
+        MinecraftForge.EVENT_BUS.addListener((TickEvent.ServerTickEvent e) -> {
+            if (e.phase != TickEvent.Phase.END || serveur == null) return;
+            int t = e.getServer().getTickCount();
+            // les cours reviennent doucement vers leur prix de base (toutes les 5 min) ; reference de tendance chaque heure
+            if (t % 6000 == 0) { for (double[] c : d().marche.values()) c[0] += (1 - c[0]) * .05; d().setDirty(); }
+            if (t % 72000 == 0) { for (double[] c : d().marche.values()) c[1] = c[0]; d().setDirty(); }
+        });
+    }
+
+    private Economie() {}
+}
