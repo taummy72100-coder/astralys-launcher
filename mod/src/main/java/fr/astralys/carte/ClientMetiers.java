@@ -32,12 +32,21 @@ final class ClientMetiers {
         MinecraftForge.EVENT_BUS.addListener(ClientMetiers::inventaire);
         MinecraftForge.EVENT_BUS.addListener(ClientMetiers::suivre);
         MinecraftForge.EVENT_BUS.addListener(ClientMetiers::decor);
+        MinecraftForge.EVENT_BUS.addListener(ClientMetiers::sansLivre);
+    }
+
+    // Pas de livre de recettes dans l'inventaire : ferme avant l'ouverture (la position du panneau en depend), bouton retire apres.
+    private static void sansLivre(ScreenEvent.Init.Pre e) {
+        var j = Minecraft.getInstance().player;
+        if (e.getScreen() instanceof InventoryScreen && j != null) j.getRecipeBook().setOpen(net.minecraft.world.inventory.RecipeBookType.CRAFTING, false);
     }
 
     private static final List<Bouton> boutons = new ArrayList<>();
 
     private static void inventaire(ScreenEvent.Init.Post e) {
         if (!(e.getScreen() instanceof EffectRenderingInventoryScreen<?> s)) return;
+        if (s instanceof InventoryScreen)
+            for (var w : List.copyOf(e.getListenersList())) if (w instanceof net.minecraft.client.gui.components.ImageButton) e.removeListener(w);
         boutons.clear();
         boutons.add(new Bouton("MÉTIERS", "niveaux & quêtes", 0xE8322B, -1, MetiersScreen::new));
         boutons.add(new Bouton("BOUTIQUE", "acheter & vendre", 0xF0B429, 1, ShopScreen::new));

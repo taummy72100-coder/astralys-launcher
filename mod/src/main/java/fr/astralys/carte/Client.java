@@ -38,6 +38,7 @@ class Client {
 
     Client() {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::touches);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(Client::packInterface);
         MinecraftForge.EVENT_BUS.addListener(this::tick);
         MinecraftForge.EVENT_BUS.addListener(this::touche);
         MinecraftForge.EVENT_BUS.addListener(this::commande);
@@ -47,6 +48,19 @@ class Client {
         BarreMagie.init();
         if (System.getenv("ASTRALYS_CAPTURES") != null) Captures.init();
         MinecraftForge.EVENT_BUS.addListener(this::listeRendu);
+    }
+
+    // Inventaire et barre d'action d'Astralys : pack obligatoire, toujours au-dessus de "vanilla" (meme si le joueur a change l'ordre).
+    private static void packInterface(net.minecraftforge.event.AddPackFindersEvent e) {
+        if (e.getPackType() != net.minecraft.server.packs.PackType.CLIENT_RESOURCES) return;
+        var dossier = net.minecraftforge.fml.ModList.get().getModFileById(AstralysCarte.MODID).getFile().findResource("interface_astralys");
+        net.minecraft.server.packs.repository.Pack.ResourcesSupplier res = id -> new net.minecraft.server.packs.PathPackResources(id, dossier, true);
+        var info = net.minecraft.server.packs.repository.Pack.readPackInfo("astralys_interface", res);
+        if (info == null) return;
+        var pack = net.minecraft.server.packs.repository.Pack.create("astralys_interface", Component.literal("Astralys - interface"), true, res, info,
+                net.minecraft.server.packs.PackType.CLIENT_RESOURCES, net.minecraft.server.packs.repository.Pack.Position.TOP, true,
+                net.minecraft.server.packs.repository.PackSource.BUILT_IN);
+        e.addRepositorySource(c -> c.accept(pack));
     }
 
     private void touches(RegisterKeyMappingsEvent event) {
