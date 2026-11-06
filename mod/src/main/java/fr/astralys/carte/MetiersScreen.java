@@ -25,7 +25,7 @@ public class MetiersScreen extends Screen {
     // Repere virtuel de l'ecran, mis a l'echelle de la fenetre.
     private static final int VW = 640, VH = 360;
     private static final int[] CX = {110, 250, 390, 530};
-    private static final ItemStack[][] ART = {
+    static final ItemStack[][] ART = {
             {new ItemStack(Items.GOLDEN_PICKAXE), new ItemStack(Items.IRON_ORE)},
             {new ItemStack(Items.GOLDEN_HOE), new ItemStack(Items.HAY_BLOCK)},
             {new ItemStack(Items.IRON_SWORD), new ItemStack(Items.SPAWNER)},
@@ -241,7 +241,8 @@ public class MetiersScreen extends Screen {
             List<Component> info = List.of(
                     Component.literal(Metiers.NOMS[m] + " — niveau " + nv).withStyle(st -> st.withColor(Metiers.COULEURS[m]).withBold(true)),
                     Component.literal(nv >= Metiers.NIVEAU_MAX ? "Niveau maximum !" : "XP : " + Metiers.reste(xp) + " / " + Metiers.cout(nv)).withStyle(st -> st.withColor(0xE8E8EE)),
-                    Component.literal(COMMENT[m]).withStyle(st -> st.withColor(0x9A9AA4).withItalic(true)));
+                    Component.literal(COMMENT[m]).withStyle(st -> st.withColor(0x9A9AA4).withItalic(true)),
+                    Component.literal("▶ Clique pour voir les détails des niveaux").withStyle(st -> st.withColor(Metiers.COULEURS[m])));
             g.renderComponentTooltip(font, info, mx, my);
         }
     }
@@ -252,6 +253,12 @@ public class MetiersScreen extends Screen {
     public boolean mouseClicked(double mx, double my, int b) {
         float vx = (float) (mx - x0) / k, vy = (float) (my - y0) / k;
         if (vx >= 604 && vx <= 622 && vy >= 16 && vy <= 34) { onClose(); return true; }
+        for (int m = 0; m < 4; m++)
+            if (Math.abs(vx - CX[m]) < 52 && vy > 80 && vy < 250) {
+                Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), 1.2f));
+                Minecraft.getInstance().setScreen(new MetierScreen(m));
+                return true;
+            }
         return super.mouseClicked(mx, my, b);
     }
 

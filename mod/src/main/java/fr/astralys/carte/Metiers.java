@@ -201,6 +201,18 @@ final class Metiers {
 
     static final int[] COULEURS = {0xE8322B, 0xF5B800, 0x2F6BFF, 0xF060C0};
 
+    /** Ce qui rapporte de l'XP, par metier (objet affiche, nom, XP de base) : affiche dans le detail des niveaux. */
+    static final Object[][][] SOURCES = {
+            {{"minecraft:coal_ore", "Charbon", 2}, {"minecraft:copper_ore", "Cuivre", 2}, {"minecraft:iron_ore", "Fer", 4}, {"minecraft:gold_ore", "Or", 6},
+             {"minecraft:redstone_ore", "Redstone", 3}, {"minecraft:lapis_ore", "Lapis", 4}, {"minecraft:diamond_ore", "Diamant", 15},
+             {"minecraft:emerald_ore", "Émeraude", 15}, {"minecraft:nether_quartz_ore", "Quartz", 2}, {"minecraft:ancient_debris", "Débris antique", 30}},
+            {{"minecraft:wheat", "Blé mûr", 2}, {"minecraft:carrot", "Carotte mûre", 2}, {"minecraft:potato", "Pomme de terre", 2},
+             {"minecraft:beetroot", "Betterave", 2}, {"minecraft:nether_wart", "Verrue du Nether", 2}, {"minecraft:pumpkin", "Citrouille", 3}, {"minecraft:melon", "Pastèque", 3}},
+            {{"minecraft:zombie_head", "Zombie", 7}, {"minecraft:skeleton_skull", "Squelette", 7}, {"minecraft:creeper_head", "Creeper", 7},
+             {"minecraft:spider_eye", "Araignée", 5}, {"minecraft:ender_pearl", "Enderman", 13}, {"minecraft:blaze_rod", "Blaze", 7},
+             {"minecraft:wither_skeleton_skull", "Wither squelette", 7}, {"minecraft:beef", "Animal", 1}},
+            {{"minecraft:potion", "Potion préparée", 6}, {"minecraft:splash_potion", "Potion jetable", 6}, {"minecraft:lingering_potion", "Potion persistante", 6}}};
+
     /** Avance des quetes du jour correspondant a l'action. */
     private static void avancer(ServerPlayer p, Type type, java.util.function.Predicate<String> cible, int n) {
         if (p.isCreative() || p.isSpectator()) return;

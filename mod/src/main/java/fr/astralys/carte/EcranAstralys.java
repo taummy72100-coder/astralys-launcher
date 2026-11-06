@@ -58,6 +58,68 @@ abstract class EcranAstralys extends Screen {
 
     boolean dans(float x1, float y1, float x2, float y2) { return vx >= x1 && vx <= x2 && vy >= y1 && vy <= y2; }
 
+    /** Ecran precedent (bouton RETOUR et Echap), ou null. */
+    protected java.util.function.Supplier<Screen> retour;
+
+    @Override
+    public void onClose() {
+        if (retour != null) minecraft.setScreen(retour.get()); else super.onClose();
+    }
+
+    /** Bande de couleur qui s'estompe vers la droite. */
+    void ligne(GuiGraphics g, float x, float y, float w, float h, int c, float al) {
+        int n = 24;
+        for (int i = 0; i < n; i++) rect(g, x + w * i / n, y, x + w * (i + 1) / n, y + h, argb(c, al * a * (1 - i / (float) n)));
+    }
+
+    /** Carte en relief : degrade, liseré clair en haut, ombre en bas, barre d'accent a gauche si accent != 0. */
+    void carte(GuiGraphics g, float x, float y, float w, float h, int accent) {
+        rect(g, x - 1, y - 1, x + w + 1, y + h + 1, argb(0x0E0E11, a));
+        g.fillGradient(Math.round(x), Math.round(y), Math.round(x + w), Math.round(y + h), argb(0x2A2A31, a), argb(0x202026, a));
+        rect(g, x, y, x + w, y + 1, argb(0xFFFFFF, .06f * a));
+        if (accent != 0) { rect(g, x, y, x + 2, y + h, argb(accent, a)); ligne(g, x + 2, y, w * .6f, 1, accent, .6f); }
+    }
+
+    /** Barre de progression : rail sombre, remplissage en degrade, reflet et point lumineux au bout. */
+    void barre(GuiGraphics g, float x, float y, float w, float h, float f, int c) {
+        f = Math.max(0, Math.min(1, f));
+        rect(g, x, y, x + w, y + h, argb(0x111114, a));
+        rect(g, x, y + h - 1, x + w, y + h, argb(0xFFFFFF, .04f * a));
+        if (f <= 0) return;
+        int clair = melange(c, 0xFFFFFF, .35f);
+        g.fillGradient(Math.round(x), Math.round(y), Math.round(x + w * f), Math.round(y + h), argb(clair, a), argb(c, a));
+        rect(g, x, y, x + w * f, y + 1, argb(0xFFFFFF, .25f * a));
+        float puls = .5f + .5f * (float) Math.sin(t * 3);
+        RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
+        halo(g, x + w * f, y + h / 2, h * 3.5f, c, (.35f + .25f * puls) * a);
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.setShaderColor(1, 1, 1, 1);
+    }
+
+    void halo(GuiGraphics g, float cx, float cy, float r, int c, float al) {
+        MetiersScreen.teinte(c, al);
+        g.pose().pushPose(); g.pose().translate(cx - r, cy - r, 0); g.pose().scale(r * 2 / 64f, r * 2 / 64f, 1);
+        g.blit(HALO, 0, 0, 0, 0, 64, 64, 64, 64); g.pose().popPose();
+    }
+
+    /** Titre de section : petit losange de couleur + texte espace. */
+    void section(GuiGraphics g, String s, float x, float y, int c) {
+        texte(g, "◆", x, y, .8f, c, -1, true);
+        texte(g, s.toUpperCase(java.util.Locale.FRANCE), x + 10, y, .85f, 0xFFFFFF, -1, true);
+    }
+
+    /** Hexagone avec bord sombre (pointe en haut). */
+    void hexBord(GuiGraphics g, float cx, float cy, float t, int c) {
+        MetiersScreen.hexa(g, cx - t / 2 - 3, cy - t / 2 - 3, t + 6, 0x0E0E10, a);
+        MetiersScreen.hexa(g, cx - t / 2, cy - t / 2, t, c, a);
+        RenderSystem.setShaderColor(1, 1, 1, a);
+    }
+
+    static int melange(int c1, int c2, float f) {
+        int r = (int) (((c1 >> 16) & 255) * (1 - f) + ((c2 >> 16) & 255) * f), gg = (int) (((c1 >> 8) & 255) * (1 - f) + ((c2 >> 8) & 255) * f), b = (int) ((c1 & 255) * (1 - f) + (c2 & 255) * f);
+        return (r << 16) | (gg << 8) | b;
+    }
+
     /** Contenu de l'ecran, dans le repere virtuel. */
     abstract void contenu(GuiGraphics g);
 
@@ -76,13 +138,21 @@ abstract class EcranAstralys extends Screen {
         g.pose().scale(k, k, 1);
         RenderSystem.enableBlend();
         rect(g, -4, -4, VW + 4, VH + 4, argb(0x0B0B0D, .95f * a));
-        rect(g, 0, 0, VW, VH, argb(0x1B1B1F, .97f * a));
-        rect(g, 0, 0, VW, 2, argb(0x2C2C33, a));
+        g.fillGradient(0, 0, VW, VH, argb(0x212128, .97f * a), argb(0x151519, .97f * a));
+        ligne(g, 0, 0, VW, 2, couleur, .9f);
+        // fines lignes de fond, a peine visibles
+        for (int y = 64; y < VH; y += 24) rect(g, 0, y, VW, y + 1, argb(0xFFFFFF, .012f * a));
+        ligne(g, 38, 58, 584, 1, couleur, .35f);
         MetiersScreen.hexa(g, -34, 128, 66, 0x0E0E10, a);
         MetiersScreen.hexa(g, -28, 134, 54, couleur, a);
         RenderSystem.setShaderColor(1, 1, 1, a);
         texte(g, "✦", -1, 150, 2.4f, 0xFFFFFF, 0, true);
         texte(g, titre.toUpperCase(java.util.Locale.FRANCE), 38, 26, 3.2f, couleur, -1, true);
+        if (retour != null) {
+            boolean s = dans(536, 16, 598, 34);
+            rect(g, 536, 16, 598, 34, argb(s ? 0x34343C : 0x26262D, a));
+            texte(g, "‹ RETOUR", 567, 21, .8f, s ? 0xFFFFFF : 0xC8C8D0, 0, true);
+        }
         boolean surX = dans(604, 16, 622, 34);
         rect(g, 604, 16, 622, 34, argb(surX ? 0xFF5A50 : 0xE8322B, a));
         texte(g, "✕", 613, 21, 1, 0xFFFFFF, 0, true);
@@ -110,7 +180,8 @@ abstract class EcranAstralys extends Screen {
     @Override
     public boolean mouseClicked(double mx, double my, int b) {
         vx = (float) (mx - x0) / k; vy = (float) (my - y0) / k;
-        if (dans(604, 16, 622, 34)) { onClose(); return true; }
+        if (dans(604, 16, 622, 34)) { retour = null; onClose(); return true; }
+        if (retour != null && dans(536, 16, 598, 34)) { onClose(); return true; }
         return clic(b, hasShiftDown()) || super.mouseClicked(mx, my, b);
     }
 
