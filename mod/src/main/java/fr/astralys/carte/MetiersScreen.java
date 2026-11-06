@@ -64,6 +64,16 @@ public class MetiersScreen extends Screen {
     private static final ResourceLocation ROND = new ResourceLocation(AstralysCarte.MODID, "textures/gui/rond.png");
     private static final ResourceLocation ROND_DEG = new ResourceLocation(AstralysCarte.MODID, "textures/gui/rond_degrade.png");
     static final int FILET = 0xF0D28A;
+    private static final ResourceLocation ILLUS = new ResourceLocation(AstralysCarte.MODID, "textures/gui/metiers.png");
+
+    /** Illustration pixel art du metier m (planche 128x32), centree, de cote t. */
+    static void illustration(GuiGraphics g, int m, float cx, float cy, float t, float a) {
+        RenderSystem.enableBlend();
+        RenderSystem.setShaderColor(1, 1, 1, a);
+        g.pose().pushPose(); g.pose().translate(cx - t / 2, cy - t / 2, 0); g.pose().scale(t / 32f, t / 32f, 1);
+        g.blit(ILLUS, 0, 0, m * 32, 0, 32, 32, 128, 32);
+        g.pose().popPose();
+    }
 
     /** Ecusson d'Astralys (losange) : bord sombre, anneau de couleur, filet dore, interieur en degrade. */
     static void ecusson(GuiGraphics g, float cx, float cy, float b, int c, float a) {
@@ -215,10 +225,9 @@ public class MetiersScreen extends Screen {
                 texte(g, "✦", CX[m] + (k == 0 ? -1 : 1) * (b / 2 + 10), 164, .8f + .3f * ps, argb(FILET, (.4f + .6f * ps) * a), true, false);
             }
             float bob = (float) Math.sin(t * 1.8f + m * 1.3f) * 2;
-            objet(g, ART[m][1], CX[m] - 4, 140 + bob, 2.6f);
-            objet(g, ART[m][0], CX[m] - 40, 128 - bob, 3.2f);
+            illustration(g, m, CX[m], 166 + bob, 64, a);
             // medaillon du niveau sur la pointe basse
-            medaillon(g, font, CX[m], 218, 17, c, "NV.", String.valueOf(nv), a);
+            medaillon(g, font, CX[m], 218, 17, c, "NIVEAU", String.valueOf(nv), a);
             // barre d'XP du niveau en cours
             float f = nv >= Metiers.NIVEAU_MAX ? 1 : Metiers.reste(xp) / (float) Metiers.cout(nv);
             rect(g, CX[m] - 40, 242, CX[m] + 40, 245, argb(0x34343B, a));
@@ -239,7 +248,7 @@ public class MetiersScreen extends Screen {
             boolean fini = q.avance() >= q.nombre();
             losange(g, x + 32, y + 35, 40, fini ? 0x22C55E : c, a);
             RenderSystem.setShaderColor(1, 1, 1, a);
-            objet(g, QUETE[q.metier()], x + 24, y + 27, 1);
+            illustration(g, q.metier(), x + 32, y + 35, 24, a);
             String ti = q.titre().toUpperCase(Locale.FRANCE);
             float et = Math.min(.8f, 74f / Math.max(1, font.width(Component.literal(ti).withStyle(st -> st.withBold(true)))));
             texte(g, ti, x + 62, y + 12, et, 0xFFFFFF, false, true);
