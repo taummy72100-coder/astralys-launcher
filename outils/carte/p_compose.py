@@ -22,8 +22,6 @@ img = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8)).convert('RGBA')
 calque = Image.new('RGBA', (W, H), (0, 0, 0, 0))
 dr = ImageDraw.Draw(calque)
 f_nom = ImageFont.truetype(F + 'pixelify-700.ttf', 66)
-f_logo = ImageFont.truetype(F + 'cinzel-decorative-latin-900-normal.ttf', 128)
-f_sous = ImageFont.truetype(F + 'pixelify-700.ttf', 40)
 
 
 def hexa(cx, cy, r):
@@ -83,23 +81,7 @@ for cle, nom, coul, sorte, (dx, dy) in (
     ax, ay = ancres[cle]
     points[cle] = marqueur(ax * k + dx, ay * k + dy, nom, coul, sorte)
 
-# Logo en haut a gauche
-lx, ly = 70, 46
-for ox, oy in ((-6, 0), (6, 0), (0, -6), (0, 8), (6, 8), (-6, 8)):
-    dr.text((lx + ox, ly + oy), 'ASTRALYS', font=f_logo, fill=(46, 24, 70, 255))
-grad = Image.new('RGBA', (W, H), (0, 0, 0, 0))
-gd = ImageDraw.Draw(grad)
-gd.text((lx, ly), 'ASTRALYS', font=f_logo, fill=(255, 255, 255, 255))
-m = np.asarray(grad)[..., 3].astype(np.float32) / 255
-bbx = gd.textbbox((lx, ly), 'ASTRALYS', font=f_logo)
-t = np.clip((np.mgrid[0:H, 0:W][0] - bbx[1]) / max(1, bbx[3] - bbx[1]), 0, 1)[..., None]
-haut, bas = np.array([255, 236, 160]), np.array([232, 150, 50])
-cg = haut * (1 - t) + bas * t
-logo = np.dstack([cg, m * 255]).astype(np.uint8)
-calque.alpha_composite(Image.fromarray(logo, 'RGBA'))
-for ox, oy in ((-3, 0), (3, 0), (0, -3), (0, 4)):
-    dr.text((lx + 12 + ox, bbx[3] + 18 + oy), 'LE ROYAUME DES TROIS MONDES', font=f_sous, fill=(46, 24, 70, 255))
-dr.text((lx + 12, bbx[3] + 18), 'LE ROYAUME DES TROIS MONDES', font=f_sous, fill=(214, 196, 255, 255))
+# Le logo ASTRALYS est grave sur le cartouche du cadre en bois (mod/outils_cadre.py), plus sur la carte.
 
 img.alpha_composite(calque)
 img = img.convert('RGB').resize((1672, 941), Image.LANCZOS)

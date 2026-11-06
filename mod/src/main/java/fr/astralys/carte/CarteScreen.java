@@ -195,8 +195,6 @@ public class CarteScreen extends Screen {
         g.blit(LUEUR, ox - m0, oy - m0, iw + 2 * m0, ih + 2 * m0, 0, 0, W + 2 * M, H + 2 * M, W + 2 * M, H + 2 * M);
         RenderSystem.defaultBlendFunc();
         teinte(0xFFFFFF, a);
-        g.drawCenteredString(font, Component.literal("✦ Les Mondes ✦").withStyle(s -> s.withColor(0xF0C576).withBold(true)),
-                width / 2, Math.round(oy - m0 + 40 * echelle) - font.lineHeight / 2 + 1, 0xFFFFFF);
 
         Monde m = sous(mx, my);
         if (m != survole && m != null) son(SoundEvents.AMETHYST_BLOCK_CHIME, 1.3f + rnd.nextFloat() * .3f);

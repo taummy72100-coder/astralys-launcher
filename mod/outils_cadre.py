@@ -5,7 +5,8 @@ Tout est eclaire par une meme lumiere venant d'en haut a gauche (cartes de haute
 """
 import math, random, sys
 import numpy as np
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
+import os
 from scipy import ndimage
 from scipy.interpolate import PchipInterpolator
 
@@ -270,6 +271,34 @@ def medaillon(c, x, y, r, gemme):
     c.briller(x * S, y * S, r * S * .9, gemme)
 
 
+POLICE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'fonts', 'cinzel-decorative-latin-900-normal.ttf')
+
+
+def titre(c, cx, cy, texte, haut_max, larg_max):
+    """Logo grave sur le cartouche : lettres dorees en degrade, contour violet sombre, ombre et halo."""
+    taille = 200
+    while True:
+        f = ImageFont.truetype(POLICE, taille * S)
+        x0, y0, x1, y1 = f.getbbox(texte)
+        if (y1 - y0) <= haut_max * S and (x1 - x0) <= larg_max * S: break
+        taille -= 1
+    w, h = x1 - x0 + 40 * S, y1 - y0 + 40 * S
+    m = Image.new('L', (w, h)); ImageDraw.Draw(m).text((20 * S - x0, 20 * S - y0), texte, font=f, fill=255)
+    mk = np.array(m, np.float32) / 255
+    contour = np.clip(ndimage.maximum_filter(mk, size=int(3.5 * S)), 0, 1)
+    X, Y = int(cx * S - w / 2), int(cy * S - h / 2)
+    c.poser(X + 2 * S, Y + 3 * S, np.zeros((h, w, 3), np.float32), ndimage.gaussian_filter(contour, 1.5 * S) * .75)
+    c.poser(X, Y, np.broadcast_to(np.array([46, 24, 70], np.float32), (h, w, 3)).copy(), contour)
+    t = np.clip((np.arange(h, dtype=np.float32)[:, None] - 20 * S) / (y1 - y0), 0, 1)[..., None]
+    alb = np.array([255, 240, 170], np.float32) * (1 - t) + np.array([226, 140, 44], np.float32) * t
+    hz = ndimage.gaussian_filter(mk, .9 * S) * 3 * S        # lettres bombees : reflet sur l'arete haute
+    rgb = eclairer(hz, np.broadcast_to(alb, (h, w, 3)).copy(), .8, 18, .7)
+    c.poser(X, Y, rgb, mk)
+    yy, xx = np.nonzero(mk > .5)
+    for k in range(0, len(xx), max(1, len(xx) // 40)):
+        c.briller(X + xx[k], Y + yy[k], 5 * S, (255, 200, 110))
+
+
 def plaque(c, cx, cy, lw, lh):
     """Cartouche en bois sculpte (le titre est ecrit en jeu)."""
     w2, h2 = int(lw * S), int(lh * S)
@@ -333,6 +362,7 @@ def main(dossier, carte=None):
             px, py = cx + side * 205 + math.cos(a) * rnd.uniform(0, 26), cy + math.sin(a) * rnd.uniform(0, 26)
             feuille(c, px, py, a, rnd.uniform(24, 34))
     plaque(c, cx, cy, 400, 58)
+    titre(c, cx, cy + 1, 'ASTRALYS', 36, 330)
     for side in (-1, 1):
         fleur(c, cx + side * 212, cy, 13, (250, 160, 205))
     # medaillons dores dans les coins
