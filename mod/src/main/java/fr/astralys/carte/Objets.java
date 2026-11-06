@@ -131,7 +131,7 @@ final class Objets {
 
         // ---------------------------------------------------------------- coffres et cles
         for (int r = 0; r < Coffres.RARETES.length; r++) { int rr = r; objet("coffre_" + Coffres.RARETES[r], () -> new Coffres.CoffreItem(rr)); }
-        for (int r = 1; r <= 3; r++) { int rr = r; objet("cle_" + Coffres.RARETES[r], () -> new Coffres.Cle(rr)); }
+        for (int r = 0; r < Coffres.RARETES.length; r++) { int rr = r; objet("cle_" + Coffres.RARETES[r], () -> new Coffres.Cle(rr)); }
     }
 
     // ------------------------------------------------------------------ blocs

@@ -195,8 +195,9 @@ final class Bosses {
             ServerPlayer p = s.getPlayerList().getPlayer(u);
             if (p == null || d < total * .02f) return;   // 2 % des PV minimum pour etre recompense
             donner(p, Metiers.pile("astralyscarte:" + type.materiau() + "*" + (1 + rnd.nextInt(3))));
-            donner(p, Metiers.pile(u.equals(meilleur) ? "astralyscarte:coffre_legendaire" : "astralyscarte:coffre_epique"));
-            if (rnd.nextFloat() < .1f) donner(p, Metiers.pile("astralyscarte:coffre_special"));
+            String r = u.equals(meilleur) ? "legendaire" : "epique";
+            donner(p, Metiers.pile("astralyscarte:coffre_" + r)); donner(p, Metiers.pile("astralyscarte:cle_" + r));
+            if (rnd.nextFloat() < .1f) { donner(p, Metiers.pile("astralyscarte:coffre_special")); donner(p, Metiers.pile("astralyscarte:cle_special")); }
             long argent = 2000 + (long) (8000 * d / total);
             Economie.crediter(p, argent, "boss " + type.nom());
             p.sendSystemMessage(Component.literal("★ Récompense du boss : matériaux, coffre" + (u.equals(meilleur) ? " légendaire (meilleur combattant !)" : " épique") + " et " + Economie.format(argent) + " $").withStyle(ChatFormatting.LIGHT_PURPLE));

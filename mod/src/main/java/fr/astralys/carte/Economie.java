@@ -59,7 +59,7 @@ final class Economie {
     private static final ZoneId PARIS = ZoneId.of("Europe/Paris");
 
     // ------------------------------------------------------------------ boutique
-    static final String[] CATEGORIES = {"Minerais", "Agriculture", "Butin", "Pierres", "Bois", "Couleurs", "Nether & End", "Create", "Alchimie"};
+    static final String[] CATEGORIES = {"Minerais", "Agriculture", "Butin", "Pierres", "Bois", "Couleurs", "Nether & End", "Create", "Alchimie", "Clés"};
 
     record Article(String item, int categorie, long base) {}
 
@@ -149,6 +149,9 @@ final class Economie {
                 "create:fluid_pipe", 12, "create:fluid_tank", 40, "create:mechanical_pump", 90, "create:electron_tube", 30, "create:precision_mechanism", 400,
                 "create:wrench", 40, "create:goggles", 60);
         // ---- alchimie
+        // ---- cles des coffres (chaque coffre a la sienne)
+        article(9, "astralyscarte:cle_commun", 1500, "astralyscarte:cle_rare", 6000, "astralyscarte:cle_epique", 20000,
+                "astralyscarte:cle_legendaire", 60000, "astralyscarte:cle_special", 200000);
         article(8, "minecraft:glass_bottle", 3, "minecraft:fermented_spider_eye", 12, "minecraft:blaze_powder", 16, "minecraft:glistering_melon_slice", 30,
                 "minecraft:rabbit_foot", 40, "minecraft:pufferfish", 15, "minecraft:phantom_membrane", 25, "minecraft:experience_bottle", 50,
                 "minecraft:brewing_stand", 120, "minecraft:cauldron", 60, "minecraft:dragon_breath", 200, "minecraft:enchanting_table", 400, "minecraft:book", 10,

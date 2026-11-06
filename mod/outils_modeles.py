@@ -754,32 +754,59 @@ RARETES = {'commun': ((126, 86, 50), (146, 146, 156), None), 'rare': ((70, 52, 4
 
 
 def coffre(r):
+    """Coffre en deux parties : le corps et le couvercle (charniere a l'arriere, y=9 z=14) pour l'animation d'ouverture."""
     def f():
         bois_c, metal_c, gem = RARETES[r]
         mm = dore(True) if r == 'legendaire' else metal(metal_c, rivets=True)
         def serrure(a):
-            P(a, 1, 1, (20, 16, 20)); P(a, 1, 2, (20, 16, 20)); P(a, 0, 0, clair(metal_c, 1.4))
-        l = [C((1, 1, 2), (14, 8, 12), bois(bois_c, 'h', 3)), C((1, 9, 2), (14, 5, 12), bois(clair(bois_c, 1.1), 'h', 3)),
-             C((1.5, 14, 2.5), (13, 1, 11), bois(clair(bois_c, 1.2), 'v', 4)),
-             C((3, 0.5, 1.5), (2, 14, 13), mm), C((11, 0.5, 1.5), (2, 14, 13), mm),
-             C((0.5, 8.5, 1.5), (15, 1, 13), mm),
-             C((6.5, 6, 1), (3, 5, 1), dore(), deco={'avant': serrure})]
+            P(a, 1, 0, (20, 16, 20)); P(a, 1, 1, (20, 16, 20)); P(a, 0, 0, clair(metal_c, 1.4)); P(a, 2, 2, clair(metal_c, 1.4))
+        corps = [C((1, 1, 2), (14, 8, 12), bois(bois_c, 'h', 3)),
+                 C((3, 0.5, 1.5), (2, 9, 13), mm), C((11, 0.5, 1.5), (2, 9, 13), mm), C((0.5, 7.5, 1.5), (15, 1, 13), mm),
+                 C((6.5, 5.5, 1), (3, 3, 1), dore(), deco={'avant': serrure})]
+        couv = [C((1, 9, 2), (14, 5, 12), bois(clair(bois_c, 1.1), 'h', 3)), C((1.5, 14, 2.5), (13, 1, 11), bois(clair(bois_c, 1.2), 'v', 4)),
+                C((3, 9.5, 1.5), (2, 5, 13), mm), C((11, 9.5, 1.5), (2, 5, 13), mm), C((6.5, 9.5, 1), (3, 2, 1), dore())]
         for x in (1, 13):
-            for z in (2.5, 11.5): l.append(C((x, 0, z), (2, 1, 2), mm))   # pieds
+            for z in (2.5, 11.5): corps.append(C((x, 0, z), (2, 1, 2), mm))   # pieds
         if gem:
-            l.append(C((7, 15, 7), (2, 1, 2), gemme(gem), lum=True))
-            l.append(C((7.5, 10.5, 0.6), (1, 1, 1), gemme(gem), lum=True))
+            couv.append(C((7, 15, 7), (2, 1, 2), gemme(gem), lum=True))
+            couv.append(C((7.5, 10.5, 0.6), (1, 1, 1), gemme(gem), lum=True))
         if r in ('legendaire', 'special'):
             for x in (0.5, 13.5):
-                for z in (1.5, 12.5): l.append(C((x, 0.5, z), (2, 2, 2), dore()))   # coins
-            for x in (0.5, 13.5):
-                for z in (1.5, 12.5): l.append(C((x, 12.5, z), (2, 2, 2), dore()))
+                for z in (1.5, 12.5): corps.append(C((x, 0.5, z), (2, 2, 2), dore())); couv.append(C((x, 12.5, z), (2, 2, 2), dore()))
         if r == 'legendaire':
-            l += [C((5, 15, 6), (6, 1, 4), dore()), C((6, 16, 7), (4, 1, 2), dore()), C((7.5, 17, 7.5), (1, 1, 1), gemme(gem), lum=True)]
+            couv += [C((5, 15, 6), (6, 1, 4), dore()), C((6, 16, 7), (4, 1, 2), dore()), C((7.5, 17, 7.5), (1, 1, 1), gemme(gem), lum=True)]
         if r == 'special':
-            l += [C((4, 15, 5), (2, 4, 2), gemme(gem), lum=True), C((9, 15, 8), (2, 5, 2), gemme(gem), lum=True), C((6.5, 15, 9.5), (1, 3, 1), gemme((255, 220, 250)), lum=True),
-                  C((10.5, 15, 4.5), (1, 2, 1), gemme(gem), lum=True)]
-        return l, None
+            couv += [C((4, 15, 5), (2, 4, 2), gemme(gem), lum=True), C((9, 15, 8), (2, 5, 2), gemme(gem), lum=True), C((6.5, 15, 9.5), (1, 3, 1), gemme((255, 220, 250)), lum=True),
+                     C((10.5, 15, 4.5), (1, 2, 1), gemme(gem), lum=True)]
+        for c in couv: c.couvercle = True
+        return corps + couv, None
+    return f
+
+
+CLE = {'thirdperson_righthand': {'rotation': [90, 90, 0], 'translation': [0, 0, 2], 'scale': [.55, .55, .55]},
+       'thirdperson_lefthand': {'rotation': [90, 90, 0], 'translation': [0, 0, 2], 'scale': [.55, .55, .55]},
+       'firstperson_righthand': {'rotation': [0, -60, 20], 'translation': [1.13, 2, 1.13], 'scale': [.5, .5, .5]},
+       'firstperson_lefthand': {'rotation': [0, -60, 20], 'translation': [1.13, 2, 1.13], 'scale': [.5, .5, .5]},
+       'gui': {'rotation': [15, -25, -40], 'translation': [0, 0, 0], 'scale': [.95, .95, .95]},
+       'ground': {'rotation': [0, 0, 0], 'translation': [0, 2, 0], 'scale': [.5, .5, .5]},
+       'fixed': {'rotation': [0, 0, -45], 'translation': [0, 0, 0], 'scale': [.9, .9, .9]}}
+
+
+def cle(r):
+    """Cle de coffre : anneau ouvrage avec gemme, tige et panneton, aux couleurs de la rarete."""
+    def f():
+        _, metal_c, gem = RARETES[r]
+        mm = dore(True) if r == 'legendaire' else metal(clair(metal_c, 1.1))
+        g = gem or (200, 210, 225)
+        l = [C((7.5, 1, 7.5), (1, 8, 1), mm), C((7, 8, 7), (2, 1, 2), dore() if r != 'legendaire' else metal((250, 230, 150))),
+             C((8.5, 1, 7.5), (2, 1, 1), mm), C((8.5, 3, 7.5), (1, 1, 1), mm), C((8.5, 5, 7.5), (2, 1, 1), mm),   # panneton
+             C((5.5, 9, 7.5), (5, 1, 1), mm), C((5.5, 14, 7.5), (5, 1, 1), mm), C((5, 10, 7.5), (1, 4, 1), mm), C((10, 10, 7.5), (1, 4, 1), mm),   # anneau
+             C((7, 11, 7), (2, 2, 2), gemme(g), lum=True), C((7.5, 15, 7.5), (1, 1, 1), gemme(g), lum=True)]
+        if r in ('epique', 'legendaire', 'special'):
+            l += [C((4, 11, 7.5), (1, 2, 1), mm), C((11, 11, 7.5), (1, 2, 1), mm)]   # ailettes
+        if r == 'special':
+            l += [C((7.5, 16, 7.5), (1, 1, 1), gemme((255, 230, 250)), lum=True), C((3, 11.5, 7.5), (1, 1, 1), gemme(g), lum=True), C((12, 11.5, 7.5), (1, 1, 1), gemme(g), lum=True)]
+        return l, CLE
     return f
 
 
@@ -805,6 +832,7 @@ OBJETS = {'baton_foudre': baton_foudre, 'sceptre_givre': sceptre_givre, 'baguett
           'elixir_celerite': elixir((90, 190, 255)), 'elixir_mineur': elixir((240, 190, 40)), 'elixir_phenix': elixir((255, 110, 30)),
           'elixir_vie': elixir((240, 80, 180))}
 OBJETS.update({'coffre_' + r: coffre(r) for r in RARETES})
+OBJETS.update({'cle_' + r: cle(r) for r in RARETES})
 
 
 # ====================================================================== principal
@@ -841,6 +869,10 @@ if __name__ == '__main__':
         m, img = modele_json(cubes, f'astralyscarte:item/3d/{nom}', 64, parent=None if disp else 'minecraft:block/block', display=disp)
         Image.fromarray(img, 'RGBA').save(f'{A}/textures/item/3d/{nom}.png')
         json.dump(m, open(f'{A}/models/item/{nom}.json', 'w'), indent=1)
+        if nom.startswith('coffre_'):   # corps et couvercle a part, pour l'animation d'ouverture
+            for part, garder in (('corps', False), ('couvercle', True)):
+                els = [e for e, c in zip(m['elements'], cubes) if getattr(c, 'couvercle', False) == garder]
+                json.dump({'textures': m['textures'], 'elements': els}, open(f'{A}/models/item/{nom}_{part}.json', 'w'), indent=1)
         mb = json.loads(json.dumps(m)); mb['textures'] = {'t': nom, 'particle': nom}
         json.dump(mb, open(f'{bb}/objets/{nom}.json', 'w'), indent=1)
         Image.fromarray(img, 'RGBA').save(f'{bb}/objets/{nom}.png')

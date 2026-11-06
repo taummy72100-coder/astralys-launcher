@@ -107,7 +107,19 @@ final class Coffres {
         @Override
         public InteractionResultHolder<ItemStack> use(Level l, Player j, InteractionHand main) {
             ItemStack s = j.getItemInHand(main);
-            if (j instanceof ServerPlayer sp) { ouvrir(sp, rarete); s.shrink(1); }
+            if (j instanceof ServerPlayer sp) {
+                // chaque coffre s'ouvre avec SA cle (boutique, onglet Cles), consommee a l'ouverture
+                ItemStack cle = ItemStack.EMPTY;
+                for (ItemStack x : sp.getInventory().items) if (x.getItem() instanceof Cle c && c.rarete == rarete) { cle = x; break; }
+                if (cle.isEmpty()) {
+                    sp.displayClientMessage(Component.literal("🔒 Il faut une clé " + NOMS[rarete].toLowerCase(java.util.Locale.FRANCE) + " pour ouvrir ce coffre (boutique → Clés)")
+                            .withStyle(st -> st.withColor(COULEURS[rarete])), true);
+                    sp.serverLevel().playSound(null, sp.blockPosition(), SoundEvents.CHEST_LOCKED, SoundSource.PLAYERS, 1, 1);
+                    return InteractionResultHolder.fail(s);
+                }
+                cle.shrink(1); s.shrink(1);
+                ouvrir(sp, rarete);
+            }
             return InteractionResultHolder.sidedSuccess(s, l.isClientSide());
         }
     }
@@ -130,7 +142,7 @@ final class Coffres {
             if (!(j instanceof ServerPlayer sp)) return InteractionResult.SUCCESS;
             ItemStack s = j.getItemInHand(main);
             if (!(s.getItem() instanceof Cle c)) {
-                sp.sendSystemMessage(Component.literal("✦ Il faut une clé (rare, épique ou légendaire) pour ouvrir la caisse astrale.").withStyle(ChatFormatting.LIGHT_PURPLE));
+                sp.sendSystemMessage(Component.literal("✦ Il faut une clé (commune à spéciale) pour ouvrir la caisse astrale.").withStyle(ChatFormatting.LIGHT_PURPLE));
                 return InteractionResult.CONSUME;
             }
             s.shrink(1);

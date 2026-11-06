@@ -45,6 +45,10 @@ class Client {
             for (int i = 0; i < PnjRendu.COUCHES.length; i++) { String skin = PnjEntity.SKINS[i]; e.registerLayerDefinition(PnjRendu.COUCHES[i], () -> PnjModeles.couche(skin)); }
         });
         MinecraftForge.EVENT_BUS.addListener(Client::bulle);
+        // corps et couvercle des coffres, a part : l'ecran d'ouverture anime le couvercle
+        FMLJavaModLoadingContext.get().getModEventBus().addListener((net.minecraftforge.client.event.ModelEvent.RegisterAdditional e) -> {
+            for (String r : Coffres.RARETES) for (String p : new String[] {"corps", "couvercle"}) e.register(CoffreScreen.modele(r, p));
+        });
         MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.client.event.RenderPlayerEvent.Pre e) -> {
             if (e.getEntity().isInvisible() && Objets.ensemble(e.getEntity()) == Objets.Matiere.OMBRE) e.setCanceled(true); });
         ClientCosm.init(FMLJavaModLoadingContext.get().getModEventBus());

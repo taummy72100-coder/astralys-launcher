@@ -16,8 +16,8 @@ public class ShopScreen extends EcranAstralys {
     private static final int OR = 0xF0B429, COLS = 6, LIGNES = 4;
     private static final ItemStack[] ICONES = {new ItemStack(Items.DIAMOND), new ItemStack(Items.WHEAT), new ItemStack(Items.BONE),
             new ItemStack(Items.STONE_BRICKS), new ItemStack(Items.OAK_LOG), new ItemStack(Items.MAGENTA_WOOL), new ItemStack(Items.NETHERRACK),
-            new ItemStack(Items.CLOCK), new ItemStack(Items.BREWING_STAND)};
-    private static final int PAS = 29;   // ecart entre les onglets de categorie
+            new ItemStack(Items.CLOCK), new ItemStack(Items.BREWING_STAND), new ItemStack(Items.TRIPWIRE_HOOK)};
+    private static final int PAS = 27;   // ecart entre les onglets de categorie
     private int categorie, defile;
     private Economie.Ligne survol;
 

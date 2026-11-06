@@ -54,5 +54,7 @@
   "item.astralyscarte.coffre_legendaire": "Legendary Chest",
   "item.astralyscarte.cle_legendaire": "Legendary Key",
   "item.astralyscarte.coffre_special": "Special Chest",
-  "itemGroup.astralys": "Astralys"
+  "itemGroup.astralys": "Astralys",
+  "item.astralyscarte.cle_commun": "Common Key",
+  "item.astralyscarte.cle_special": "Special Key"
 }
