@@ -88,13 +88,13 @@ public class CoffreScreen extends EcranAstralys {
         // la cle : glisse depuis la gauche jusqu'a la serrure, tourne d'un quart de tour, puis s'efface
         if (s < TREMBLE) {
             float arrivee = lisse(s / CLE), tour = lisse((s - CLE) / (TOUR - CLE)), fondu = 1 - lisse((s - TOUR) / .5f);
-            float kx = 90 + (cx - 34 - 90) * arrivee, ky = cy - 6 + (float) Math.sin(s * 9) * 3 * (1 - arrivee);
+            float kx = 90 + (cx - 58 - 90) * arrivee, ky = cy - 6 + (float) Math.sin(s * 9) * 3 * (1 - arrivee);
             ItemStack cle = Metiers.pile("astralyscarte:cle_" + Coffres.RARETES[r.rarete()]);
             g.pose().pushPose();
             g.pose().translate(kx, ky, 300);
             g.pose().mulPose(Axis.ZP.rotationDegrees(-45 + 90 * tour));
             g.pose().scale(fondu, fondu, 1);
-            objet(g, cle, -16, -16, 2);
+            objet(g, cle, -28, -28, 3.5f);
             g.pose().popPose();
         }
         String txt = s < TOUR ? "La clé tourne dans la serrure…" : s < TREMBLE ? "Le coffre s'éveille…" : "Le coffre s'ouvre !";
