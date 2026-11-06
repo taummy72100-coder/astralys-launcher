@@ -56,12 +56,37 @@ final class Captures {
         if (e.phase != TickEvent.Phase.END) return;
         Minecraft mc = Minecraft.getInstance();
         if (i < 0) { if (mc.screen instanceof TitleScreen && ++attente > 100) { i = 0; attente = 0; } return; }
-        if (i >= ETAPES.size()) { mc.stop(); return; }
+        if (i >= ETAPES.size()) { monde(mc); return; }
         Etape et = ETAPES.get(i);
         if (attente == 0) { et.donnees.run(); mc.setScreen(et.ecran.get()); }
         // la souris sur un element pour voir les survols
         if (++attente == 60) Screenshot.grab(mc.gameDirectory, "astralys_" + et.nom + ".png", mc.getMainRenderTarget(), c -> {});
         if (attente > 70) { i++; attente = 0; }
+    }
+
+    // Ensuite : un monde plat de test pour capturer l'inventaire (normal, puis souris sur le bouton Metiers).
+    private static int phase, attenteMonde;
+
+    private static void monde(Minecraft mc) {
+        if (phase == 0) {
+            phase = 1;
+            var reglages = new net.minecraft.world.level.LevelSettings("captures", net.minecraft.world.level.GameType.SURVIVAL, false,
+                    net.minecraft.world.Difficulty.PEACEFUL, true, new net.minecraft.world.level.GameRules(), net.minecraft.world.level.WorldDataConfiguration.DEFAULT);
+            mc.createWorldOpenFlows().createFreshLevel("captures", reglages, new net.minecraft.world.level.levelgen.WorldOptions(0L, false, false),
+                    ra -> ra.registryOrThrow(net.minecraft.core.registries.Registries.WORLD_PRESET)
+                            .getHolderOrThrow(net.minecraft.world.level.levelgen.presets.WorldPresets.FLAT).value().createWorldDimensions());
+            return;
+        }
+        if (mc.player == null || mc.level == null) { if (++attenteMonde > 6000) mc.stop(); return; }
+        attenteMonde++;
+        if (phase == 1 && attenteMonde > 200) { phase = 2; attenteMonde = 0; mc.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(mc.player)); }
+        if (phase == 2 && attenteMonde == 60) Screenshot.grab(mc.gameDirectory, "astralys_inventaire.png", mc.getMainRenderTarget(), c -> {});
+        if (phase == 2 && attenteMonde == 70 && mc.screen instanceof net.minecraft.client.gui.screens.inventory.InventoryScreen s) {
+            double f = mc.getWindow().getGuiScale();
+            org.lwjgl.glfw.GLFW.glfwSetCursorPos(mc.getWindow().getWindow(), (s.getGuiLeft() + 176 + 40) * f, (s.getGuiTop() + 20) * f);
+        }
+        if (phase == 2 && attenteMonde == 110) Screenshot.grab(mc.gameDirectory, "astralys_inventaire_survol.png", mc.getMainRenderTarget(), c -> {});
+        if (phase == 2 && attenteMonde > 130) mc.stop();
     }
 
     private Captures() {}
