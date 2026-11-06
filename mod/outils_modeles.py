@@ -637,11 +637,11 @@ def modele_json(cubes, tex, larg=64, parent=None, display=None):
 
 
 # axes des cubes d'objet : x, y (haut), z ; « avant » = face nord
-TENU = {'thirdperson_righthand': {'rotation': [0, 90, 0], 'translation': [0, 3.5, 0.5], 'scale': [.85, .85, .85]},
-        'thirdperson_lefthand': {'rotation': [0, 90, 0], 'translation': [0, 3.5, 0.5], 'scale': [.85, .85, .85]},
-        'firstperson_righthand': {'rotation': [0, -60, 20], 'translation': [1, 3, -1], 'scale': [.6, .6, .6]},
-        'firstperson_lefthand': {'rotation': [0, -60, 20], 'translation': [1, 3, -1], 'scale': [.6, .6, .6]},
-        'gui': {'rotation': [25, -35, -40], 'translation': [0, 0, 0], 'scale': [.52, .52, .52]},
+TENU = {'thirdperson_righthand': {'rotation': [180, 90, 0], 'translation': [0, 4, 0.5], 'scale': [.85, .85, .85]},
+        'thirdperson_lefthand': {'rotation': [180, 90, 0], 'translation': [0, 4, 0.5], 'scale': [.85, .85, .85]},
+        'firstperson_righthand': {'rotation': [0, -60, 20], 'translation': [1.13, 1.5, 1.13], 'scale': [.42, .42, .42]},
+        'firstperson_lefthand': {'rotation': [0, -60, 20], 'translation': [1.13, 1.5, 1.13], 'scale': [.42, .42, .42]},
+        'gui': {'rotation': [25, -35, -40], 'translation': [0, 0, 0], 'scale': [.62, .62, .62]},
         'ground': {'rotation': [0, 0, 0], 'translation': [0, 2, 0], 'scale': [.4, .4, .4]},
         'fixed': {'rotation': [0, 0, -45], 'translation': [0, 0, 0], 'scale': [.6, .6, .6]},
         'head': {'rotation': [0, 0, 0], 'translation': [0, 8, 0], 'scale': [.8, .8, .8]}}
