@@ -41,6 +41,9 @@ class Client {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(Client::packInterface);
         FMLJavaModLoadingContext.get().getModEventBus().addListener((net.minecraftforge.client.event.EntityRenderersEvent.RegisterRenderers e) ->
                 e.registerEntityRenderer(Objets.PNJ.get(), PnjRendu::new));
+        FMLJavaModLoadingContext.get().getModEventBus().addListener((net.minecraftforge.client.event.EntityRenderersEvent.RegisterLayerDefinitions e) -> {
+            for (int i = 0; i < PnjRendu.COUCHES.length; i++) { String skin = PnjEntity.SKINS[i]; e.registerLayerDefinition(PnjRendu.COUCHES[i], () -> PnjModeles.couche(skin)); }
+        });
         MinecraftForge.EVENT_BUS.addListener(Client::bulle);
         MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.client.event.RenderPlayerEvent.Pre e) -> {
             if (e.getEntity().isInvisible() && Objets.ensemble(e.getEntity()) == Objets.Matiere.OMBRE) e.setCanceled(true); });

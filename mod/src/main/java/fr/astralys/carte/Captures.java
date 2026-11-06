@@ -74,6 +74,7 @@ final class Captures {
 
     // Ensuite : un monde plat de test pour capturer l'inventaire (normal, puis souris sur le bouton Metiers).
     private static int phase, attenteMonde;
+    private static net.minecraft.world.phys.Vec3 origine = net.minecraft.world.phys.Vec3.ZERO;
 
     private static void monde(Minecraft mc) {
         if (phase == 0) {
@@ -95,8 +96,12 @@ final class Captures {
         }
         if (phase == 2 && attenteMonde == 110) Screenshot.grab(mc.gameDirectory, "astralys_inventaire_survol.png", mc.getMainRenderTarget(), c -> {});
         // barre d'action seule, puis inventaire creatif
-        if (phase == 2 && attenteMonde == 140) { mc.setScreen(null); var objets = Objets.ITEMS.getEntries().stream().toList();
-            for (int k = 0; k < Math.min(36, objets.size()); k++) mc.player.getInventory().items.set(k, new net.minecraft.world.item.ItemStack(objets.get(k).get())); }
+        if (phase == 2 && attenteMonde == 140) { mc.setScreen(null);
+            // barre : les objets en 3D d'abord, puis coffres, elixirs et le reste dans l'inventaire
+            String[] vitrine = {"baton_foudre", "sceptre_givre", "baguette_soins", "baton_braise", "orbe_transfert", "marteau_forgeron", "hache_titan", "epee_runique", "elixir_vie",
+                    "coffre_commun", "coffre_rare", "coffre_epique", "coffre_legendaire", "coffre_special", "caisse_astrale", "elixir_force", "elixir_titan", "elixir_ombre",
+                    "elixir_celerite", "elixir_mineur", "elixir_phenix", "cle_rare", "cle_epique", "cle_legendaire", "bloc_fantome", "cristal_astral", "grimoire_astralys"};
+            for (int k = 0; k < vitrine.length; k++) mc.player.getInventory().items.set(k, Metiers.pile("astralyscarte:" + vitrine[k])); }
         if (phase == 2 && attenteMonde == 190) Screenshot.grab(mc.gameDirectory, "astralys_barre.png", mc.getMainRenderTarget(), c -> {});
         if (phase == 2 && attenteMonde == 200) mc.player.connection.sendCommand("gamemode creative");
         if (phase == 2 && attenteMonde == 240) mc.setScreen(new net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen(mc.player, mc.player.connection.enabledFeatures(), true));
@@ -104,7 +109,7 @@ final class Captures {
         // les 5 PNJ alignes devant le joueur
         if (phase == 2 && attenteMonde == 320) {
             mc.setScreen(null);
-            var srv = mc.getSingleplayerServer(); var pos = mc.player.position();
+            var srv = mc.getSingleplayerServer(); var pos = mc.player.position(); origine = pos;
             srv.execute(() -> {
                 var lvl = srv.overworld();
                 srv.getPlayerList().getPlayers().get(0).connection.teleport(pos.x, pos.y, pos.z, 0, 8);
@@ -135,7 +140,17 @@ final class Captures {
             mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
         }
         if (phase == 2 && attenteMonde == 830) Screenshot.grab(mc.gameDirectory, "astralys_cosmetiques_porte.png", mc.getMainRenderTarget(), c -> {});
-        if (phase == 2 && attenteMonde > 850) mc.stop();
+        // gros plans des PNJ (3 par 3), a la premiere personne
+        if (phase == 2 && attenteMonde == 860) mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+        for (int g = 0; g < 3; g++) {
+            if (phase == 2 && attenteMonde == 870 + g * 50) {
+                double x = origine.x + (g * 3 - 3.5) * 1.6;
+                var srv = mc.getSingleplayerServer();
+                srv.execute(() -> srv.getPlayerList().getPlayers().get(0).connection.teleport(x, origine.y, origine.z + 5.6, 0, 12));
+            }
+            if (phase == 2 && attenteMonde == 905 + g * 50) Screenshot.grab(mc.gameDirectory, "astralys_pnj_proche" + g + ".png", mc.getMainRenderTarget(), c -> {});
+        }
+        if (phase == 2 && attenteMonde > 1030) mc.stop();
     }
 
     private Captures() {}

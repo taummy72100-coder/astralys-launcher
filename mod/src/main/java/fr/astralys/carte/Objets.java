@@ -140,7 +140,7 @@ final class Objets {
     static final RegistryObject<Block> CRISTAL = bloc("cristal_astral", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE)
             .strength(1f).sound(SoundType.AMETHYST).lightLevel(s -> 15)), Rarity.UNCOMMON);
     static final RegistryObject<Block> CAISSE = bloc("caisse_astrale", () -> new Coffres.Caisse(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE)
-            .strength(-1, 3600000).sound(SoundType.WOOD).noLootTable().lightLevel(s -> 7)), Rarity.EPIC);
+            .strength(-1, 3600000).sound(SoundType.WOOD).noLootTable().noOcclusion().lightLevel(s -> 7)), Rarity.EPIC);
 
     private static RegistryObject<Block> bloc(String id, Supplier<Block> f, Rarity r) {
         RegistryObject<Block> b = BLOCS.register(id, f);
