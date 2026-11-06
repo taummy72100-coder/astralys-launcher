@@ -15,7 +15,9 @@ import net.minecraftforge.registries.ForgeRegistries;
 public class ShopScreen extends EcranAstralys {
     private static final int OR = 0xF0B429, COLS = 6, LIGNES = 4;
     private static final ItemStack[] ICONES = {new ItemStack(Items.DIAMOND), new ItemStack(Items.WHEAT), new ItemStack(Items.BONE),
-            new ItemStack(Items.BRICKS), new ItemStack(Items.CLOCK), new ItemStack(Items.BREWING_STAND)};
+            new ItemStack(Items.STONE_BRICKS), new ItemStack(Items.OAK_LOG), new ItemStack(Items.MAGENTA_WOOL), new ItemStack(Items.NETHERRACK),
+            new ItemStack(Items.CLOCK), new ItemStack(Items.BREWING_STAND)};
+    private static final int PAS = 29;   // ecart entre les onglets de categorie
     private int categorie, defile;
     private Economie.Ligne survol;
 
@@ -37,18 +39,14 @@ public class ShopScreen extends EcranAstralys {
         texte(g, "✦ " + Economie.format(ClientEco.solde) + " $", 596, 40, 1.4f, OR, 1, true);
         // categories
         for (int i = 0; i < Economie.CATEGORIES.length; i++) {
-            float y = 76 + i * 34;
-            boolean sel = i == categorie, s = dans(30, y, 152, y + 28);
-            rect(g, 30, y, 152, y + 28, argb(sel ? 0x2E2A1E : s ? 0x2A2A31 : 0x222228, a));
-            if (sel) rect(g, 30, y, 33, y + 28, argb(OR, a));
-            objet(g, ICONES[i], 40, y + 6, 1);
-            texte(g, Economie.CATEGORIES[i].toUpperCase(Locale.FRANCE), 62, y + 10, .9f, sel ? OR : 0xE8E8EE, -1, true);
+            float y = 70 + i * PAS;
+            boolean sel = i == categorie, s = dans(30, y, 152, y + 25);
+            rect(g, 30, y, 152, y + 25, argb(sel ? 0x2E2A1E : s ? 0x2A2A31 : 0x222228, a));
+            if (sel) rect(g, 30, y, 33, y + 25, argb(OR, a));
+            objet(g, ICONES[i], 40, y + 4, 1);
+            texte(g, Economie.CATEGORIES[i].toUpperCase(Locale.FRANCE), 62, y + 9, .85f, sel ? OR : 0xE8E8EE, -1, true);
         }
-        texte(g, "Clic gauche : acheter 1", 30, 286, .7f, 0x9A9AA4, -1, false);
-        texte(g, "Maj + clic : acheter 16", 30, 296, .7f, 0x9A9AA4, -1, false);
-        texte(g, "Clic droit : vendre 1", 30, 310, .7f, 0x9A9AA4, -1, false);
-        texte(g, "Maj + clic droit : tout vendre", 30, 320, .7f, 0x9A9AA4, -1, false);
-        texte(g, "Les prix bougent avec les achats et les ventes.", 30, 336, .6f, 0x6E6E78, -1, false);
+        texte(g, "Clic G : acheter 1  •  Maj : 16     Clic D : vendre 1  •  Maj : tout     Molette : défiler", 392, 340, .62f, 0x9A9AA4, 0, false);
         // articles
         List<Economie.Ligne> l = lignes();
         survol = null;
@@ -74,6 +72,7 @@ public class ShopScreen extends EcranAstralys {
         if (pages > LIGNES) {
             float h = 262f * LIGNES / pages, y = 72 + 262f * defile / pages;
             rect(g, 624, 72, 627, 334, argb(0x2A2A31, a));
+            texte(g, l.size() + " objets", 622, 60, .6f, 0x6E6E78, 1, false);
             rect(g, 624, y, 627, y + h, argb(OR, a));
         }
     }
@@ -91,7 +90,7 @@ public class ShopScreen extends EcranAstralys {
     @Override
     boolean clic(int b, boolean maj) {
         for (int i = 0; i < Economie.CATEGORIES.length; i++)
-            if (dans(30, 76 + i * 34, 152, 104 + i * 34)) { categorie = i; defile = 0; son(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 1.2f); return true; }
+            if (dans(30, 70 + i * PAS, 152, 95 + i * PAS)) { categorie = i; defile = 0; son(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 1.2f); return true; }
         if (survol == null || (b != 0 && b != 1)) return false;
         boolean achat = b == 0;
         Metiers.CANAL.sendToServer(new Economie.Transaction(survol.item(), achat ? (maj ? 16 : 1) : (maj ? -1 : 1), achat));

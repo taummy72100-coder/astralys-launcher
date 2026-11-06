@@ -57,7 +57,8 @@ final class Metiers {
 
     // ------------------------------------------------------------------ niveaux
     /** XP pour passer du niveau n au niveau n+1. */
-    static long cout(int n) { return 100 + 40L * n; }
+    // Tres long a monter (~1,45 million d'XP pour le niveau 100 d'un metier), mais rapide au debut.
+    static long cout(int n) { return 100 + 25L * n + 4L * n * n; }
 
     static int niveau(long xp) {
         int n = 0;

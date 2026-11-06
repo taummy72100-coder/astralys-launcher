@@ -86,7 +86,14 @@ final class Captures {
             org.lwjgl.glfw.GLFW.glfwSetCursorPos(mc.getWindow().getWindow(), (s.getGuiLeft() + 176 + 40) * f, (s.getGuiTop() + 20) * f);
         }
         if (phase == 2 && attenteMonde == 110) Screenshot.grab(mc.gameDirectory, "astralys_inventaire_survol.png", mc.getMainRenderTarget(), c -> {});
-        if (phase == 2 && attenteMonde > 130) mc.stop();
+        // barre d'action seule, puis inventaire creatif
+        if (phase == 2 && attenteMonde == 140) { mc.setScreen(null); mc.player.getInventory().items.set(0, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND_PICKAXE));
+            mc.player.getInventory().items.set(2, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.OAK_LOG, 32)); }
+        if (phase == 2 && attenteMonde == 190) Screenshot.grab(mc.gameDirectory, "astralys_barre.png", mc.getMainRenderTarget(), c -> {});
+        if (phase == 2 && attenteMonde == 200) mc.player.connection.sendCommand("gamemode creative");
+        if (phase == 2 && attenteMonde == 240) mc.setScreen(new net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen(mc.player, mc.player.connection.enabledFeatures(), true));
+        if (phase == 2 && attenteMonde == 300) Screenshot.grab(mc.gameDirectory, "astralys_creatif.png", mc.getMainRenderTarget(), c -> {});
+        if (phase == 2 && attenteMonde > 320) mc.stop();
     }
 
     private Captures() {}

@@ -59,7 +59,7 @@ final class Economie {
     private static final ZoneId PARIS = ZoneId.of("Europe/Paris");
 
     // ------------------------------------------------------------------ boutique
-    static final String[] CATEGORIES = {"Minerais", "Agriculture", "Butin", "Blocs", "Create", "Alchimie"};
+    static final String[] CATEGORIES = {"Minerais", "Agriculture", "Butin", "Pierres", "Bois", "Couleurs", "Nether & End", "Create", "Alchimie"};
 
     record Article(String item, int categorie, long base) {}
 
@@ -69,26 +69,90 @@ final class Economie {
         for (int i = 0; i < paires.length; i += 2) ARTICLES.add(new Article((String) paires[i], cat, ((Number) paires[i + 1]).longValue()));
     }
 
+    private static void serie(int cat, long prix, String modele, String... mots) {
+        for (String m : mots) ARTICLES.add(new Article("minecraft:" + modele.replace("*", m), cat, prix));
+    }
+
     static {
-        article(0, "minecraft:cobblestone", 2, "minecraft:cobbled_deepslate", 2, "minecraft:coal", 4, "minecraft:raw_copper", 4, "minecraft:copper_ingot", 6,
-                "minecraft:raw_iron", 8, "minecraft:iron_ingot", 12, "minecraft:raw_gold", 14, "minecraft:gold_ingot", 20, "minecraft:redstone", 4,
-                "minecraft:lapis_lazuli", 6, "minecraft:quartz", 5, "minecraft:amethyst_shard", 8, "minecraft:obsidian", 25, "minecraft:emerald", 90,
-                "minecraft:diamond", 120, "minecraft:netherite_scrap", 600);
-        article(1, "minecraft:wheat", 3, "minecraft:carrot", 3, "minecraft:potato", 3, "minecraft:beetroot", 3, "minecraft:sugar_cane", 3,
-                "minecraft:melon_slice", 2, "minecraft:pumpkin", 6, "minecraft:apple", 5, "minecraft:cocoa_beans", 4, "minecraft:nether_wart", 5,
-                "minecraft:egg", 3, "minecraft:leather", 8, "minecraft:white_wool", 6, "minecraft:bread", 10, "minecraft:golden_apple", 300);
+        String[] couleurs = {"white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black"};
+        // ---- minerais : bruts, lingots, pepites, minerais en bloc (normaux et deepslate), blocs de stockage
+        article(0, "minecraft:coal", 4, "minecraft:charcoal", 3, "minecraft:raw_copper", 4, "minecraft:copper_ingot", 6, "minecraft:raw_iron", 8,
+                "minecraft:iron_nugget", 2, "minecraft:iron_ingot", 12, "minecraft:raw_gold", 14, "minecraft:gold_nugget", 3, "minecraft:gold_ingot", 20,
+                "minecraft:redstone", 4, "minecraft:lapis_lazuli", 6, "minecraft:quartz", 5, "minecraft:amethyst_shard", 8, "minecraft:emerald", 90,
+                "minecraft:diamond", 120, "minecraft:netherite_scrap", 600, "minecraft:netherite_ingot", 2600, "minecraft:flint", 3);
+        String[][] minerais = {{"coal", "6"}, {"copper", "6"}, {"iron", "11"}, {"gold", "18"}, {"redstone", "10"}, {"lapis", "14"}, {"diamond", "140"}, {"emerald", "110"}};
+        for (String[] m : minerais) {
+            article(0, "minecraft:" + m[0] + "_ore", Long.parseLong(m[1]), "minecraft:deepslate_" + m[0] + "_ore", Long.parseLong(m[1]) + 2);
+        }
+        article(0, "minecraft:nether_gold_ore", 10, "minecraft:nether_quartz_ore", 8, "minecraft:ancient_debris", 650,
+                "minecraft:coal_block", 36, "minecraft:copper_block", 54, "minecraft:raw_copper_block", 36, "minecraft:iron_block", 108, "minecraft:raw_iron_block", 72,
+                "minecraft:gold_block", 180, "minecraft:raw_gold_block", 126, "minecraft:redstone_block", 36, "minecraft:lapis_block", 54,
+                "minecraft:diamond_block", 1080, "minecraft:emerald_block", 810, "minecraft:amethyst_block", 32, "minecraft:netherite_block", 23400);
+        // ---- agriculture
+        article(1, "minecraft:wheat", 3, "minecraft:wheat_seeds", 1, "minecraft:carrot", 3, "minecraft:potato", 3, "minecraft:baked_potato", 5, "minecraft:beetroot", 3,
+                "minecraft:beetroot_seeds", 1, "minecraft:sugar_cane", 3, "minecraft:sugar", 3, "minecraft:melon_slice", 2, "minecraft:melon", 16, "minecraft:pumpkin", 6,
+                "minecraft:pumpkin_seeds", 1, "minecraft:apple", 5, "minecraft:sweet_berries", 2, "minecraft:glow_berries", 4, "minecraft:cocoa_beans", 4,
+                "minecraft:bamboo", 1, "minecraft:cactus", 3, "minecraft:kelp", 1, "minecraft:dried_kelp", 2, "minecraft:egg", 3, "minecraft:milk_bucket", 20,
+                "minecraft:honeycomb", 8, "minecraft:honey_bottle", 10, "minecraft:leather", 8, "minecraft:feather", 2, "minecraft:white_wool", 6,
+                "minecraft:beef", 6, "minecraft:cooked_beef", 9, "minecraft:porkchop", 6, "minecraft:cooked_porkchop", 9, "minecraft:chicken", 4,
+                "minecraft:cooked_chicken", 7, "minecraft:mutton", 5, "minecraft:cooked_mutton", 8, "minecraft:cod", 4, "minecraft:salmon", 5,
+                "minecraft:bread", 10, "minecraft:cookie", 3, "minecraft:pumpkin_pie", 14, "minecraft:cake", 40, "minecraft:golden_carrot", 25,
+                "minecraft:golden_apple", 300, "minecraft:hay_block", 27, "minecraft:bone_meal", 2);
+        // ---- butin de monstres
         article(2, "minecraft:rotten_flesh", 2, "minecraft:bone", 4, "minecraft:string", 4, "minecraft:spider_eye", 5, "minecraft:arrow", 2,
-                "minecraft:feather", 2, "minecraft:gunpowder", 8, "minecraft:slime_ball", 10, "minecraft:phantom_membrane", 25,
-                "minecraft:blaze_rod", 30, "minecraft:ender_pearl", 40, "minecraft:ghast_tear", 60);
-        article(3, "minecraft:dirt", 2, "minecraft:sand", 2, "minecraft:gravel", 2, "minecraft:stone", 3, "minecraft:stone_bricks", 4,
-                "minecraft:glass", 4, "minecraft:terracotta", 5, "minecraft:bricks", 6, "minecraft:oak_log", 6, "minecraft:spruce_log", 6,
-                "minecraft:birch_log", 6, "minecraft:dark_oak_log", 6, "minecraft:glowstone", 18, "minecraft:quartz_block", 24, "minecraft:sea_lantern", 30);
-        article(4, "create:shaft", 6, "create:raw_zinc", 8, "create:andesite_alloy", 10, "create:zinc_ingot", 12, "create:cogwheel", 14,
-                "create:large_cogwheel", 20, "create:andesite_casing", 22, "create:brass_ingot", 24, "create:copper_casing", 30,
-                "create:belt_connector", 30, "create:brass_casing", 50, "create:water_wheel", 90, "create:mechanical_press", 180);
-        article(5, "minecraft:glass_bottle", 3, "minecraft:fermented_spider_eye", 12, "minecraft:blaze_powder", 16, "minecraft:magma_cream", 18,
-                "minecraft:golden_carrot", 25, "minecraft:glistering_melon_slice", 30, "minecraft:rabbit_foot", 40, "minecraft:experience_bottle", 50,
-                "minecraft:brewing_stand", 120, "minecraft:dragon_breath", 200);
+                "minecraft:gunpowder", 8, "minecraft:slime_ball", 10, "minecraft:phantom_membrane", 25, "minecraft:ender_pearl", 40, "minecraft:ink_sac", 4,
+                "minecraft:glow_ink_sac", 10, "minecraft:prismarine_shard", 6, "minecraft:prismarine_crystals", 8, "minecraft:rabbit_hide", 4,
+                "minecraft:scute", 60, "minecraft:nautilus_shell", 80, "minecraft:totem_of_undying", 900, "minecraft:saddle", 120, "minecraft:name_tag", 80);
+        // ---- pierres et blocs de construction
+        article(3, "minecraft:cobblestone", 2, "minecraft:stone", 3, "minecraft:smooth_stone", 4, "minecraft:stone_bricks", 4, "minecraft:mossy_stone_bricks", 5,
+                "minecraft:cracked_stone_bricks", 5, "minecraft:chiseled_stone_bricks", 6, "minecraft:mossy_cobblestone", 4, "minecraft:cobbled_deepslate", 2,
+                "minecraft:deepslate", 3, "minecraft:polished_deepslate", 4, "minecraft:deepslate_bricks", 5, "minecraft:deepslate_tiles", 5, "minecraft:tuff", 3,
+                "minecraft:calcite", 4, "minecraft:dripstone_block", 4, "minecraft:andesite", 2, "minecraft:polished_andesite", 3, "minecraft:diorite", 2,
+                "minecraft:polished_diorite", 3, "minecraft:granite", 2, "minecraft:polished_granite", 3, "minecraft:dirt", 2, "minecraft:coarse_dirt", 2,
+                "minecraft:grass_block", 4, "minecraft:podzol", 4, "minecraft:mud", 2, "minecraft:mud_bricks", 4, "minecraft:clay_ball", 2, "minecraft:clay", 8,
+                "minecraft:bricks", 6, "minecraft:sand", 2, "minecraft:red_sand", 2, "minecraft:sandstone", 4, "minecraft:smooth_sandstone", 5,
+                "minecraft:cut_sandstone", 5, "minecraft:red_sandstone", 4, "minecraft:gravel", 2, "minecraft:glass", 4, "minecraft:glass_pane", 2,
+                "minecraft:obsidian", 25, "minecraft:crying_obsidian", 35, "minecraft:ice", 4, "minecraft:packed_ice", 10, "minecraft:blue_ice", 40,
+                "minecraft:snow_block", 3, "minecraft:moss_block", 4, "minecraft:prismarine", 20, "minecraft:prismarine_bricks", 45, "minecraft:dark_prismarine", 50,
+                "minecraft:sea_lantern", 30, "minecraft:lantern", 14, "minecraft:torch", 1, "minecraft:ladder", 2, "minecraft:chest", 10, "minecraft:barrel", 10,
+                "minecraft:bookshelf", 30, "minecraft:terracotta", 5);
+        // ---- bois de toutes les essences
+        for (String b : new String[] {"oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove", "cherry"}) {
+            article(4, "minecraft:" + b + "_log", 6, "minecraft:stripped_" + b + "_log", 6, "minecraft:" + b + "_planks", 2, "minecraft:" + b + "_sapling", 3,
+                    "minecraft:" + b + "_leaves", 1, "minecraft:" + b + "_stairs", 3, "minecraft:" + b + "_slab", 1, "minecraft:" + b + "_fence", 3, "minecraft:" + b + "_door", 4);
+        }
+        article(4, "minecraft:mangrove_roots", 3, "minecraft:bamboo_block", 6, "minecraft:bamboo_planks", 2, "minecraft:bamboo_mosaic", 3, "minecraft:stick", 1);
+        // ---- couleurs : laines, beton, poudre, terre cuite, verre, tapis, colorants
+        serie(5, 6, "*_wool", couleurs);
+        serie(5, 5, "*_concrete", couleurs);
+        serie(5, 4, "*_concrete_powder", couleurs);
+        serie(5, 6, "*_terracotta", couleurs);
+        serie(5, 8, "*_glazed_terracotta", couleurs);
+        serie(5, 6, "*_stained_glass", couleurs);
+        serie(5, 3, "*_carpet", couleurs);
+        serie(5, 3, "*_dye", couleurs);
+        // ---- Nether et End
+        article(6, "minecraft:netherrack", 1, "minecraft:nether_bricks", 4, "minecraft:red_nether_bricks", 6, "minecraft:soul_sand", 3, "minecraft:soul_soil", 3,
+                "minecraft:basalt", 3, "minecraft:polished_basalt", 4, "minecraft:blackstone", 3, "minecraft:polished_blackstone", 4, "minecraft:polished_blackstone_bricks", 5,
+                "minecraft:gilded_blackstone", 30, "minecraft:magma_block", 12, "minecraft:glowstone_dust", 4, "minecraft:glowstone", 18, "minecraft:shroomlight", 15,
+                "minecraft:crimson_stem", 6, "minecraft:warped_stem", 6, "minecraft:crimson_planks", 2, "minecraft:warped_planks", 2, "minecraft:nether_wart", 5,
+                "minecraft:nether_wart_block", 10, "minecraft:warped_wart_block", 10, "minecraft:quartz_block", 24, "minecraft:quartz_bricks", 26,
+                "minecraft:blaze_rod", 30, "minecraft:ghast_tear", 60, "minecraft:magma_cream", 18, "minecraft:end_stone", 4, "minecraft:end_stone_bricks", 6,
+                "minecraft:purpur_block", 8, "minecraft:chorus_fruit", 6, "minecraft:popped_chorus_fruit", 8, "minecraft:shulker_shell", 250, "minecraft:ender_eye", 70);
+        // ---- Create
+        article(7, "create:shaft", 6, "create:raw_zinc", 8, "create:zinc_ingot", 12, "create:zinc_nugget", 2, "create:zinc_block", 108, "create:andesite_alloy", 10,
+                "create:cogwheel", 14, "create:large_cogwheel", 20, "create:andesite_casing", 22, "create:brass_ingot", 24, "create:brass_nugget", 3,
+                "create:brass_sheet", 28, "create:copper_sheet", 10, "create:iron_sheet", 16, "create:golden_sheet", 26, "create:copper_casing", 30,
+                "create:brass_casing", 50, "create:belt_connector", 30, "create:gearbox", 40, "create:water_wheel", 90, "create:large_water_wheel", 260,
+                "create:windmill_bearing", 120, "create:mechanical_press", 180, "create:mechanical_mixer", 200, "create:mechanical_drill", 150,
+                "create:mechanical_saw", 150, "create:encased_fan", 140, "create:millstone", 120, "create:depot", 30, "create:chute", 20,
+                "create:fluid_pipe", 12, "create:fluid_tank", 40, "create:mechanical_pump", 90, "create:electron_tube", 30, "create:precision_mechanism", 400,
+                "create:wrench", 40, "create:goggles", 60);
+        // ---- alchimie
+        article(8, "minecraft:glass_bottle", 3, "minecraft:fermented_spider_eye", 12, "minecraft:blaze_powder", 16, "minecraft:glistering_melon_slice", 30,
+                "minecraft:rabbit_foot", 40, "minecraft:pufferfish", 15, "minecraft:phantom_membrane", 25, "minecraft:experience_bottle", 50,
+                "minecraft:brewing_stand", 120, "minecraft:cauldron", 60, "minecraft:dragon_breath", 200, "minecraft:enchanting_table", 400, "minecraft:book", 10,
+                "minecraft:lapis_lazuli", 6, "minecraft:redstone", 4, "minecraft:glowstone_dust", 4, "minecraft:gunpowder", 8);
     }
 
     static long achat(long base, double f) { return Math.max(1, Math.round(base * f)); }
