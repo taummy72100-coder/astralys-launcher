@@ -68,5 +68,10 @@
   "item.astralyscarte.poussiere_etoile": "Stardust",
   "item.astralyscarte.foreuse_celeste": "Celestial Drill",
   "item.astralyscarte.arrosoir_enchante": "Enchanted Watering Can",
-  "entity.astralyscarte.pet": "Pet"
+  "entity.astralyscarte.pet": "Pet",
+  "item.astralyscarte.rubis_jaune": "Yellow Ruby",
+  "item.astralyscarte.rubis_jaune.desc": "Astralys money ($): jobs, quests, shop.",
+  "item.astralyscarte.rubis_bleu": "Blue Ruby",
+  "item.astralyscarte.rubis_bleu.desc": "Premium currency: cosmetics, profile, cosmetic chests.",
+  "key.astralyscarte.emote": "Play your favourite emote"
 }

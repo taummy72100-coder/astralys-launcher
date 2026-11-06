@@ -136,6 +136,9 @@ final class Objets {
         // ---------------------------------------------------------------- pets, machines, objets de metier
         for (String o : Familiers.OEUFS) objet(o, () -> new Item(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)) { @Override public boolean isFoil(ItemStack s) { return true; } });
         objet("poussiere_etoile", () -> new Item(new Item.Properties().rarity(Rarity.RARE)));
+        // les deux monnaies : rubis jaune = l'argent du jeu ($), rubis bleu = la monnaie premium (cosmetiques, profil, coffres cosmetiques)
+        objet("rubis_jaune", () -> new Item(new Item.Properties().rarity(Rarity.UNCOMMON)));
+        objet("rubis_bleu", () -> new Item(new Item.Properties().rarity(Rarity.EPIC)));
         objet("foreuse_celeste", () -> new PickaxeItem(new Rang(5000, 12, 5, 4, 20), 1, -2.8f, p(Rarity.EPIC)) { @Override public boolean isFoil(ItemStack s) { return true; } });
         objet("arrosoir_enchante", () -> new Sort(p(Rarity.RARE), 3, false, SoundEvents.BUCKET_EMPTY, Verrous::arroser));
     }

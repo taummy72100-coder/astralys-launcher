@@ -209,6 +209,9 @@ public class MetiersScreen extends Screen {
         g.fillGradient(500, 16, 598, 34, argb(surC ? 0x4A3880 : 0x33255F, a), argb(surC ? 0x33255F : 0x241A46, a));
         rect(g, 500, 16, 598, 17, argb(0xE2B65C, (surC ? .9f : .5f) * a));
         texte(g, "★ CLASSEMENT", 549, 21, .8f, surC ? 0xFFECAA : 0xF0D28A, true, true);
+        boolean surR = vx >= 430 && vx <= 494 && vy >= 16 && vy <= 34;
+        rect(g, 430, 16, 494, 34, argb(surR ? 0x3A2C66 : 0x2E2257, a));
+        texte(g, "‹ RETOUR", 462, 21, .8f, surR ? 0xFFFFFF : 0xC8C8D0, true, true);
         boolean surX = vx >= 604 && vx <= 622 && vy >= 16 && vy <= 34;
         rect(g, 604, 16, 622, 34, argb(surX ? 0xFF5A50 : 0xE8322B, a));
         texte(g, "✕", 613, 21, 1, 0xFFFFFF, true, true);
@@ -313,7 +316,8 @@ public class MetiersScreen extends Screen {
     @Override
     public boolean mouseClicked(double mx, double my, int b) {
         float vx = (float) (mx - x0) / k, vy = (float) (my - y0) / k;
-        if (vx >= 604 && vx <= 622 && vy >= 16 && vy <= 34) { onClose(); return true; }
+        if (vx >= 604 && vx <= 622 && vy >= 16 && vy <= 34) { fermer = true; onClose(); return true; }
+        if (vx >= 430 && vx <= 494 && vy >= 16 && vy <= 34) { onClose(); return true; }
         if (vx >= 500 && vx <= 598 && vy >= 16 && vy <= 34) {
             Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK.value(), 1.2f));
             Minecraft.getInstance().setScreen(new ClassementScreen());
@@ -326,6 +330,15 @@ public class MetiersScreen extends Screen {
                 return true;
             }
         return super.mouseClicked(mx, my, b);
+    }
+
+    private boolean fermer;
+
+    // Echap et RETOUR ramenent a l'inventaire ; le ✕ ferme tout
+    @Override
+    public void onClose() {
+        var s = fermer ? null : EcranAstralys.INVENTAIRE.get();
+        if (s != null) Minecraft.getInstance().setScreen(s); else super.onClose();
     }
 
     @Override

@@ -309,7 +309,8 @@ def java_modele(nom, os_racine, pos_de, larg, haut):
     def ecrire(o, parent):
         var = f'p{k[0]}'; k[0] += 1
         cl = 'CubeListBuilder.create()' + ''.join(
-            f'.texOffs({pos_de[id(c)][0]}, {pos_de[id(c)][1]}).addBox({fl(c.mn[0])}, {fl(c.mn[1])}, {fl(c.mn[2])}, {fl(c.t[0])}, {fl(c.t[1])}, {fl(c.t[2])})' for c in o.cubes)
+            f'.texOffs({pos_de[id(c)][0]}, {pos_de[id(c)][1]}).addBox({fl(c.mn[0])}, {fl(c.mn[1])}, {fl(c.mn[2])}, {fl(c.t[0])}, {fl(c.t[1])}, {fl(c.t[2])}'
+            + (f', new CubeDeformation({fl(c.gonfle)}))' if getattr(c, 'gonfle', 0) else ')') for c in o.cubes)
         px, py, pz = o.pivot
         pose = (f'PartPose.offsetAndRotation({fl(px)}, {fl(py)}, {fl(pz)}, {fl(o.rot[0])}, {fl(o.rot[1])}, {fl(o.rot[2])})' if any(o.rot)
                 else f'PartPose.offset({fl(px)}, {fl(py)}, {fl(pz)})')
@@ -335,7 +336,7 @@ def bbmodel_entite(nom, os_racine, pos_de, img):
                      'south': [uu + 2 * d + w, vv + d, uu + 2 * d + 2 * w, vv + d + h], 'west': [uu + d + w, vv + d, uu + 2 * d + w, vv + d + h],
                      'up': [uu + d + w, vv + d, uu + d, vv], 'down': [uu + d + 2 * w, vv, uu + d + w, vv + d]}
             e = {'name': o.nom, 'box_uv': True, 'rescale': False, 'locked': False, 'render_order': 'default', 'allow_mirror_modeling': True,
-                 'from': fr, 'to': to, 'autouv': 0, 'color': len(elements) % 8, 'origin': orig, 'uv_offset': [uu, vv],
+                 'from': fr, 'to': to, 'autouv': 0, 'color': len(elements) % 8, 'origin': orig, 'uv_offset': [uu, vv], 'inflate': getattr(c, 'gonfle', 0),
                  'faces': {k: {'uv': v, 'texture': 0} for k, v in faces.items()}, 'type': 'cube', 'uuid': u()}
             elements.append(e); g['children'].append(e['uuid'])
         for en in o.enfants: g['children'].append(grp(en, A))

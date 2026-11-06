@@ -44,15 +44,21 @@ final class Captures {
         ClientMetiers.vue = new Metiers.Vue(new long[] {48000, 9100, 2300, 450}, 4.6f, List.of(
                 new Metiers.QueteVue("Mineur de fer", "Casser 32 minerais de fer", 21, 32, 0, 150),
                 new Metiers.QueteVue("Nettoyeur", "Tuer 30 monstres", 30, 30, 2, 200),
-                new Metiers.QueteVue("Apprenti alchimiste", "Préparer 3 potions", 1, 3, 3, 200)), 150_000);
+                new Metiers.QueteVue("Apprenti alchimiste", "Préparer 3 potions", 1, 3, 3, 200)), 150_000, 37);
         ClientEco.solde = 125430;
         List<Economie.Ligne> l = new ArrayList<>();
         int n = 0;
         for (Economie.Article a : Economie.ARTICLES) {
+            if (a.categorie() != Economie.CLES) continue;
             double f = 1 + Math.sin(n++ * 1.7) * .12;
-            l.add(new Economie.Ligne(a.item(), a.categorie(), Economie.achat(a.base(), f), Economie.vente(a.base(), f), (float) (Math.sin(n * 2.3) * 6)));
+            l.add(new Economie.Ligne(a.item(), 0, Economie.achat(a.base(), f), Economie.vente(a.base(), f), (float) (Math.sin(n * 2.3) * 6)));
         }
-        ClientEco.marche = new Economie.Marche(List.of(Economie.CATEGORIES), l);
+        ClientEco.marche = new Economie.Marche(List.of(Economie.CATEGORIES[Economie.CLES]), l);
+        var pr = new net.minecraft.nbt.CompoundTag();
+        pr.putString("fond", "nebuleuse"); pr.putString("motif", "constellation"); pr.putString("embleme", "oeuf_dragon"); pr.putString("grade", "astral"); pr.putString("emote", "danse");
+        ClientCosm.vue = new Cosmetiques.Vue(4850, List.of("chapeau_sorcier_violet", "jambieres_runiques_violet", "bottes_ailees_or", "casque_chevalier_royal", "couronne_or",
+                "fond:nebuleuse", "motif:constellation", "embleme:oeuf_dragon", "grade:astral", "emote:danse", "emote:victoire"),
+                java.util.Arrays.asList("chapeau_sorcier_violet", "", "jambieres_runiques_violet", "bottes_ailees_or"), pr);
         ClientEco.faction = new Economie.FactionVue("Dragons", "Dev", List.of("Dev", "Lyra", "Kaelen", "Nox", "Mira", "Tobias", "Sora"),
                 List.of(true, true, false, true, false, false, true), 84250, 1840, 14, 26, 4000,
                 List.of(new Economie.DefiVue("Mine collective", "Casser 1500 minerais", 1500, 1500, 20000, 100),
@@ -124,8 +130,7 @@ final class Captures {
         if (phase == 2 && attenteMonde == 420) Screenshot.grab(mc.gameDirectory, "astralys_pnj.png", mc.getMainRenderTarget(), c -> {});
         // garde-robe (cosmetiques) avec un exemple, puis ouverture d'un coffre legendaire, puis le joueur vu de face
         if (phase == 2 && attenteMonde == 440) mc.setScreen(new CosmetiqueScreen());
-        if (phase == 2 && attenteMonde == 460) ClientCosm.vue = new Cosmetiques.Vue(1250, List.of("couronne_astrale", "robe_etoilee", "pans_astraux", "bottes_comete"),
-                List.of("couronne_astrale", "robe_etoilee", "pans_astraux", "bottes_comete"));
+        if (phase == 2 && attenteMonde == 460) exemple();
         if (phase == 2 && attenteMonde == 520) Screenshot.grab(mc.gameDirectory, "astralys_cosmetiques.png", mc.getMainRenderTarget(), c -> {});
         if (phase == 2 && attenteMonde == 540) {
             var rnd = net.minecraft.util.RandomSource.create(3);
@@ -156,7 +161,7 @@ final class Captures {
         }
         // ecran des pets, ecran du broyeur, puis machines et pets poses dans le monde
         if (phase == 2 && attenteMonde == 1040) {
-            ClientMetiers.vue = new Metiers.Vue(new long[] {250000, 9100, 2300, 450}, 4.6f, List.of(), 150_000); Verrous.xpClient = ClientMetiers.vue.xp();
+            ClientMetiers.vue = new Metiers.Vue(new long[] {250000, 9100, 2300, 450}, 4.6f, List.of(), 150_000, 37); Verrous.xpClient = ClientMetiers.vue.xp();
             mc.setScreen(new PetsScreen());
         }
         if (phase == 2 && attenteMonde == 1050) PetsScreen.vue = new Familiers.Vue(0b0001, 0);
@@ -210,7 +215,48 @@ final class Captures {
             }
             if (phase == 2 && attenteMonde == 1250 + k * 50) Screenshot.grab(mc.gameDirectory, "astralys_monture" + k + ".png", mc.getMainRenderTarget(), c -> {});
         }
-        if (phase == 2 && attenteMonde > 1420) mc.stop();
+        // boutique (cles seules), coffres cosmetiques, vitrine des cosmetiques par onglet, roulette cosmetique, profil, emote en jeu
+        if (phase == 2 && attenteMonde == 1430) {
+            var srv = mc.getSingleplayerServer();
+            srv.execute(() -> srv.getPlayerList().getPlayers().get(0).stopRiding());
+            mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+            exemple(); mc.setScreen(new ShopScreen());
+        }
+        if (phase == 2 && attenteMonde == 1435) exemple();
+        if (phase == 2 && attenteMonde == 1470) Screenshot.grab(mc.gameDirectory, "astralys_boutique_cles.png", mc.getMainRenderTarget(), c -> {});
+        if (phase == 2 && attenteMonde == 1480) mc.setScreen(new CoffresCosmScreen());
+        if (phase == 2 && attenteMonde == 1485) exemple();
+        if (phase == 2 && attenteMonde == 1520) Screenshot.grab(mc.gameDirectory, "astralys_coffres_cosm.png", mc.getMainRenderTarget(), c -> {});
+        String[] onglets = {"selection", "chapeaux", "casques", "jambieres", "chaussures"};
+        for (int k = 0; k < onglets.length; k++) {
+            if (phase == 2 && attenteMonde == 1530 + k * 50) { var s = new CosmetiqueScreen(); s.onglet = k - 1; mc.setScreen(s); }
+            if (phase == 2 && attenteMonde == 1535 + k * 50) exemple();
+            if (phase == 2 && attenteMonde == 1575 + k * 50) Screenshot.grab(mc.gameDirectory, "astralys_cosm_" + onglets[k] + ".png", mc.getMainRenderTarget(), c -> {});
+        }
+        if (phase == 2 && attenteMonde == 1790) {
+            var rnd = new java.util.Random(5);
+            List<net.minecraft.world.item.ItemStack> bande = new ArrayList<>(); List<Integer> rar = new ArrayList<>();
+            for (int k = 0; k < Coffres.TAILLE; k++) { var c = CatalogueCosm.LISTE.get(k == Coffres.GAGNANT ? 12 : rnd.nextInt(CatalogueCosm.LISTE.size())); bande.add(Cosmetiques.pile(c)); rar.add(c.rarete()); }
+            mc.setScreen(new CoffreScreen(new Coffres.Roulette(3, bande, rar, Coffres.GAGNANT)));
+        }
+        if (phase == 2 && attenteMonde == 1910) Screenshot.grab(mc.gameDirectory, "astralys_coffre_cosm_roulette.png", mc.getMainRenderTarget(), c -> {});
+        if (phase == 2 && attenteMonde == 2010) Screenshot.grab(mc.gameDirectory, "astralys_coffre_cosm_gain.png", mc.getMainRenderTarget(), c -> {});
+        for (int k = 0; k < 4; k++) {
+            if (phase == 2 && attenteMonde == 2020 + k * 50) { var s = new ProfilScreen(); s.onglet = k; mc.setScreen(s); }
+            if (phase == 2 && attenteMonde == 2025 + k * 50) exemple();
+            if (phase == 2 && attenteMonde == 2065 + k * 50) Screenshot.grab(mc.gameDirectory, "astralys_profil" + k + ".png", mc.getMainRenderTarget(), c -> {});
+        }
+        if (phase == 2 && attenteMonde == 2230) {
+            mc.setScreen(null); exemple();
+            ClientCosm.portes = java.util.Map.of(mc.player.getUUID(), ClientCosm.vue.portes());
+            mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
+            mc.player.setXRot(10);
+        }
+        if (phase == 2 && attenteMonde == 2240) Emotes.jouer(mc.player.getUUID(), "victoire");
+        if (phase == 2 && attenteMonde == 2270) Screenshot.grab(mc.gameDirectory, "astralys_emote_victoire.png", mc.getMainRenderTarget(), c -> {});
+        if (phase == 2 && attenteMonde == 2300) Emotes.jouer(mc.player.getUUID(), "dab");
+        if (phase == 2 && attenteMonde == 2335) Screenshot.grab(mc.gameDirectory, "astralys_emote_dab.png", mc.getMainRenderTarget(), c -> {});
+        if (phase == 2 && attenteMonde > 2350) mc.stop();
     }
 
     private static final Familiers.Pet[] MONTURES = new Familiers.Pet[Familiers.IDS.length];

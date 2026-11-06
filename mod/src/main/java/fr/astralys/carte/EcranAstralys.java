@@ -27,7 +27,13 @@ abstract class EcranAstralys extends Screen {
     private final List<float[]> etincelles = new ArrayList<>();   // x, y, vie, duree, taille, doree
     protected final Random rnd = new Random();
 
-    EcranAstralys(String titre, int couleur) { super(Component.literal(titre)); this.titre = titre; this.couleur = couleur; }
+    EcranAstralys(String titre, int couleur) { super(Component.literal(titre)); this.titre = titre; this.couleur = couleur; retour = INVENTAIRE; }
+
+    /** Retour par defaut : l'inventaire, d'ou partent tous les boutons (le ✕ ferme tout). */
+    static final java.util.function.Supplier<Screen> INVENTAIRE = () -> {
+        var j = Minecraft.getInstance().player;
+        return j == null ? null : new net.minecraft.client.gui.screens.inventory.InventoryScreen(j);
+    };
 
     @Override
     protected void init() {
@@ -54,6 +60,26 @@ abstract class EcranAstralys extends Screen {
 
     void objet(GuiGraphics g, ItemStack s, float x, float y, float e) {
         g.pose().pushPose(); g.pose().translate(x, y, 0); g.pose().scale(e, e, 1); g.renderItem(s, 0, 0); g.pose().popPose();
+    }
+
+    /** Decoupe le dessin a un rectangle du repere virtuel (un mannequin deborde sinon de sa carte). */
+    void decoupe(GuiGraphics g, float x1, float y1, float x2, float y2) {
+        float dy = (1 - a) * 12;
+        g.enableScissor(Math.round(x0 + x1 * k), Math.round(y0 + dy + y1 * k), Math.round(x0 + x2 * k), Math.round(y0 + dy + y2 * k));
+    }
+
+    /** Un objet, ou le mannequin qui porte le cosmetique si la pile en designe un (roulette des coffres cosmetiques). */
+    void lot(GuiGraphics g, ItemStack s, float x, float y, float w, float h) {
+        String id = s.hasTag() ? s.getTag().getString("astralys_cosm") : "";
+        Cosmetiques.Cosm c = id.isEmpty() ? null : Cosmetiques.get(id);
+        ClientCosm.Mannequin m = c == null ? null : ClientCosm.mannequin();
+        if (m == null) { float e = Math.min(w, h) / 16 * .62f; objet(g, s, x + w / 2 - 8 * e, y + h / 2 - 8 * e, e); return; }
+        m.emote = null; m.habiller(id);
+        decoupe(g, x, y, x + w, y + h);
+        if (c.partie() == 0) ClientCosm.dessiner(g, x + w / 2, y + h * 2.1f, Math.round(h * .95f), .45f, m);
+        else if (c.partie() >= 2) ClientCosm.dessiner(g, x + w / 2, y + h * .92f, Math.round(h * .78f), .45f, m);
+        else ClientCosm.dessiner(g, x + w / 2, y + h * 1.4f, Math.round(h * .64f), .45f, m);
+        g.disableScissor();
     }
 
     boolean dans(float x1, float y1, float x2, float y2) { return vx >= x1 && vx <= x2 && vy >= y1 && vy <= y2; }

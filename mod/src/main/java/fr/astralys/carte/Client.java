@@ -33,6 +33,8 @@ class Client {
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_M, "key.categories.astralys");
     static final KeyMapping MONTURE = new KeyMapping("key.astralyscarte.monture",
             InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_G, "key.categories.astralys");
+    static final KeyMapping EMOTE = new KeyMapping("key.astralyscarte.emote",
+            InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_B, "key.categories.astralys");
 
     /** Ouverture demandee par /carte : faite au tick suivant, une fois le chat ferme. */
     private boolean ouvrir;
@@ -84,6 +86,7 @@ class Client {
     private void touches(RegisterKeyMappingsEvent event) {
         event.register(TOUCHE);
         event.register(MONTURE);
+        event.register(EMOTE);
     }
 
     private static void carte() {
@@ -101,6 +104,7 @@ class Client {
         if (event.phase != TickEvent.Phase.END) return;
         if (!clavierVerifie) { clavierVerifie = true; toucheMSurAzerty(); }
         while (TOUCHE.consumeClick()) carte();
+        while (EMOTE.consumeClick()) Emotes.favorite();
         while (MONTURE.consumeClick())
             if (Minecraft.getInstance().getConnection() != null && PetsScreen.vue != null && PetsScreen.vue.actif() >= 0)
                 Metiers.CANAL.sendToServer(new Familiers.Action(4, PetsScreen.vue.actif()));

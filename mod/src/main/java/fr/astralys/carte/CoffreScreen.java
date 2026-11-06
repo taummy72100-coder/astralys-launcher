@@ -147,7 +147,7 @@ public class CoffreScreen extends EcranAstralys {
             g.fillGradient(Math.round(x), Math.round(Y + 40), Math.round(x + 60), Math.round(Y + 80), argb(rc, 0), argb(rc, .45f * bord * a));
             rect(g, x, Y + 77, x + 60, Y + 80, argb(rc, bord * a));
             if (gagnant) { rect(g, x - 2, Y - 2, x + 62, Y, argb(rc, a)); rect(g, x - 2, Y + 80, x + 62, Y + 82, argb(rc, a)); }
-            objet(g, r.objets().get(i), x + 10, Y + 14, 2.5f);
+            lot(g, r.objets().get(i), x, Y, 60, 76);
             int n = r.objets().get(i).getCount();
             if (n > 1) texte(g, "×" + n, x + 56, Y + 60, .8f, 0xFFFFFF, 1, true);
         }
@@ -171,10 +171,10 @@ public class CoffreScreen extends EcranAstralys {
             halo(g, 320, 272, 36, 0xFFFFFF, .25f * a);
             RenderSystem.defaultBlendFunc();
             RenderSystem.setShaderColor(1, 1, 1, 1);
-            objet(g, gain, 304, 256, 2);
+            lot(g, gain, 290, 242, 60, 52);
             texte(g, Coffres.NOMS[r.raretes().get(r.gagnant())].toUpperCase(java.util.Locale.FRANCE), 320, 234, .8f, gc, 0, true);
             texte(g, (gain.getCount() > 1 ? gain.getCount() + "× " : "") + gain.getHoverName().getString(), 320, 296, 1.2f, 0xFFFFFF, 0, true);
-            texte(g, "Ajouté à ton inventaire  •  clique pour fermer", 320, 316, .7f, 0x9A9AA4, 0, false);
+            texte(g, (gain.hasTag() && gain.getTag().contains("astralys_cosm") ? "Ajouté à tes cosmétiques" : "Ajouté à ton inventaire") + "  •  clique pour fermer", 320, 316, .7f, 0x9A9AA4, 0, false);
         } else texte(g, "Clique pour accélérer", 320, 316, .7f, 0x6E6E78, 0, false);
     }
 

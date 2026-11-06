@@ -128,5 +128,10 @@
   "item.astralyscarte.foreuse_celeste.desc": "Creuse en 3×3 (accroupi : un seul bloc).",
   "item.astralyscarte.arrosoir_enchante": "Arrosoir enchanté",
   "item.astralyscarte.arrosoir_enchante.desc": "Clic droit : fait pousser les cultures autour (5×5).\nRecharge : 3 s",
-  "entity.astralyscarte.pet": "Pet"
+  "entity.astralyscarte.pet": "Pet",
+  "item.astralyscarte.rubis_jaune": "Rubis jaune",
+  "item.astralyscarte.rubis_jaune.desc": "L'argent d'Astralys ($) : métiers, quêtes, boutique.",
+  "item.astralyscarte.rubis_bleu": "Rubis bleu",
+  "item.astralyscarte.rubis_bleu.desc": "Monnaie premium : cosmétiques, profil, coffres cosmétiques.",
+  "key.astralyscarte.emote": "Jouer son emote favorite"
 }

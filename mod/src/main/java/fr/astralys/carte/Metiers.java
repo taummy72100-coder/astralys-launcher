@@ -51,7 +51,7 @@ final class Metiers {
     static final String[] NOMS = {"MINEUR", "FARMEUR", "HUNTER", "ALCHIMISTE"};
     static final int MINEUR = 0, FARMEUR = 1, HUNTER = 2, ALCHIMISTE = 3, NIVEAU_MAX = 100;
     private static final ZoneId PARIS = ZoneId.of("Europe/Paris");
-    private static final String VERSION = "7";   // a changer a chaque modification d'un paquet : client et serveur doivent avoir le meme mod
+    private static final String VERSION = "8";   // a changer a chaque modification d'un paquet : client et serveur doivent avoir le meme mod
     // Les joueurs sans le mod peuvent toujours se connecter (ils n'ont simplement pas l'ecran).
     static final SimpleChannel CANAL = NetworkRegistry.newSimpleChannel(new ResourceLocation(AstralysCarte.MODID, "metiers"),
             () -> VERSION, NetworkRegistry.acceptMissingOr(VERSION), NetworkRegistry.acceptMissingOr(VERSION));
@@ -128,6 +128,7 @@ final class Metiers {
         long jour = -1;
         final int[] avance = new int[3];
         long xpJoueur;   // niveau du joueur (tous metiers, quetes, boss, temps de jeu)
+        int quetes;      // quetes terminees depuis toujours (badges du profil)
     }
 
     static final class Donnees extends SavedData {
@@ -143,6 +144,7 @@ final class Metiers {
                 j.jour = c.getLong("jour");
                 if (c.contains("nom")) j.nom = c.getString("nom");
                 j.xpJoueur = c.getLong("xpj");
+                j.quetes = c.getInt("qf");
                 int[] av = c.getIntArray("avance");
                 System.arraycopy(av, 0, j.avance, 0, Math.min(3, av.length));
                 d.joueurs.put(UUID.fromString(k), j);
@@ -159,6 +161,7 @@ final class Metiers {
                 c.putIntArray("avance", j.avance);
                 c.putString("nom", j.nom);
                 c.putLong("xpj", j.xpJoueur);
+                c.putInt("qf", j.quetes);
                 t.put(id.toString(), c);
             });
             return t;
@@ -341,6 +344,7 @@ final class Metiers {
             donnees(p.server).setDirty();
             aEnvoyer.add(p.getUUID());
             if (j.avance[i] >= q[i].nombre) {
+                j.quetes++;
                 p.sendSystemMessage(Component.literal("✔ Quête terminée : " + q[i].titre + "  (+" + q[i].recompense + " XP " + NOMS[q[i].metier] + ")")
                         .withStyle(st -> st.withColor(0x22C55E).withBold(true)));
                 p.serverLevel().playSound(null, p.blockPosition(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, SoundSource.PLAYERS, .8f, 1);
@@ -414,10 +418,11 @@ final class Metiers {
 
     // ------------------------------------------------------------------ reseau
     /** Ce que l'ecran affiche. */
-    record Vue(long[] xp, float bonus, List<QueteVue> quetes, long xpJoueur) {
+    record Vue(long[] xp, float bonus, List<QueteVue> quetes, long xpJoueur, int quetesFaites) {
         void ecrire(FriendlyByteBuf b) {
             for (long x : xp) b.writeVarLong(x);
             b.writeVarLong(xpJoueur);
+            b.writeVarInt(quetesFaites);
             b.writeFloat(bonus);
             b.writeVarInt(quetes.size());
             for (QueteVue q : quetes) { b.writeUtf(q.titre); b.writeUtf(q.desc); b.writeVarInt(q.avance); b.writeVarInt(q.nombre); b.writeVarInt(q.metier); b.writeVarInt(q.recompense); }
@@ -427,11 +432,12 @@ final class Metiers {
             long[] xp = new long[4];
             for (int i = 0; i < 4; i++) xp[i] = b.readVarLong();
             long xpj = b.readVarLong();
+            int qf = b.readVarInt();
             float bonus = b.readFloat();
             int n = b.readVarInt();
             List<QueteVue> q = new ArrayList<>();
             for (int i = 0; i < n; i++) q.add(new QueteVue(b.readUtf(), b.readUtf(), b.readVarInt(), b.readVarInt(), b.readVarInt(), b.readVarInt()));
-            return new Vue(xp, bonus, q, xpj);
+            return new Vue(xp, bonus, q, xpj, qf);
         }
     }
 
@@ -443,7 +449,7 @@ final class Metiers {
         Quete[] q = duJour(p.getUUID(), j.jour);
         List<QueteVue> v = new ArrayList<>();
         for (int i = 0; i < 3; i++) v.add(new QueteVue(q[i].titre, q[i].desc, j.avance[i], q[i].nombre, q[i].metier, q[i].recompense));
-        CANAL.send(PacketDistributor.PLAYER.with(() -> p), new Vue(j.xp.clone(), bonus(j.xp), v, j.xpJoueur));
+        CANAL.send(PacketDistributor.PLAYER.with(() -> p), new Vue(j.xp.clone(), bonus(j.xp), v, j.xpJoueur, j.quetes));
     }
 
     static void init() {

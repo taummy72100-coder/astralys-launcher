@@ -54,6 +54,7 @@ final class ClientMetiers {
         boutons.add(new Bouton("FACTION", "alliés & défis", 0xB46CFF, 2, FactionScreen::new));
         boutons.add(new Bouton("MARCHÉ", "ventes entre joueurs", 0x3DD6C5, 3, HdvScreen::new));
         boutons.add(new Bouton("PETS", "compagnons", 0x7FE0FF, 4, PetsScreen::new));
+        boutons.add(new Bouton("PROFIL", "bannière & emotes", 0x4FA8FF, 6, ProfilScreen::new));
         boutons.forEach(e::addListener);
         placer(s);
     }
@@ -62,7 +63,7 @@ final class ClientMetiers {
     private static void placer(EffectRenderingInventoryScreen<?> s) {
         boolean droite = s.getGuiLeft() + 176 + 6 + Bouton.L <= s.width;
         int x = droite ? s.getGuiLeft() + 176 + 6 : s.getGuiLeft() - 6 - Bouton.L;
-        for (int i = 0; i < boutons.size(); i++) boutons.get(i).setPosition(x, s.getGuiTop() + 4 + i * 27);
+        for (int i = 0; i < boutons.size(); i++) boutons.get(i).setPosition(x, s.getGuiTop() - 14 + i * 27);
     }
 
     private static void suivre(ScreenEvent.Render.Pre e) {
@@ -122,7 +123,7 @@ final class ClientMetiers {
     private static final class Bouton extends Button {
         static final int L = 104, H = 26;
         private static final ResourceLocation LOS = new ResourceLocation(AstralysCarte.MODID, "textures/gui/losange.png");
-        private static final ItemStack[] ICONES = {null, new ItemStack(Items.EMERALD), new ItemStack(Items.WHITE_BANNER), new ItemStack(Items.CHEST), Metiers.pile("astralyscarte:oeuf_fee"), new ItemStack(Items.NETHER_STAR)};
+        private static final ItemStack[] ICONES = {null, Metiers.pile("astralyscarte:rubis_jaune"), new ItemStack(Items.WHITE_BANNER), new ItemStack(Items.CHEST), Metiers.pile("astralyscarte:oeuf_fee"), new ItemStack(Items.NETHER_STAR), Metiers.pile("astralyscarte:rubis_bleu")};
         private final String titre, sous;
         private final int couleur, icone;
         private float survol;

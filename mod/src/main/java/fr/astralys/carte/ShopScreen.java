@@ -14,9 +14,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 /** Boutique : categories, prix d'achat / de vente qui suivent l'offre et la demande, tendance sur l'heure. */
 public class ShopScreen extends EcranAstralys {
     private static final int OR = 0xF0B429, COLS = 6, LIGNES = 4;
-    private static final ItemStack[] ICONES = {new ItemStack(Items.DIAMOND), new ItemStack(Items.WHEAT), new ItemStack(Items.BONE),
-            new ItemStack(Items.STONE_BRICKS), new ItemStack(Items.OAK_LOG), new ItemStack(Items.MAGENTA_WOOL), new ItemStack(Items.NETHERRACK),
-            new ItemStack(Items.CLOCK), new ItemStack(Items.BREWING_STAND), new ItemStack(Items.TRIPWIRE_HOOK)};
+    private static final ItemStack CLE = Metiers.pile("astralyscarte:cle_legendaire"), RUBIS = Metiers.pile("astralyscarte:rubis_jaune");
     private static final int PAS = 27;   // ecart entre les onglets de categorie
     private int categorie, defile;
     private Economie.Ligne survol;
@@ -39,18 +37,18 @@ public class ShopScreen extends EcranAstralys {
 
     @Override
     void contenu(GuiGraphics g) {
-        texte(g, "✦ " + Economie.format(ClientEco.solde) + " $", 596, 40, 1.4f, OR, 1, true);
-        boolean sc = dans(300, 30, 440, 52);
-        rect(g, 299, 29, 441, 53, argb(0x0A0714, a));
-        g.fillGradient(300, 30, 440, 52, argb(sc ? 0xFF6FE0 : 0xD23CB4, a), argb(0x6E1E64, a));
-        texte(g, "✧ COSMÉTIQUES", 370, 37, .85f, 0xFFFFFF, 0, true);
+        String solde = Economie.format(ClientEco.solde) + " $";
+        texte(g, solde, 596, 40, 1.4f, OR, 1, true);
+        objet(g, RUBIS, 576 - font.width(solde) * 1.4f, 35, 1.1f);
+        bouton(g, 18, "⚿ COFFRES", 0xF0B429, 0x7A4A10);
+        bouton(g, 39, "✧ COSMÉTIQUES", 0xD23CB4, 0x6E1E64);
         // categories
         for (int i = 0; i < cats().size(); i++) {
             float y = 70 + i * PAS;
             boolean sel = i == categorie, s = dans(30, y, 152, y + 25);
             rect(g, 30, y, 152, y + 25, argb(sel ? 0x3D2E1E : s ? 0x33265C : 0x2A1F4D, a));
             if (sel) rect(g, 30, y, 33, y + 25, argb(OR, a));
-            objet(g, ICONES[Math.min(i, ICONES.length - 1)], 40, y + 4, 1);
+            objet(g, CLE, 40, y + 4, 1);
             texte(g, cats().get(i).toUpperCase(Locale.FRANCE), 62, y + 9, .85f, sel ? OR : 0xE8E8EE, -1, true);
         }
         texte(g, "Clic G : acheter 1  •  Maj : 16     Clic D : vendre 1  •  Maj : tout     Molette : défiler", 392, 340, .62f, 0x9A9AA4, 0, false);
@@ -85,6 +83,13 @@ public class ShopScreen extends EcranAstralys {
         }
     }
 
+    private void bouton(GuiGraphics g, float y, String s, int c, int fonce) {
+        boolean sur = dans(300, y, 440, y + 19);
+        rect(g, 299, y - 1, 441, y + 20, argb(0x0A0714, a));
+        g.fillGradient(300, Math.round(y), 440, Math.round(y + 19), argb(sur ? melange(c, 0xFFFFFF, .3f) : c, a), argb(fonce, a));
+        texte(g, s, 370, y + 6, .8f, 0xFFFFFF, 0, true);
+    }
+
     @Override
     void infobulle(GuiGraphics g, int mx, int my) {
         if (survol == null) return;
@@ -97,7 +102,8 @@ public class ShopScreen extends EcranAstralys {
 
     @Override
     boolean clic(int b, boolean maj) {
-        if (dans(300, 30, 440, 52)) { minecraft.setScreen(new CosmetiqueScreen()); return true; }
+        if (dans(300, 18, 440, 37)) { minecraft.setScreen(new CoffresCosmScreen()); return true; }
+        if (dans(300, 39, 440, 58)) { minecraft.setScreen(new CosmetiqueScreen()); return true; }
         for (int i = 0; i < cats().size(); i++)
             if (dans(30, 70 + i * PAS, 152, 95 + i * PAS)) { categorie = i; defile = 0; son(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 1.2f); return true; }
         if (survol == null || (b != 0 && b != 1)) return false;

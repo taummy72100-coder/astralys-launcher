@@ -441,14 +441,17 @@ final class Economie {
 
     static void envoyerSolde(ServerPlayer p) { envoyer(p, new Solde(solde(p.getUUID()))); }
 
+    /** La boutique ne vend plus que les cles (les autres articles restent ici, prets a etre remis). */
+    static final int CLES = 9;
+
     private static void envoyerMarche(ServerPlayer p) {
         List<Ligne> l = new ArrayList<>();
         for (Article a : ARTICLES) {
-            if (!ForgeRegistries.ITEMS.containsKey(new ResourceLocation(a.item))) continue;
+            if (a.categorie != CLES || !ForgeRegistries.ITEMS.containsKey(new ResourceLocation(a.item))) continue;
             double[] c = cours(a.item);
-            l.add(new Ligne(a.item, a.categorie, achat(a.base, c[0]), vente(a.base, c[0]), (float) ((c[0] / c[1] - 1) * 100)));
+            l.add(new Ligne(a.item, 0, achat(a.base, c[0]), vente(a.base, c[0]), (float) ((c[0] / c[1] - 1) * 100)));
         }
-        envoyer(p, new Marche(List.of(CATEGORIES), l));
+        envoyer(p, new Marche(List.of(CATEGORIES[CLES]), l));
         envoyerSolde(p);
     }
 
@@ -470,7 +473,7 @@ final class Economie {
 
     private static void transaction(ServerPlayer p, Transaction t) {
         Article a = null;
-        for (Article x : ARTICLES) if (x.item.equals(t.item)) a = x;
+        for (Article x : ARTICLES) if (x.item.equals(t.item) && x.categorie == CLES) a = x;
         Item item = a == null ? null : ForgeRegistries.ITEMS.getValue(new ResourceLocation(a.item));
         if (item == null || (t.n != -1 && (t.n < 1 || t.n > 2304))) return;    // paquet invalide : ignore
         double[] c = cours(a.item);
