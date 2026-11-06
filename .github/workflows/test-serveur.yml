@@ -1,0 +1,27 @@
+name: Test serveur
+# Demarre un serveur Forge dedie avec le mod Astralys pour verifier qu'il charge sans planter.
+on: workflow_dispatch
+jobs:
+  serveur:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: distribution }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - name: Installer Forge 1.20.1-47.4.10
+        run: |
+          mkdir srv && cd srv
+          curl -sSLo inst.jar https://maven.minecraftforge.net/net/minecraftforge/forge/1.20.1-47.4.10/forge-1.20.1-47.4.10-installer.jar
+          java -jar inst.jar --installServer > /dev/null
+          mkdir mods && cp ../servers/astralys-1.20.1/forgemods/required/astralys-carte-*.jar mods/
+          echo eula=true > eula.txt
+          printf 'online-mode=false\nlevel-type=flat\n' > server.properties
+      - name: Demarrer, tester les commandes, arreter
+        run: |
+          cd srv
+          (sleep 150; echo "eco give @a 1"; echo "f top"; echo "baltop"; sleep 5; echo stop) | timeout 600 ./run.sh nogui > sortie.log 2>&1 || true
+          grep -E "Done \(|astralys|Astralys|ERROR|Exception" sortie.log | head -60
+          grep -q "Done (" sortie.log
+          ! grep -E "Exception|Crash" sortie.log | grep -iE "astralys|fr\.astralys"
