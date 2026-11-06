@@ -637,8 +637,8 @@ def modele_json(cubes, tex, larg=64, parent=None, display=None):
 
 
 # axes des cubes d'objet : x, y (haut), z ; « avant » = face nord
-TENU = {'thirdperson_righthand': {'rotation': [180, 90, 0], 'translation': [0, 4, 0.5], 'scale': [.85, .85, .85]},
-        'thirdperson_lefthand': {'rotation': [180, 90, 0], 'translation': [0, 4, 0.5], 'scale': [.85, .85, .85]},
+TENU = {'thirdperson_righthand': {'rotation': [-90, 90, 0], 'translation': [0, 1, -4], 'scale': [.85, .85, .85]},
+        'thirdperson_lefthand': {'rotation': [-90, 90, 0], 'translation': [0, 1, -4], 'scale': [.85, .85, .85]},
         'firstperson_righthand': {'rotation': [0, -60, 20], 'translation': [1.13, 1.5, 1.13], 'scale': [.42, .42, .42]},
         'firstperson_lefthand': {'rotation': [0, -60, 20], 'translation': [1.13, 1.5, 1.13], 'scale': [.42, .42, .42]},
         'gui': {'rotation': [25, -35, -40], 'translation': [0, 0, 0], 'scale': [.62, .62, .62]},
