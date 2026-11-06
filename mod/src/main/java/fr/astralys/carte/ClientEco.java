@@ -17,7 +17,7 @@ final class ClientEco {
         mc.setScreen(switch (ecran) { case 0 -> new ShopScreen(); case 1 -> new FactionScreen(); default -> new MetiersScreen(); });
     }
 
-    static void demander(int quoi) { Metiers.CANAL.sendToServer(new Economie.Demande(quoi)); }
+    static void demander(int quoi) { if (Minecraft.getInstance().getConnection() != null) Metiers.CANAL.sendToServer(new Economie.Demande(quoi)); }
 
     private ClientEco() {}
 }

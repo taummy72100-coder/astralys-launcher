@@ -1,0 +1,24 @@
+name: Captures des ecrans
+# Lance le jeu (sans compte, ecran virtuel) et capture chaque ecran du mod avec des donnees d'exemple.
+on: workflow_dispatch
+jobs:
+  captures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: '8.8' }
+      - name: Ecran virtuel
+        run: sudo apt-get update -q && sudo apt-get install -yq xvfb mesa-utils libgl1-mesa-dri > /dev/null
+      - name: Lancer le jeu et capturer
+        env: { ASTRALYS_CAPTURES: '1' }
+        run: |
+          mkdir -p mod/run && echo "guiScale:3" > mod/run/options.txt
+          timeout 1500 xvfb-run -s "-screen 0 1920x1080x24" gradle -p mod runClient --no-daemon > jeu.log 2>&1 || true
+          tail -40 jeu.log
+          ls -la mod/run/screenshots || true
+      - uses: actions/upload-artifact@v4
+        with: { name: captures, path: 'mod/run/screenshots/*.png' }

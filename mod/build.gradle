@@ -10,6 +10,14 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 minecraft {
     mappings channel: 'official', version: '1.20.1'
+    // Jeu de test (captures automatiques des ecrans en CI : ASTRALYS_CAPTURES=1)
+    runs {
+        client {
+            workingDirectory project.file('run')
+            args '--width', '1600', '--height', '900'
+            mods { astralyscarte { source sourceSets.main } }
+        }
+    }
 }
 
 repositories { mavenCentral() }
