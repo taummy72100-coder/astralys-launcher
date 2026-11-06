@@ -20,7 +20,9 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -30,11 +32,16 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.block.BonemealableBlock;
+import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.Tags;
+import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.fml.DistExecutor;
@@ -67,6 +74,18 @@ final class Familiers {
     static final String[] CONSTRUCTION = {"3×3 blocs de fer sous l'incubateur + 4 cristaux astraux aux coins",
             "3×3 bottes de foin sous l'incubateur + 4 composteurs aux coins", "3×3 blocs d'os sous l'incubateur + 4 lanternes des âmes aux coins",
             "3×3 blocs d'améthyste sous l'incubateur + 4 alambics aux coins"};
+    /** Niveau du metier pour monter sur son pet, puis 4 passifs debloques aux niveaux 70, 80, 90 et 100. */
+    static final int NIVEAU_MONTURE = 60;
+    static final int[] NIVEAUX_PASSIFS = {70, 80, 90, 100};
+    static final String[][] PASSIFS = {
+            {"Résistance I", "10 % de minerais en double", "Plus de malus de vie", "Célérité III"},
+            {"Fait pousser dans un rayon de 5", "Saturation toutes les 30 s", "15 % de récoltes en double", "Actif dans le Nether et l'End"},
+            {"Vision nocturne", "Frappe ta cible : 6 dégâts", "Plus de surbrillance", "Force II"},
+            {"Résistance au feu", "Soigne les joueurs à 6 blocs", "Plus de faiblesse", "Régénération II + Absorption"}};
+    /** Vitesse en vol quand on le monte : golem lourd, faucon le plus rapide. */
+    static final float[] VITESSE = {.25f, .35f, .5f, .4f};
+    /** Hauteur de la selle (en blocs) sur le modele agrandi. */
+    static final double[] SELLE = {1.9, 1.3, 1.25, 1.6};
     private static final UUID SANTE = UUID.fromString("6a7c9e1d-5b0f-4c3a-9a51-2f1e7d4b8c60");
 
     static Block bloc(String id) { return ForgeRegistries.BLOCKS.getValue(new net.minecraft.resources.ResourceLocation(id)); }
@@ -118,7 +137,10 @@ final class Familiers {
         static Vue lire(FriendlyByteBuf b) { return new Vue(b.readVarInt(), b.readVarInt()); }
     }
 
-    /** 0 demander, 1 acheter l'oeuf, 2 sortir le pet, 3 le ranger. */
+    /** Nombre de passifs debloques par le niveau du metier du pet (0 a 4). */
+    static int passifs(int niveau) { int n = 0; for (int v : NIVEAUX_PASSIFS) if (niveau >= v) n++; return n; }
+
+    /** 0 demander, 1 acheter l'oeuf, 2 sortir le pet, 3 le ranger, 4 monter / descendre. */
     record Action(int action, int type) {
         void ecrire(FriendlyByteBuf b) { b.writeVarInt(action); b.writeVarInt(type); }
         static Action lire(FriendlyByteBuf b) { return new Action(b.readVarInt(), b.readVarInt()); }
@@ -132,6 +154,7 @@ final class Familiers {
         MinecraftForge.EVENT_BUS.addListener(Familiers::tick);
         MinecraftForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent e) -> { if (e.getEntity() instanceof ServerPlayer p) envoyer(p); });
         MinecraftForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent e) -> ranger(e.getEntity().getUUID()));
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, Familiers::casse);
     }
 
     static void envoyer(ServerPlayer p) { Economie.envoyer(p, new Vue(debloques(p), actif(p))); }
@@ -151,7 +174,33 @@ final class Familiers {
             }
         } else if (a.action() == 2 && possede(p, t)) { donnees(p).putInt("a", t); invoquer(p); }
         else if (a.action() == 3) { donnees(p).putInt("a", -1); ranger(p.getUUID()); appliquer(p, -1); }
+        else if (a.action() == 4) monter(p, t);
         envoyer(p);
+    }
+
+    private static void monter(ServerPlayer p, int t) {
+        Pet pet = VIVANTS.get(p.getUUID());
+        if (actif(p) != t || pet == null || pet.isRemoved()) { dire(p, "Fais d'abord venir ton pet (inventaire → PETS).", ChatFormatting.YELLOW); return; }
+        if (p.getVehicle() == pet) { p.stopRiding(); return; }
+        if (Metiers.niveau(p, t) < NIVEAU_MONTURE) { dire(p, "Il faut le niveau " + NIVEAU_MONTURE + " en " + Metiers.NOMS[t] + " pour monter sur ton pet.", ChatFormatting.RED); return; }
+        if (p.isPassenger()) p.stopRiding();
+        pet.moveTo(p.getX(), p.getY(), p.getZ(), p.getYRot(), 0);
+        p.startRiding(pet, true);
+        dire(p, "✦ En selle ! Regarde où tu veux aller et avance • accroupis-toi pour descendre.", ChatFormatting.AQUA);
+    }
+
+    /** Passifs de double recolte : minerais pour le golem (niv. 80), cultures mures pour le bourdon (niv. 90). */
+    private static void casse(BlockEvent.BreakEvent e) {
+        if (e.isCanceled() || !(e.getPlayer() instanceof ServerPlayer j) || j.isCreative() || !(e.getLevel() instanceof ServerLevel l)) return;
+        int t = actif(j);
+        BlockState s = e.getState();
+        ItemStack outil = j.getMainHandItem();
+        boolean minerai = t == 0 && s.is(Tags.Blocks.ORES) && passifs(Metiers.niveau(j, 0)) >= 2 && l.random.nextFloat() < .10f
+                && j.hasCorrectToolForDrops(s) && net.minecraft.world.item.enchantment.EnchantmentHelper.getItemEnchantmentLevel(Enchantments.SILK_TOUCH, outil) == 0;
+        boolean culture = t == 1 && s.getBlock() instanceof CropBlock c && c.isMaxAge(s) && passifs(Metiers.niveau(j, 1)) >= 3 && l.random.nextFloat() < .15f;
+        if (!minerai && !culture) return;
+        Block.dropResources(s, l, e.getPos(), l.getBlockEntity(e.getPos()), j, outil);
+        l.sendParticles(ParticleTypes.HAPPY_VILLAGER, e.getPos().getX() + .5, e.getPos().getY() + .5, e.getPos().getZ() + .5, 6, .3, .3, .3, 0);
     }
 
     private static void dire(ServerPlayer p, String m, ChatFormatting c) { p.sendSystemMessage(Component.literal(m).withStyle(c)); }
@@ -186,8 +235,9 @@ final class Familiers {
 
     /** Avantages et inconvenients du pet sorti (toutes les 2 s). */
     private static void appliquer(ServerPlayer j, int t) {
+        int n = t < 0 ? 0 : passifs(Metiers.niveau(j, t));
         var vie = j.getAttribute(Attributes.MAX_HEALTH);
-        double malus = t == 0 ? -4 : t == 2 ? -2 : 0;
+        double malus = t == 0 ? (n >= 3 ? 0 : -4) : t == 2 ? -2 : 0;
         var actuel = vie == null ? null : vie.getModifier(SANTE);
         if (vie != null && (actuel == null ? malus != 0 : actuel.getAmount() != malus)) {
             vie.removeModifier(SANTE);
@@ -198,14 +248,17 @@ final class Familiers {
         ServerLevel l = j.serverLevel();
         switch (t) {
             case 0 -> {
-                j.addEffect(ef(MobEffects.DIG_SPEED, 1, 80));
+                j.addEffect(ef(MobEffects.DIG_SPEED, n >= 4 ? 2 : 1, 80));
+                if (n >= 1) j.addEffect(ef(MobEffects.DAMAGE_RESISTANCE, 0, 80));
                 if (j.getY() < 50) j.addEffect(ef(MobEffects.NIGHT_VISION, 0, 400));
                 if (j.isInWater()) j.addEffect(ef(MobEffects.MOVEMENT_SLOWDOWN, 0, 60));
             }
             case 1 -> {
-                if (l.dimension() != Level.OVERWORLD && !l.dimension().location().getNamespace().equals("astralys")) return;
+                if (n < 4 && l.dimension() != Level.OVERWORLD && !l.dimension().location().getNamespace().equals("astralys")) return;
+                if (n >= 2 && j.tickCount % 600 < 40) j.addEffect(ef(MobEffects.SATURATION, 0, 1));
+                int r = n >= 1 ? 5 : 3;
                 BlockPos c = j.blockPosition();
-                for (BlockPos b : BlockPos.betweenClosed(c.offset(-3, -1, -3), c.offset(3, 1, 3))) {
+                for (BlockPos b : BlockPos.betweenClosed(c.offset(-r, -1, -r), c.offset(r, 1, r))) {
                     BlockState s = l.getBlockState(b);
                     if (s.getBlock() instanceof BonemealableBlock && s.is(net.minecraft.tags.BlockTags.CROPS) && l.random.nextFloat() < .35f) {
                         s.randomTick(l, b.immutable(), l.random);
@@ -215,17 +268,22 @@ final class Familiers {
                 j.causeFoodExhaustion(.5f);
             }
             case 2 -> {
-                j.addEffect(ef(MobEffects.DAMAGE_BOOST, 0, 80));
-                j.addEffect(ef(MobEffects.GLOWING, 0, 80));
+                j.addEffect(ef(MobEffects.DAMAGE_BOOST, n >= 4 ? 1 : 0, 80));
+                if (n >= 1) j.addEffect(ef(MobEffects.NIGHT_VISION, 0, 400));
+                if (n < 3) j.addEffect(ef(MobEffects.GLOWING, 0, 80));
                 LivingEntity cible = j.getLastHurtMob();
                 if (cible != null && cible.isAlive() && cible.distanceTo(j) < 16 && j.tickCount - j.getLastHurtMobTimestamp() < 200) {
-                    cible.hurt(j.damageSources().playerAttack(j), 3);
+                    cible.hurt(j.damageSources().playerAttack(j), n >= 2 ? 6 : 3);
                     l.sendParticles(ParticleTypes.SWEEP_ATTACK, cible.getX(), cible.getY() + cible.getBbHeight() * .6, cible.getZ(), 1, 0, 0, 0, 0);
                 }
             }
             default -> {
-                j.addEffect(ef(MobEffects.REGENERATION, 0, 80));
-                j.addEffect(ef(MobEffects.WEAKNESS, 0, 80));
+                j.addEffect(ef(MobEffects.REGENERATION, n >= 4 ? 1 : 0, 80));
+                if (n >= 4) j.addEffect(ef(MobEffects.ABSORPTION, 0, 400));
+                if (n >= 1) j.addEffect(ef(MobEffects.FIRE_RESISTANCE, 0, 80));
+                if (n >= 2) for (Player o : l.getEntitiesOfClass(Player.class, j.getBoundingBox().inflate(6), x -> x != j))
+                    o.addEffect(ef(MobEffects.REGENERATION, 0, 80));
+                if (n < 3) j.addEffect(ef(MobEffects.WEAKNESS, 0, 80));
                 if (j.fallDistance > 3) j.addEffect(ef(MobEffects.SLOW_FALLING, 0, 60));
                 j.causeFoodExhaustion(.4f);
             }
@@ -248,19 +306,43 @@ final class Familiers {
 
         @Override
         public void tick() {
+            noPhysics = !isVehicle();   // monte : il heurte les blocs ; sinon il traverse tout pour suivre son maitre
             super.tick();
             if (level().isClientSide || maitre == null) return;
             ServerPlayer j = ((ServerLevel) level()).getServer().getPlayerList().getPlayer(maitre);
             if (j == null || j.level() != level() || actif(j) != sorte()) { discard(); return; }
+            if (isVehicle()) return;   // le client du cavalier le pilote (comme un cheval)
             double a = Math.toRadians(j.getYRot());
             Vec3 avant = new Vec3(-Math.sin(a), 0, Math.cos(a)), droite = new Vec3(-Math.cos(a), 0, -Math.sin(a));
-            Vec3 cible = j.position().add(droite.scale(.9)).add(avant.scale(-.5)).add(0, 1.55 + Math.sin(tickCount * .12) * .12, 0);
+            Vec3 cible = j.position().add(droite.scale(1.1)).add(avant.scale(-.8)).add(0, 1.45 + Math.sin(tickCount * .12) * .12, 0);
             Vec3 ici = position();
             Vec3 pos = ici.distanceToSqr(cible) > 100 ? cible : ici.add(cible.subtract(ici).scale(.3));
             setPos(pos.x, pos.y, pos.z);
             setYRot(j.getYRot()); yBodyRot = j.getYRot(); yHeadRot = j.getYHeadRot();
             if (tickCount % 8 == 0) ((ServerLevel) level()).sendParticles(sorte() == 0 ? ParticleTypes.END_ROD : sorte() == 1 ? ParticleTypes.WAX_ON
                     : sorte() == 2 ? ParticleTypes.SOUL_FIRE_FLAME : ParticleTypes.ENCHANT, getX(), getY() + .2, getZ(), 1, .1, .1, .1, 0);
+        }
+
+        // ---- monture : vole la ou regarde le cavalier
+        @Override public LivingEntity getControllingPassenger() { return getFirstPassenger() instanceof Player p ? p : null; }
+        @Override protected void tickRidden(Player p, Vec3 v) {
+            super.tickRidden(p, v);
+            setRot(p.getYRot(), p.getXRot() * .5f);
+            Vec3 d = getDeltaMovement(); setDeltaMovement(d.x, d.y * .9, d.z);   // sans gravite, la montee/descente s'emballerait
+            yRotO = yBodyRot = yHeadRot = getYRot();
+        }
+        @Override protected Vec3 getRiddenInput(Player p, Vec3 v) {
+            double monte = -Math.sin(Math.toRadians(p.getXRot())) * p.zza;
+            return new Vec3(p.xxa * .5, monte, p.zza);
+        }
+        @Override protected float getRiddenSpeed(Player p) { return VITESSE[sorte()]; }
+        @Override public double getPassengersRidingOffset() { return SELLE[sorte()]; }
+        @Override public EntityDimensions getDimensions(Pose pose) { return isVehicle() ? EntityDimensions.scalable(1.3f, (float) SELLE[sorte()]) : super.getDimensions(pose); }
+        @Override protected void addPassenger(net.minecraft.world.entity.Entity e) { super.addPassenger(e); refreshDimensions(); }
+        @Override protected void removePassenger(net.minecraft.world.entity.Entity e) {
+            super.removePassenger(e);
+            refreshDimensions();
+            if (!level().isClientSide && e instanceof ServerPlayer j) j.addEffect(ef(MobEffects.SLOW_FALLING, 0, 120));   // descendre en plein vol
         }
 
         @Override public boolean isPickable() { return false; }

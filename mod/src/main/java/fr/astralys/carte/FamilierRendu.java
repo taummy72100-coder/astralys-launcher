@@ -41,7 +41,7 @@ final class FamilierRendu extends MobRenderer<Familiers.Pet, FamilierRendu.Model
     @Override public ResourceLocation getTextureLocation(Familiers.Pet e) { return TEXTURES[e.sorte()]; }
     @Override protected int getBlockLightLevel(Familiers.Pet e, BlockPos p) { return 15; }
     @Override protected boolean shouldShowName(Familiers.Pet e) { return false; }
-    @Override protected void scale(Familiers.Pet e, PoseStack ps, float pt) { ps.scale(.75f, .75f, .75f); }
+    @Override protected void scale(Familiers.Pet e, PoseStack ps, float pt) { float k = e.isVehicle() ? 2.2f : 1f; ps.scale(k, k, k); }
 
     static final class Modele extends EntityModel<Familiers.Pet> {
         private final ModelPart racine, corps, ag, ad, debris;

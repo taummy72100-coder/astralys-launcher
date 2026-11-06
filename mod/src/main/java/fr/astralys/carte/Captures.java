@@ -184,15 +184,35 @@ final class Captures {
                 l.setBlockAndUpdate(inc.offset(3, 0, 0), Objets.PIEGE.get().defaultBlockState());
                 for (int k = 0; k < Familiers.IDS.length; k++) {
                     var p = Objets.PET.get().create(l);
-                    p.sorte(k); p.moveTo(o.getX() + .5 + (k - 1.5) * 1.0, o.getY() + 1.15, o.getZ() + 2.2, 180, 0);
-                    l.addFreshEntity(p);
+                    p.sorte(k); p.moveTo(o.getX() + .5 + (k - 1.5) * 1.6, o.getY() + 1.15, o.getZ() + 2.2, 180, 0);
+                    l.addFreshEntity(p); MONTURES[k] = p;
                 }
                 srv.getPlayerList().getPlayers().get(0).connection.teleport(o.getX() + .5, o.getY(), o.getZ() - .3, 0, 12);
             });
         }
         if (phase == 2 && attenteMonde == 1200) Screenshot.grab(mc.gameDirectory, "astralys_machines_pets.png", mc.getMainRenderTarget(), c -> {});
-        if (phase == 2 && attenteMonde > 1220) mc.stop();
+        // chaque pet monte, vu de face
+        for (int k = 0; k < Familiers.IDS.length; k++) {
+            final int kk = k;
+            if (phase == 2 && attenteMonde == 1210 + k * 50) {
+                mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
+                var srv = mc.getSingleplayerServer();
+                srv.execute(() -> {
+                    var j = srv.getPlayerList().getPlayers().get(0);
+                    j.stopRiding();
+                    if (kk > 0) MONTURES[kk - 1].discard();
+                    var p = MONTURES[kk];
+                    p.moveTo(origine.x - 9, origine.y + .3, origine.z, 0, 0);
+                    j.setYRot(-30); j.setXRot(10);
+                    j.startRiding(p, true);
+                });
+            }
+            if (phase == 2 && attenteMonde == 1250 + k * 50) Screenshot.grab(mc.gameDirectory, "astralys_monture" + k + ".png", mc.getMainRenderTarget(), c -> {});
+        }
+        if (phase == 2 && attenteMonde > 1420) mc.stop();
     }
+
+    private static final Familiers.Pet[] MONTURES = new Familiers.Pet[Familiers.IDS.length];
 
     private Captures() {}
 }

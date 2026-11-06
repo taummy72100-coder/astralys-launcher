@@ -43,7 +43,7 @@ public class PetsScreen extends EcranAstralys {
     private void carteDuPet(GuiGraphics g, int t) {
         float x = X0 + t * PAS, y = Y0, cx = x + L / 2;
         int c = Metiers.COULEURS[t];
-        carte(g, x, y, L, 280, c);
+        carte(g, x, y, L, 284, c);
         texte(g, Familiers.NOMS[t].toUpperCase(java.util.Locale.FRANCE), cx, y + 7, .8f, c, 0, true);
         texte(g, "Pet du " + Metiers.NOMS[t], cx, y + 18, .6f, 0xB8AEDA, 0, false);
 
@@ -67,36 +67,47 @@ public class PetsScreen extends EcranAstralys {
         texte(g, "INCONVÉNIENTS", x + 8, ly, .55f, 0xF0645A, -1, true); ly += 8;
         for (String s : Familiers.INCONVENIENTS[t]) { texte(g, "✖ " + s, x + 8, ly, .52f, 0xF8D8D6, -1, false); ly += 7; }
 
-        // oeuf
-        ly = y + 178;
-        objet(g, pile(Familiers.OEUFS[t]), x + 8, ly, 1);
-        texte(g, pile(Familiers.OEUFS[t]).getHoverName().getString(), x + 28, ly + 2, .58f, 0xFFFFFF, -1, true);
+        // passifs debloques par le niveau du metier
         int nv = niveau(t);
-        texte(g, Metiers.NOMS[t] + " niv. " + Familiers.NIVEAU + "  (toi : " + nv + ")", x + 28, ly + 10, .52f, nv >= Familiers.NIVEAU ? 0x22C55E : 0xF0645A, -1, false);
+        ly += 3;
+        texte(g, "PASSIFS DU MÉTIER", x + 8, ly, .55f, c, -1, true); ly += 8;
+        boolean mt = nv >= Familiers.NIVEAU_MONTURE;
+        texte(g, (mt ? "✔ " : "🔒 ") + Familiers.NIVEAU_MONTURE + " • Monture (touche G)", x + 8, ly, .52f, mt ? 0xFFFFFF : 0x6A6A78, -1, false); ly += 7;
+        for (int i = 0; i < 4; i++) {
+            boolean ok = nv >= Familiers.NIVEAUX_PASSIFS[i];
+            texte(g, (ok ? "✔ " : "🔒 ") + Familiers.NIVEAUX_PASSIFS[i] + " • " + Familiers.PASSIFS[t][i], x + 8, ly, .52f, ok ? 0xFFFFFF : 0x6A6A78, -1, false); ly += 7;
+        }
 
-        // construction d'eclosion vue du dessus : socle 3x3, coins, incubateur au centre
-        float gx = x + 10, gy = y + 202, k = 14;
-        texte(g, "ÉCLOSION", x + 64, gy + 2, .55f, c, -1, true);
-        ItemStack socle = pile(Familiers.SOCLE[t]), coin = pile(Familiers.COIN[t]), inc = pile("incubateur_astral");
+        // oeuf + construction d'eclosion vue du dessus : socle 3x3, coins, incubateur au centre
+        float gx = x + 8, gy = y + 222, k = 10;
+        ItemStack socle = pile(Familiers.SOCLE[t]), coin = pile(Familiers.COIN[t]), inc = pile("incubateur_astral"), oeuf = pile(Familiers.OEUFS[t]);
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++) {
                 rect(g, gx + i * k, gy + j * k, gx + i * k + k - 1, gy + j * k + k - 1, argb(0x0A0714, .7f * a));
                 boolean estCoin = i != 1 && j != 1, centre = i == 1 && j == 1;
-                objet(g, centre ? inc : estCoin ? coin : socle, gx + i * k + 1, gy + j * k + 1, .75f);
+                objet(g, centre ? inc : estCoin ? coin : socle, gx + i * k + 1, gy + j * k + 1, .5f);
             }
+        float tx = x + 42;
+        objet(g, oeuf, tx, gy - 1, .6f);
+        texte(g, oeuf.getHoverName().getString(), tx + 12, gy + 1, .52f, 0xFFFFFF, -1, true);
+        texte(g, Metiers.NOMS[t] + " niv. " + Familiers.NIVEAU + "  (toi : " + nv + ")", tx, gy + 10, .48f, nv >= Familiers.NIVEAU ? 0x22C55E : 0xF0645A, -1, false);
         String[] mots = Familiers.CONSTRUCTION[t].split(" \\+ ");
-        texte(g, mots[0], x + 64, gy + 12, .45f, 0xC8C8D0, -1, false);
-        texte(g, "+ " + mots[1], x + 64, gy + 19, .45f, 0xC8C8D0, -1, false);
-        texte(g, "puis clic droit avec l'œuf", x + 64, gy + 28, .45f, 0x9A9AA4, -1, false);
+        texte(g, mots[0], tx, gy + 17, .42f, 0xC8C8D0, -1, false);
+        texte(g, "+ " + mots[1], tx, gy + 23, .42f, 0xC8C8D0, -1, false);
 
-        // bouton
+        // boutons : venir / ranger, et monter
         int e = etat(t);
-        boolean s = e > 0 && dans(x + 8, y + 256, x + L - 8, y + 274);
-        int bc = e == 0 ? 0x3B2F5E : e == 1 ? 0xF0B429 : e == 2 ? 0x22C55E : 0xE8322B;
-        rect(g, x + 7, y + 255, x + L - 7, y + 275, argb(0x0A0714, a));
-        g.fillGradient(Math.round(x + 8), Math.round(y + 256), Math.round(x + L - 8), Math.round(y + 274), argb(s ? EcranAstralys.melange(bc, 0xFFFFFF, .25f) : bc, a), argb(EcranAstralys.melange(bc, 0, .4f), a));
-        String b = switch (e) { case 0 -> "🔒 NIVEAU " + Familiers.NIVEAU + " REQUIS"; case 1 -> "ŒUF — " + Economie.format(Familiers.PRIX_OEUF) + " $"; case 2 -> "FAIRE VENIR"; default -> "RANGER"; };
-        texte(g, b, cx, y + 261, .62f, e == 0 ? 0x8A8A92 : 0x0A0714, 0, true);
+        bouton(g, x + 7, y + 262, possede(t) ? x + L / 2 + 14 : x + L - 7, e, switch (e) { case 0 -> "🔒 NIVEAU " + Familiers.NIVEAU + " REQUIS"; case 1 -> "ŒUF — " + Economie.format(Familiers.PRIX_OEUF) + " $"; case 2 -> "FAIRE VENIR"; default -> "RANGER"; },
+                e == 0 ? 0x3B2F5E : e == 1 ? 0xF0B429 : e == 2 ? 0x22C55E : 0xE8322B);
+        if (possede(t)) bouton(g, x + L / 2 + 17, y + 262, x + L - 7, mt && e == 3 ? 1 : 0, mt ? "MONTER" : "🔒 NIV. " + Familiers.NIVEAU_MONTURE, 0x7FE0FF);
+    }
+
+    private void bouton(GuiGraphics g, float x1, float y1, float x2, int e, String b, int bc) {
+        boolean s = e > 0 && dans(x1 + 1, y1 + 1, x2 - 1, y1 + 17);
+        if (e == 0) bc = 0x3B2F5E;
+        rect(g, x1, y1, x2, y1 + 18, argb(0x0A0714, a));
+        g.fillGradient(Math.round(x1 + 1), Math.round(y1 + 1), Math.round(x2 - 1), Math.round(y1 + 17), argb(s ? EcranAstralys.melange(bc, 0xFFFFFF, .25f) : bc, a), argb(EcranAstralys.melange(bc, 0, .4f), a));
+        texte(g, b, (x1 + x2) / 2, y1 + 6, .6f, e == 0 ? 0x8A8A92 : 0x0A0714, 0, true);
     }
 
     @Override
@@ -104,7 +115,14 @@ public class PetsScreen extends EcranAstralys {
         for (int t = 0; t < Familiers.IDS.length; t++) {
             float x = X0 + t * PAS;
             int e = etat(t);
-            if (e > 0 && dans(x + 8, Y0 + 256, x + L - 8, Y0 + 274)) {
+            float fin = possede(t) ? x + L / 2 + 14 : x + L - 7;
+            if (possede(t) && e == 3 && niveau(t) >= Familiers.NIVEAU_MONTURE && dans(x + L / 2 + 18, Y0 + 263, x + L - 8, Y0 + 279)) {
+                Metiers.CANAL.sendToServer(new Familiers.Action(4, t));
+                son(SoundEvents.HORSE_SADDLE, 1.2f);
+                minecraft.setScreen(null);
+                return true;
+            }
+            if (e > 0 && dans(x + 8, Y0 + 263, fin - 1, Y0 + 279)) {
                 Metiers.CANAL.sendToServer(new Familiers.Action(e == 1 ? 1 : e == 2 ? 2 : 3, t));
                 son(e == 1 ? SoundEvents.AMETHYST_BLOCK_CHIME : SoundEvents.UI_BUTTON_CLICK.value(), 1.2f);
                 return true;
