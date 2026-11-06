@@ -10,6 +10,7 @@ public class AstralysCarte {
 
     public AstralysCarte() {
         // Chez le joueur : la carte. Sur le serveur : la reinitialisation de Sylvaria.
+        Metiers.init();
         if (FMLEnvironment.dist == Dist.CLIENT) new Client();
         else ResetSylvaria.init();
     }

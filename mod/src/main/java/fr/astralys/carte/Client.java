@@ -43,6 +43,7 @@ class Client {
         MinecraftForge.EVENT_BUS.addListener(this::commande);
         MinecraftForge.EVENT_BUS.addListener(this::listeAvant);
         MinecraftForge.EVENT_BUS.addListener(this::pause);
+        ClientMetiers.init();
         MinecraftForge.EVENT_BUS.addListener(this::listeRendu);
     }
 
