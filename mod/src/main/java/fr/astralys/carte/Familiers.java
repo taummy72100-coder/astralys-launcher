@@ -50,7 +50,7 @@ final class Familiers {
     static final String[] NOMS = {"Golem de cristal", "Bourdon doré", "Faucon spectral", "Fée d'éther"};
     static final String[] OEUFS = {"oeuf_golem", "oeuf_bourdon", "oeuf_faucon", "oeuf_fee"};
     static final int NIVEAU = 50;
-    static final long PRIX_OEUF = 25_000;
+    static final long PRIX_OEUF = 250_000;
     static final String[][] AVANTAGES = {
             {"Célérité II en permanence", "Vision nocturne sous la couche 50", "+25 % d'XP de Mineur"},
             {"Fait pousser les cultures autour de toi", "+25 % d'XP de Farmeur"},

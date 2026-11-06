@@ -162,6 +162,30 @@ final class Economie {
                 "minecraft:rabbit_foot", 40, "minecraft:pufferfish", 15, "minecraft:phantom_membrane", 25, "minecraft:experience_bottle", 50,
                 "minecraft:brewing_stand", 120, "minecraft:cauldron", 60, "minecraft:dragon_breath", 200, "minecraft:enchanting_table", 400, "minecraft:book", 10,
                 "minecraft:lapis_lazuli", 6, "minecraft:redstone", 4, "minecraft:glowstone_dust", 4, "minecraft:gunpowder", 8);
+        // ---- objets les plus durs a obtenir : en vente, mais tres chers
+        article(2, "minecraft:enchanted_golden_apple", 50_000, "minecraft:heart_of_the_sea", 15_000, "minecraft:trident", 20_000,
+                "minecraft:wither_skeleton_skull", 8_000, "minecraft:nether_star", 50_000, "minecraft:beacon", 75_000, "minecraft:elytra", 150_000,
+                "minecraft:dragon_head", 100_000, "minecraft:netherite_upgrade_smithing_template", 30_000);
+        // ---- plus c'est difficile a obtenir, plus c'est cher (remplace les prix de base ci-dessus)
+        cher("minecraft:diamond", 600, "minecraft:diamond_ore", 700, "minecraft:deepslate_diamond_ore", 720, "minecraft:diamond_block", 5_400,
+                "minecraft:emerald", 300, "minecraft:emerald_ore", 350, "minecraft:deepslate_emerald_ore", 370, "minecraft:emerald_block", 2_700,
+                "minecraft:ancient_debris", 6_500, "minecraft:netherite_scrap", 6_000, "minecraft:netherite_ingot", 25_000, "minecraft:netherite_block", 225_000,
+                "minecraft:totem_of_undying", 15_000, "minecraft:golden_apple", 1_500, "minecraft:shulker_shell", 4_000, "minecraft:nautilus_shell", 600,
+                "minecraft:scute", 300, "minecraft:ender_eye", 250, "minecraft:ender_pearl", 80, "minecraft:ghast_tear", 250, "minecraft:blaze_rod", 120,
+                "minecraft:dragon_breath", 2_000, "minecraft:enchanting_table", 3_000, "minecraft:experience_bottle", 150, "minecraft:name_tag", 300,
+                "minecraft:saddle", 300, "minecraft:phantom_membrane", 60, "minecraft:crying_obsidian", 80, "minecraft:blue_ice", 90,
+                "alexscaves:occult_gem", 5_000, "alexscaves:uranium", 400, "alexscaves:block_of_uranium", 3_600, "alexscaves:radrock_uranium_ore", 450,
+                "create:precision_mechanism", 800,
+                "astralyscarte:cle_commun", 5_000, "astralyscarte:cle_rare", 25_000, "astralyscarte:cle_epique", 80_000,
+                "astralyscarte:cle_legendaire", 250_000, "astralyscarte:cle_special", 1_000_000);
+    }
+
+    private static void cher(Object... paires) {
+        for (int i = 0; i < paires.length; i += 2) {
+            String id = (String) paires[i]; long prix = ((Number) paires[i + 1]).longValue();
+            for (int k = 0; k < ARTICLES.size(); k++)
+                if (ARTICLES.get(k).item().equals(id)) ARTICLES.set(k, new Article(id, ARTICLES.get(k).categorie(), prix));
+        }
     }
 
     static long achat(long base, double f) { return Math.max(1, Math.round(base * f)); }
