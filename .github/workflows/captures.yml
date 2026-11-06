@@ -18,7 +18,7 @@ jobs:
       - name: Lancer le jeu et capturer
         env: { ASTRALYS_CAPTURES: '1' }
         run: |
-          mkdir -p mod/run && echo "guiScale:3" > mod/run/options.txt
+          mkdir -p mod/run && printf 'guiScale:3\nresourcePacks:["mod_resources","vanilla"]\n' > mod/run/options.txt
           timeout 1500 xvfb-run -s "-screen 0 1920x1080x24" gradle -p mod runClient --no-daemon > jeu.log 2>&1 || true
           tail -40 jeu.log
           ls -la mod/run/screenshots || true
