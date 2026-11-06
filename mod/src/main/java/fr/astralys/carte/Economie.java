@@ -219,14 +219,14 @@ final class Economie {
         UUID chef;
         final Map<UUID, String> membres = new LinkedHashMap<>();
         final Set<UUID> invites = new HashSet<>();
-        long banque, points, semaine = -1;
+        long banque, points, semaine = -1, xp;
         final long[] defis = new long[3];
 
         CompoundTag ecrire() {
             CompoundTag t = new CompoundTag();
             t.putString("nom", nom); t.putUUID("chef", chef);
             CompoundTag m = new CompoundTag(); membres.forEach((u, n) -> m.putString(u.toString(), n)); t.put("membres", m);
-            t.putLong("banque", banque); t.putLong("points", points); t.putLong("semaine", semaine); t.putLongArray("defis", defis);
+            t.putLong("banque", banque); t.putLong("points", points); t.putLong("semaine", semaine); t.putLongArray("defis", defis); t.putLong("xp", xp);
             return t;
         }
 
@@ -234,7 +234,7 @@ final class Economie {
             Faction f = new Faction();
             f.nom = t.getString("nom"); f.chef = t.getUUID("chef");
             CompoundTag m = t.getCompound("membres"); for (String k : m.getAllKeys()) f.membres.put(UUID.fromString(k), m.getString(k));
-            f.banque = t.getLong("banque"); f.points = t.getLong("points"); f.semaine = t.getLong("semaine");
+            f.banque = t.getLong("banque"); f.points = t.getLong("points"); f.semaine = t.getLong("semaine"); f.xp = t.getLong("xp");
             long[] d = t.getLongArray("defis"); System.arraycopy(d, 0, f.defis, 0, Math.min(3, d.length));
             return f;
         }
@@ -248,6 +248,7 @@ final class Economie {
         final Map<String, double[]> marche = new HashMap<>();     // item -> {facteur, facteur il y a une heure}
         final Map<String, Faction> factions = new HashMap<>();    // cle = nom en minuscules
         final Map<String, String> claims = new HashMap<>();       // "dimension|cx|cz" -> faction
+        long jourPaye;                                            // dernier versement des gains du classement
 
         static Donnees lire(CompoundTag t) {
             Donnees d = new Donnees();
@@ -255,6 +256,7 @@ final class Economie {
             CompoundTag m = t.getCompound("marche"); for (String k : m.getAllKeys()) { CompoundTag c = m.getCompound(k); d.marche.put(k, new double[] {c.getDouble("f"), c.getDouble("h")}); }
             for (Tag x : t.getList("factions", Tag.TAG_COMPOUND)) { Faction f = Faction.lire((CompoundTag) x); d.factions.put(f.nom.toLowerCase(), f); }
             CompoundTag c = t.getCompound("claims"); for (String k : c.getAllKeys()) d.claims.put(k, c.getString(k));
+            d.jourPaye = t.getLong("jourPaye");
             return d;
         }
 
@@ -264,6 +266,7 @@ final class Economie {
             CompoundTag m = new CompoundTag(); marche.forEach((k, v) -> { CompoundTag c = new CompoundTag(); c.putDouble("f", v[0]); c.putDouble("h", v[1]); m.put(k, c); }); t.put("marche", m);
             ListTag l = new ListTag(); factions.values().forEach(f -> l.add(f.ecrire())); t.put("factions", l);
             CompoundTag c = new CompoundTag(); claims.forEach(c::putString); t.put("claims", c);
+            t.putLong("jourPaye", jourPaye);
             return t;
         }
     }
@@ -331,11 +334,58 @@ final class Economie {
             if (dm[i].type != type || f.defis[i] >= dm[i].nombre) continue;
             f.defis[i] = Math.min(dm[i].nombre, f.defis[i] + n); d().setDirty();
             if (f.defis[i] >= dm[i].nombre) {
-                f.banque += dm[i].argent; f.points += dm[i].points;
+                f.banque += dm[i].argent; f.points += dm[i].points; gagnerXp(f, dm[i].points * 2);
                 annoncerFaction(f, Component.literal("★ Défi de la semaine réussi : " + dm[i].titre + " ! +" + format(dm[i].argent) + " $ en banque, +" + dm[i].points + " points")
                         .withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD));
             }
         }
+    }
+
+    // ------------------------------------------------------------------ niveau des factions et gains du classement
+    static final int NIVEAU_FACTION_MAX = 50;
+    /** Gains verses chaque jour a minuit selon le classement (points) : du 1er au 5e, puis toute faction qui a des points. */
+    static final long[] GAIN_ARGENT = {10_000, 6_000, 4_000, 2_500, 2_500}, GAIN_XP = {500, 300, 200, 120, 120};
+    static final long GAIN_ARGENT_AUTRES = 500, GAIN_XP_AUTRES = 25;
+
+    static long coutFaction(int n) { return 1000 + 500L * n; }
+
+    static int niveauFaction(long xp) {
+        int n = 0;
+        while (n < NIVEAU_FACTION_MAX && xp >= coutFaction(n)) xp -= coutFaction(n++);
+        return n;
+    }
+
+    static long resteFaction(long xp) {
+        int n = 0;
+        while (n < NIVEAU_FACTION_MAX && xp >= coutFaction(n)) xp -= coutFaction(n++);
+        return xp;
+    }
+
+    static void gagnerXp(Faction f, long n) {
+        int avant = niveauFaction(f.xp);
+        f.xp += n; d().setDirty();
+        int apres = niveauFaction(f.xp);
+        if (apres > avant) annoncerFaction(f, Component.literal("✦ La faction " + f.nom + " passe niveau " + apres + " !").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+    }
+
+    /** A minuit (Paris), chaque faction touche en banque et en XP selon sa place au classement. */
+    private static void verserClassement() {
+        long jour = LocalDate.now(PARIS).toEpochDay();
+        if (d().jourPaye == jour) return;
+        boolean premier = d().jourPaye == 0;
+        d().jourPaye = jour; d().setDirty();
+        if (premier) return;   // premiere mise en route : rien a verser pour une journee qui n'a pas eu lieu
+        List<Faction> l = d().factions.values().stream().filter(f -> f.points > 0).sorted(Comparator.comparingLong((Faction x) -> -x.points)).toList();
+        for (int i = 0; i < l.size(); i++) {
+            Faction f = l.get(i);
+            long a = i < GAIN_ARGENT.length ? GAIN_ARGENT[i] : GAIN_ARGENT_AUTRES, x = i < GAIN_XP.length ? GAIN_XP[i] : GAIN_XP_AUTRES;
+            f.banque += a;
+            annoncerFaction(f, Component.literal("★ Classement du jour : " + (i + 1) + (i == 0 ? "re" : "e") + " place ! +" + format(a) + " $ en banque, +" + x + " XP de faction")
+                    .withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD));
+            gagnerXp(f, x);
+        }
+        if (!l.isEmpty()) serveur.getPlayerList().broadcastSystemMessage(Component.literal("★ Classement des factions du jour : 1re " + l.get(0).nom
+                + (l.size() > 1 ? ", 2e " + l.get(1).nom : "") + (l.size() > 2 ? ", 3e " + l.get(2).nom : "") + ". Gains versés en banque !").withStyle(ChatFormatting.LIGHT_PURPLE), false);
     }
 
     private static void annoncerFaction(Faction f, Component c) {
@@ -386,12 +436,12 @@ final class Economie {
 
     record DefiVue(String titre, String desc, long avance, long nombre, long argent, long points) {}
 
-    record FactionVue(String nom, String chef, List<String> membres, List<Boolean> enLigne, long banque, long points, int claims, int max,
+    record FactionVue(String nom, String chef, List<String> membres, List<Boolean> enLigne, long banque, long points, long xp, int claims, int max,
                       long prixClaim, List<DefiVue> defis, List<String> top) {
         void ecrire(FriendlyByteBuf b) {
             b.writeUtf(nom); b.writeUtf(chef);
             b.writeVarInt(membres.size()); for (int i = 0; i < membres.size(); i++) { b.writeUtf(membres.get(i)); b.writeBoolean(enLigne.get(i)); }
-            b.writeVarLong(banque); b.writeVarLong(points); b.writeVarInt(claims); b.writeVarInt(max); b.writeVarLong(prixClaim);
+            b.writeVarLong(banque); b.writeVarLong(points); b.writeVarLong(xp); b.writeVarInt(claims); b.writeVarInt(max); b.writeVarLong(prixClaim);
             b.writeVarInt(defis.size()); for (DefiVue v : defis) { b.writeUtf(v.titre); b.writeUtf(v.desc); b.writeVarLong(v.avance); b.writeVarLong(v.nombre); b.writeVarLong(v.argent); b.writeVarLong(v.points); }
             b.writeVarInt(top.size()); top.forEach(b::writeUtf);
         }
@@ -399,11 +449,11 @@ final class Economie {
             String nom = b.readUtf(), chef = b.readUtf();
             int n = Math.min(b.readVarInt(), 200); List<String> m = new ArrayList<>(); List<Boolean> e = new ArrayList<>();
             for (int i = 0; i < n; i++) { m.add(b.readUtf()); e.add(b.readBoolean()); }
-            long banque = b.readVarLong(), points = b.readVarLong(); int claims = b.readVarInt(), max = b.readVarInt(); long prix = b.readVarLong();
+            long banque = b.readVarLong(), points = b.readVarLong(), xp = b.readVarLong(); int claims = b.readVarInt(), max = b.readVarInt(); long prix = b.readVarLong();
             int nd = Math.min(b.readVarInt(), 10); List<DefiVue> d = new ArrayList<>();
             for (int i = 0; i < nd; i++) d.add(new DefiVue(b.readUtf(), b.readUtf(), b.readVarLong(), b.readVarLong(), b.readVarLong(), b.readVarLong()));
             int nt = Math.min(b.readVarInt(), 20); List<String> t = new ArrayList<>(); for (int i = 0; i < nt; i++) t.add(b.readUtf());
-            return new FactionVue(nom, chef, m, e, banque, points, claims, max, prix, d, t);
+            return new FactionVue(nom, chef, m, e, banque, points, xp, claims, max, prix, d, t);
         }
     }
 
@@ -460,14 +510,14 @@ final class Economie {
         List<String> top = new ArrayList<>();
         d().factions.values().stream().sorted(Comparator.comparingLong((Faction x) -> -x.points)).limit(5)
                 .forEach(x -> top.add(x.nom + "|" + x.points));
-        if (f == null) { envoyer(p, new FactionVue("", "", List.of(), List.of(), 0, 0, 0, 0, 0, List.of(), top)); return; }
+        if (f == null) { envoyer(p, new FactionVue("", "", List.of(), List.of(), 0, 0, 0, 0, 0, 0, List.of(), top)); return; }
         majSemaine(f);
         List<String> m = new ArrayList<>(); List<Boolean> e = new ArrayList<>();
         f.membres.forEach((u, n) -> { m.add(n); e.add(serveur.getPlayerList().getPlayer(u) != null); });
         DefiModele[] dm = defisDeLaSemaine(f.semaine);
         List<DefiVue> dv = new ArrayList<>();
         for (int i = 0; i < 3; i++) dv.add(new DefiVue(dm[i].titre, dm[i].desc, f.defis[i], dm[i].nombre, dm[i].argent, dm[i].points));
-        envoyer(p, new FactionVue(f.nom, f.membres.getOrDefault(f.chef, "?"), m, e, f.banque, f.points, nbClaims(f), f.maxClaims(), prixClaim(f), dv, top));
+        envoyer(p, new FactionVue(f.nom, f.membres.getOrDefault(f.chef, "?"), m, e, f.banque, f.points, f.xp, nbClaims(f), f.maxClaims(), prixClaim(f), dv, top));
         envoyerSolde(p);
     }
 
@@ -719,6 +769,7 @@ final class Economie {
             // les cours reviennent doucement vers leur prix de base (toutes les 5 min) ; reference de tendance chaque heure
             if (t % 6000 == 0) { for (double[] c : d().marche.values()) c[0] += (1 - c[0]) * .05; d().setDirty(); }
             if (t % 72000 == 0) { for (double[] c : d().marche.values()) c[1] = c[0]; d().setDirty(); }
+            if (t % 1200 == 0) verserClassement();
         });
     }
 

@@ -14,6 +14,7 @@ public class AstralysCarte {
         Objets.init();
         Metiers.init();
         Economie.init();
+        Accueil.init();
         if (FMLEnvironment.dist == Dist.CLIENT) new Client();
         else ResetSylvaria.init();
     }

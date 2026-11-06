@@ -82,6 +82,17 @@ public class FactionScreen extends EcranAstralys {
         texte(g, f.nom().toUpperCase(Locale.FRANCE), 104, 78, 2, 0xFFFFFF, -1, true);
         texte(g, "Chef : " + f.chef() + "   •   " + f.membres().size() + " membre" + (f.membres().size() > 1 ? "s" : "") + "   •   " + enLigne + " en ligne",
                 104, 101, .72f, 0xB8B8C2, -1, false);
+        // niveau et XP de la faction, gains du classement a minuit
+        int nv = Economie.niveauFaction(f.xp());
+        boolean maxi = nv >= Economie.NIVEAU_FACTION_MAX;
+        hexBord(g, 372, 90, 26, OR);
+        texte(g, String.valueOf(nv), 372, 86, 1, 0x2A1A00, 0, true);
+        texte(g, "NIVEAU DE FACTION", 392, 76, .62f, OR, -1, true);
+        barre(g, 392, 88, 150, 5, maxi ? 1 : Economie.resteFaction(f.xp()) / (float) Economie.coutFaction(nv), OR);
+        texte(g, maxi ? "Niveau maximum" : Economie.format(Economie.resteFaction(f.xp())) + " / " + Economie.format(Economie.coutFaction(nv)) + " XP", 392, 97, .55f, 0xC8C8D0, -1, false);
+        String gain = rang > 0 && rang <= Economie.GAIN_ARGENT.length ? "+" + Economie.format(Economie.GAIN_ARGENT[rang - 1]) + " $  •  +" + Economie.GAIN_XP[rang - 1] + " XP"
+                : f.points() > 0 ? "+" + Economie.format(Economie.GAIN_ARGENT_AUTRES) + " $  •  +" + Economie.GAIN_XP_AUTRES + " XP" : "gagne des points pour être payé";
+        texte(g, "À minuit : " + gain, 392, 108, .55f, 0x22C55E, -1, true);
         texte(g, rang > 0 ? "#" + rang : "—", 610, 76, 2.2f, rang == 1 ? OR : VIOLET, 1, true);
         texte(g, "AU CLASSEMENT", 610, 101, .6f, 0x8A8A92, 1, true);
 

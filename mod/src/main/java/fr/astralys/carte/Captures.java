@@ -26,7 +26,7 @@ final class Captures {
         ETAPES.add(new Etape("metier_hunter", Captures::exemple, () -> new MetierScreen(2)));
         ETAPES.add(new Etape("boutique", Captures::exemple, ShopScreen::new));
         ETAPES.add(new Etape("faction", Captures::exemple, FactionScreen::new));
-        ETAPES.add(new Etape("faction_vide", () -> { exemple(); ClientEco.faction = new Economie.FactionVue("", "", List.of(), List.of(), 0, 0, 0, 0, 0, List.of(),
+        ETAPES.add(new Etape("faction_vide", () -> { exemple(); ClientEco.faction = new Economie.FactionVue("", "", List.of(), List.of(), 0, 0, 0, 0, 0, 0, List.of(),
                 List.of("Dragons|1840", "Lumina|1320", "Givre|960", "Braises|410", "Sylves|120")); }, FactionScreen::new));
         ETAPES.add(new Etape("carte", Captures::exemple, CarteScreen::new));
         ETAPES.add(new Etape("classement", () -> { exemple(); ClientEco.classement = new Economie.Classement(List.of(
@@ -60,7 +60,7 @@ final class Captures {
                 "fond:nebuleuse", "motif:constellation", "embleme:oeuf_dragon", "grade:astral", "emote:danse", "emote:victoire"),
                 java.util.Arrays.asList("chapeau_sorcier_violet", "", "jambieres_runiques_violet", "bottes_ailees_or"), pr);
         ClientEco.faction = new Economie.FactionVue("Dragons", "Dev", List.of("Dev", "Lyra", "Kaelen", "Nox", "Mira", "Tobias", "Sora"),
-                List.of(true, true, false, true, false, false, true), 84250, 1840, 14, 26, 4000,
+                List.of(true, true, false, true, false, false, true), 84250, 1840, 9800, 14, 26, 4000,
                 List.of(new Economie.DefiVue("Mine collective", "Casser 1500 minerais", 1500, 1500, 20000, 100),
                         new Economie.DefiVue("Grande moisson", "Récolter 2000 cultures", 1240, 2000, 15000, 80),
                         new Economie.DefiVue("Marchands", "Vendre pour 50 000 $ au shop", 8700, 50000, 25000, 120)),

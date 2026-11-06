@@ -51,7 +51,7 @@ final class Metiers {
     static final String[] NOMS = {"MINEUR", "FARMEUR", "HUNTER", "ALCHIMISTE"};
     static final int MINEUR = 0, FARMEUR = 1, HUNTER = 2, ALCHIMISTE = 3, NIVEAU_MAX = 100;
     private static final ZoneId PARIS = ZoneId.of("Europe/Paris");
-    private static final String VERSION = "8";   // a changer a chaque modification d'un paquet : client et serveur doivent avoir le meme mod
+    private static final String VERSION = "9";   // a changer a chaque modification d'un paquet : client et serveur doivent avoir le meme mod
     // Les joueurs sans le mod peuvent toujours se connecter (ils n'ont simplement pas l'ecran).
     static final SimpleChannel CANAL = NetworkRegistry.newSimpleChannel(new ResourceLocation(AstralysCarte.MODID, "metiers"),
             () -> VERSION, NetworkRegistry.acceptMissingOr(VERSION), NetworkRegistry.acceptMissingOr(VERSION));
