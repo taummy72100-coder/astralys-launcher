@@ -5,7 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.gui.screens.inventory.EffectRenderingInventoryScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -26,7 +26,7 @@ final class ClientMetiers {
     private static final java.util.List<Bouton> boutons = new java.util.ArrayList<>();
 
     private static void inventaire(ScreenEvent.Init.Post e) {
-        if (!(e.getScreen() instanceof InventoryScreen s)) return;
+        if (!(e.getScreen() instanceof EffectRenderingInventoryScreen<?> s)) return;
         boutons.clear();
         boutons.add(new Bouton("Métiers & quêtes", 0xE8322B, Items.GOLDEN_PICKAXE, () -> new MetiersScreen()));
         boutons.add(new Bouton("Boutique", 0xF0B429, Items.EMERALD, () -> new ShopScreen()));
@@ -35,13 +35,13 @@ final class ClientMetiers {
         placer(s);
     }
 
-    private static void placer(InventoryScreen s) {
+    private static void placer(EffectRenderingInventoryScreen<?> s) {
         for (int i = 0; i < boutons.size(); i++) boutons.get(i).setPosition(s.getGuiLeft() - 30, s.getGuiTop() + 6 + i * 30);
     }
 
     // Le livre de recettes deplace l'inventaire : les boutons suivent.
     private static void suivre(ScreenEvent.Render.Pre e) {
-        if (e.getScreen() instanceof InventoryScreen s) placer(s);
+        if (e.getScreen() instanceof EffectRenderingInventoryScreen<?> s) placer(s);
     }
 
     private static final class Bouton extends Button {

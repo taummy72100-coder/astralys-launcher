@@ -99,7 +99,6 @@ final class Metiers {
             new Quete("Os brisés", "Tuer 15 squelettes", Type.TUER, "minecraft:skeleton", 15, HUNTER, 150),
             new Quete("Toiles et crocs", "Tuer 12 araignées", Type.TUER, "minecraft:spider", 12, HUNTER, 130),
             new Quete("Nettoyeur", "Tuer 30 monstres", Type.TUER, "@monstre", 30, HUNTER, 200),
-            new Quete("Né du chaos", "Tuer 5 créatures Born in Chaos", Type.TUER, "born_in_chaos_v1:", 5, HUNTER, 260),
             new Quete("Faune sauvage", "Tuer 6 créatures d'Alex's Mobs", Type.TUER, "alexsmobs:", 6, HUNTER, 220));
     static final List<Quete> ROTATION = List.of(
             new Quete("Mine de Sylvaria", "Aller miner à Sylvaria", Type.VISITER, "astralys:sylvaria", 1, MINEUR, 80),
