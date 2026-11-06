@@ -18,7 +18,7 @@ final class ClientEco {
 
     static void ouvrir(int ecran) {
         Minecraft mc = Minecraft.getInstance();
-        mc.setScreen(switch (ecran) { case 0 -> new ShopScreen(); case 1 -> new FactionScreen(); case 3 -> new ClassementScreen(); case 4 -> new HdvScreen(); default -> new MetiersScreen(); });
+        mc.setScreen(switch (ecran) { case 0 -> new ShopScreen(); case 1 -> new FactionScreen(); case 3 -> new ClassementScreen(); case 4 -> new HdvScreen(); case 5 -> new CarteScreen(); default -> new MetiersScreen(); });
     }
 
     static void demander(int quoi) { if (Minecraft.getInstance().getConnection() != null) Metiers.CANAL.sendToServer(new Economie.Demande(quoi)); }

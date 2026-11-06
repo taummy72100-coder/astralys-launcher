@@ -1,4 +1,15 @@
 {
   "key.categories.astralys": "Astralys",
-  "key.astralyscarte.carte": "Open the world map"
+  "key.astralyscarte.carte": "Open the world map",
+  "item.astralyscarte.pioche_cristal": "Crystal Pickaxe",
+  "item.astralyscarte.pioche_celeste": "Celestial Pickaxe",
+  "item.astralyscarte.houe_doree": "Golden Hoe of Astralys",
+  "item.astralyscarte.faux_moissons": "Harvest Scythe",
+  "item.astralyscarte.dague_chasseur": "Hunter's Dagger",
+  "item.astralyscarte.lame_lunaire": "Lunar Blade",
+  "item.astralyscarte.fiole_eternelle": "Eternal Flask",
+  "item.astralyscarte.fiole_eternelle.desc": "Right click: Regeneration II (10 s). Never empty.\nCooldown: 1 min",
+  "item.astralyscarte.grimoire_astralys": "Grimoire of Astralys",
+  "item.astralyscarte.grimoire_astralys.desc": "Right click: Absorption II, Speed, Night Vision (30 s).\nCooldown: 5 min",
+  "entity.astralyscarte.pnj": "Astralys NPC"
 }

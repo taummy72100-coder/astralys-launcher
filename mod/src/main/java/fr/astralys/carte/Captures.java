@@ -95,13 +95,28 @@ final class Captures {
         }
         if (phase == 2 && attenteMonde == 110) Screenshot.grab(mc.gameDirectory, "astralys_inventaire_survol.png", mc.getMainRenderTarget(), c -> {});
         // barre d'action seule, puis inventaire creatif
-        if (phase == 2 && attenteMonde == 140) { mc.setScreen(null); mc.player.getInventory().items.set(0, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND_PICKAXE));
-            mc.player.getInventory().items.set(2, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.OAK_LOG, 32)); }
+        if (phase == 2 && attenteMonde == 140) { mc.setScreen(null); var objets = Objets.ITEMS.getEntries().stream().toList();
+            for (int k = 0; k < objets.size(); k++) mc.player.getInventory().items.set(k, new net.minecraft.world.item.ItemStack(objets.get(k).get())); }
         if (phase == 2 && attenteMonde == 190) Screenshot.grab(mc.gameDirectory, "astralys_barre.png", mc.getMainRenderTarget(), c -> {});
         if (phase == 2 && attenteMonde == 200) mc.player.connection.sendCommand("gamemode creative");
         if (phase == 2 && attenteMonde == 240) mc.setScreen(new net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen(mc.player, mc.player.connection.enabledFeatures(), true));
         if (phase == 2 && attenteMonde == 300) Screenshot.grab(mc.gameDirectory, "astralys_creatif.png", mc.getMainRenderTarget(), c -> {});
-        if (phase == 2 && attenteMonde > 320) mc.stop();
+        // les 5 PNJ alignes devant le joueur
+        if (phase == 2 && attenteMonde == 320) {
+            mc.setScreen(null);
+            var srv = mc.getSingleplayerServer(); var pos = mc.player.position();
+            srv.execute(() -> {
+                var lvl = srv.overworld();
+                srv.getPlayerList().getPlayers().get(0).connection.teleport(pos.x, pos.y, pos.z, 0, 8);
+                for (int k = 0; k < PnjEntity.SKINS.length; k++) {
+                    var e = Objets.PNJ.get().create(lvl);
+                    e.moveTo(pos.x + (k - 2) * 1.5, pos.y, pos.z + 5, 180, 0); e.setYHeadRot(180); e.sorte(k);
+                    lvl.addFreshEntity(e);
+                }
+            });
+        }
+        if (phase == 2 && attenteMonde == 420) Screenshot.grab(mc.gameDirectory, "astralys_pnj.png", mc.getMainRenderTarget(), c -> {});
+        if (phase == 2 && attenteMonde > 440) mc.stop();
     }
 
     private Captures() {}

@@ -39,6 +39,9 @@ class Client {
     Client() {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::touches);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(Client::packInterface);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener((net.minecraftforge.client.event.EntityRenderersEvent.RegisterRenderers e) ->
+                e.registerEntityRenderer(Objets.PNJ.get(), PnjRendu::new));
+        MinecraftForge.EVENT_BUS.addListener(Client::bulle);
         MinecraftForge.EVENT_BUS.addListener(this::tick);
         MinecraftForge.EVENT_BUS.addListener(this::touche);
         MinecraftForge.EVENT_BUS.addListener(this::commande);
@@ -153,5 +156,14 @@ class Client {
             s.status = Component.empty();
             s.playerList = List.of();
         }
+    }
+
+    // Description des objets d'Astralys : cle de langue "<objet>.desc", lignes separees par \n.
+    private static void bulle(net.minecraftforge.event.entity.player.ItemTooltipEvent e) {
+        String cle = e.getItemStack().getDescriptionId() + ".desc";
+        if (!cle.startsWith("item." + AstralysCarte.MODID + ".") || !net.minecraft.client.resources.language.I18n.exists(cle)) return;
+        int i = 1;   // juste sous le nom
+        for (String l : net.minecraft.client.resources.language.I18n.get(cle).split("\\n"))
+            e.getToolTip().add(i++, Component.literal(l).withStyle(net.minecraft.ChatFormatting.GRAY, net.minecraft.ChatFormatting.ITALIC));
     }
 }

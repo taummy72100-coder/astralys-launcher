@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "astralyscarte:item/pioche_cristal"
+  }
+}

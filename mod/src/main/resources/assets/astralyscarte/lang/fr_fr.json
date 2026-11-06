@@ -1,4 +1,21 @@
 {
   "key.categories.astralys": "Astralys",
-  "key.astralyscarte.carte": "Ouvrir la carte des mondes"
+  "key.astralyscarte.carte": "Ouvrir la carte des mondes",
+  "item.astralyscarte.pioche_cristal": "Pioche de cristal",
+  "item.astralyscarte.pioche_cristal.desc": "Taillée dans l'améthyste des profondeurs.\nRécompense : Mineur niveau 50",
+  "item.astralyscarte.pioche_celeste": "Pioche céleste",
+  "item.astralyscarte.pioche_celeste.desc": "Forgée sous la lune d'Astralys, elle creuse comme le vent.\nRécompense : Mineur niveau 100",
+  "item.astralyscarte.houe_doree": "Houe dorée",
+  "item.astralyscarte.houe_doree.desc": "Les récoltes poussent mieux sous sa lame.\nRécompense : Farmeur niveau 50",
+  "item.astralyscarte.faux_moissons": "Faux des moissons",
+  "item.astralyscarte.faux_moissons.desc": "L'outil des grands fermiers d'Astralys.\nRécompense : Farmeur niveau 100",
+  "item.astralyscarte.dague_chasseur": "Dague du chasseur",
+  "item.astralyscarte.dague_chasseur.desc": "Légère et rapide, pour frapper avant la bête.\nRécompense : Hunter niveau 50",
+  "item.astralyscarte.lame_lunaire": "Lame lunaire",
+  "item.astralyscarte.lame_lunaire.desc": "Elle brille d'un éclat d'argent dans la nuit.\nRécompense : Hunter niveau 100",
+  "item.astralyscarte.fiole_eternelle": "Fiole éternelle",
+  "item.astralyscarte.fiole_eternelle.desc": "Clic droit : Régénération II (10 s). Jamais vide.\nRecharge : 1 min\nRécompense : Alchimiste niveau 50",
+  "item.astralyscarte.grimoire_astralys": "Grimoire d'Astralys",
+  "item.astralyscarte.grimoire_astralys.desc": "Clic droit : Absorption II, Vitesse, Vision nocturne (30 s).\nRecharge : 5 min\nRécompense : Alchimiste niveau 100",
+  "entity.astralyscarte.pnj": "PNJ d'Astralys"
 }

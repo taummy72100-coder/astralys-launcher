@@ -530,7 +530,7 @@ final class Economie {
                     return 1; })));
     }
 
-    private static int ouvrir(ServerPlayer p, int ecran) {
+    static int ouvrir(ServerPlayer p, int ecran) {
         if (!aLeMod(p)) return dire(p, "Il faut le mod Astralys (launcher) pour ouvrir cet écran.", ChatFormatting.RED);
         envoyer(p, new Ouvrir(ecran));
         if (ecran == 0) envoyerMarche(p); else if (ecran == 1) envoyerFaction(p);
