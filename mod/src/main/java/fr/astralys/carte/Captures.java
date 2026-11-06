@@ -184,10 +184,10 @@ final class Captures {
                 l.setBlockAndUpdate(inc.offset(3, 0, 0), Objets.PIEGE.get().defaultBlockState());
                 for (int k = 0; k < Familiers.IDS.length; k++) {
                     var p = Objets.PET.get().create(l);
-                    p.sorte(k); p.moveTo(o.getX() + .5 + (k - 1.5) * 1.1, o.getY() + 1.6, o.getZ() + 1.8, 180, 0);
+                    p.sorte(k); p.moveTo(o.getX() + .5 + (k - 1.5) * 1.0, o.getY() + 1.15, o.getZ() + 2.2, 180, 0);
                     l.addFreshEntity(p);
                 }
-                srv.getPlayerList().getPlayers().get(0).connection.teleport(o.getX() + .5, o.getY(), o.getZ() - .5, 0, 22);
+                srv.getPlayerList().getPlayers().get(0).connection.teleport(o.getX() + .5, o.getY(), o.getZ() - .3, 0, 12);
             });
         }
         if (phase == 2 && attenteMonde == 1200) Screenshot.grab(mc.gameDirectory, "astralys_machines_pets.png", mc.getMainRenderTarget(), c -> {});
