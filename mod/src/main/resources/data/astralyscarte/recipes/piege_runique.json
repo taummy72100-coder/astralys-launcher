@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "RIR",
+    "ICI",
+    "RIR"
+  ],
+  "key": {
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "C": {
+      "item": "astralyscarte:cristal_astral"
+    }
+  },
+  "result": {
+    "item": "astralyscarte:piege_runique",
+    "count": 2
+  }
+}

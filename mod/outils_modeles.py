@@ -833,7 +833,148 @@ OBJETS = {'baton_foudre': baton_foudre, 'sceptre_givre': sceptre_givre, 'baguett
           'elixir_vie': elixir((240, 80, 180))}
 OBJETS.update({'coffre_' + r: coffre(r) for r in RARETES})
 OBJETS.update({'cle_' + r: cle(r) for r in RARETES})
+OBJETS_TARDIFS = True
 
+
+
+# ====================================================================== machines et blocs speciaux (modeles de bloc 3D)
+def broyeur_astral():
+    acier, sombre, braise = (120, 126, 140), (52, 48, 64), (255, 150, 60)
+    def grille(a):
+        for x in range(1, a.shape[1] - 1, 2): a[1:-1, x, :3] *= .55
+    def rouages(a):
+        cx, cy = a.shape[1] // 2, a.shape[0] // 2
+        for dx in range(-2, 3):
+            for dy in range(-2, 3):
+                if abs(dx) + abs(dy) <= 3: P(a, cx + dx, cy + dy, (180, 150, 70) if (dx + dy) % 2 else (130, 100, 40))
+        P(a, cx, cy, (40, 30, 20))
+    l = [C((1, 0, 1), (14, 3, 14), metal(sombre, rivets=True)),                                  # socle
+         C((2, 3, 2), (12, 7, 12), metal(acier), deco={k: rouages for k in ('avant', 'dos', 'droite', 'gauche')}),
+         C((0, 10, 0), (16, 2, 16), dore(True)),                                                   # plateau
+         C((3, 12, 3), (10, 3, 10), metal(sombre), deco={'haut': grille}),                         # tremie
+         C((5, 6, 0.5), (6, 3, 1), gemme(braise), lum=True), C((5, 6, 14.5), (6, 3, 1), gemme(braise), lum=True),   # foyers
+         C((0.5, 6, 5), (1, 3, 6), gemme(braise), lum=True), C((14.5, 6, 5), (1, 3, 6), gemme(braise), lum=True)]
+    for x in (0, 13):
+        for z in (0, 13): l.append(C((x, 0, z), (3, 12, 3), metal(acier, rivets=True)))            # piliers
+    l += [C((6, 15, 6), (4, 1, 4), gemme((255, 200, 90)), lum=True), C((7, 16, 7), (2, 1, 2), dore())]
+    return l, None
+
+
+def incubateur_astral():
+    verre_c, orc = (200, 230, 255), OR_C
+    l = [C((2, 0, 2), (12, 2, 12), dore(True)), C((3, 2, 3), (10, 1, 10), metal((60, 50, 90))),
+         C((4, 3, 4), (8, 8, 8), verre(verre_c)),                                                  # cloche de verre
+         C((6, 4, 6), (4, 5, 4), gemme((255, 230, 160)), lum=True),                                # lumiere chaude
+         C((3, 11, 3), (10, 1, 10), dore()), C((5, 12, 5), (6, 1, 6), dore()), C((7, 13, 7), (2, 2, 2), gemme((200, 140, 255)), lum=True)]
+    for x in (3, 12):
+        for z in (3, 12): l.append(C((x, 3, z), (1, 8, 1), dore()))
+    return l, None
+
+
+def piege_runique():
+    def runes(a):
+        for i in range(2, a.shape[1] - 2, 3): P(a, i, a.shape[0] // 2, (255, 80, 80)); P(a, a.shape[0] // 2, i, (255, 80, 80))
+    l = [C((0, 0, 0), (16, 1, 16), metal((70, 60, 70)), deco={'haut': runes}), C((6, 1, 6), (4, 1, 4), gemme((255, 60, 60)), lum=True)]
+    for x in (1, 13):
+        for z in (1, 13): l.append(C((x, 1, z), (2, 1, 2), metal((150, 140, 150))))
+    return l, None
+
+
+def caisse_bloc(): return caisse()
+
+
+BLOCS3D = {'caisse_astrale': caisse_bloc, 'broyeur_astral': broyeur_astral, 'incubateur_astral': incubateur_astral, 'piege_runique': piege_runique}
+
+
+# ====================================================================== oeufs, outils de metier
+def oeuf(base, taches, gem):
+    def f():
+        def tach(a):
+            for _ in range(max(2, a.shape[0] * a.shape[1] // 6)): P(a, R.integers(a.shape[1]), R.integers(a.shape[0]), taches)
+        l = [C((5, 0, 5), (6, 1, 6), uni(clair(base, .8))), C((4, 1, 4), (8, 6, 8), uni(base), deco={k: tach for k in ('avant', 'dos', 'droite', 'gauche', 'haut')}),
+             C((5, 7, 5), (6, 3, 6), uni(clair(base, 1.08)), deco={k: tach for k in ('avant', 'dos', 'droite', 'gauche', 'haut')}),
+             C((6, 10, 6), (4, 2, 4), uni(clair(base, 1.15))), C((7, 12, 7), (2, 1, 2), uni(clair(base, 1.2))),
+             C((7, 5, 3.6), (2, 2, 1), gemme(gem), lum=True), C((7, 5, 11.4), (2, 2, 1), gemme(gem), lum=True)]
+        return l, PETIT
+    return f
+
+
+def foreuse_celeste():
+    l = [fut(bois((40, 40, 60), 'v', 30), -4, 12), C((7, -5, 7), (2, 1, 2), dore()), bague(cuir((40, 30, 50)), 0, 5),
+         C((2, 12, 6.5), (12, 3, 3), metal((90, 150, 230), rivets=True)),                    # tete
+         C((0, 12.5, 7), (2, 2, 2), gemme((150, 220, 255)), lum=True), C((14, 12.5, 7), (2, 2, 2), gemme((150, 220, 255)), lum=True),
+         C((-1, 13, 7.5), (1, 1, 1), metal((230, 240, 255))), C((16, 13, 7.5), (1, 1, 1), metal((230, 240, 255))),
+         C((6, 11, 6), (4, 5, 4), dore(True)), C((7, 16, 7), (2, 1, 2), gemme((255, 230, 150)), lum=True)]
+    return l, TENU
+
+
+def arrosoir_enchante():
+    l = [C((4, 0, 5), (8, 7, 6), metal((90, 170, 120), rivets=True)), C((4.5, 7, 5.5), (7, 1, 5), metal((70, 140, 100))),
+         C((12, 3, 7), (3, 1, 2), metal((90, 170, 120))), C((15, 4, 7), (1, 2, 2), dore()),               # bec
+         C((6, 8, 7.5), (4, 1, 1), dore()), C((5, 6, 7.5), (1, 3, 1), dore()), C((10, 6, 7.5), (1, 3, 1), dore()),   # anse
+         C((6.5, 2, 4.6), (3, 3, 1), gemme((120, 255, 160)), lum=True)]
+    return l, PETIT
+
+
+def poussiere_etoile():
+    l = [C((5, 0, 5), (6, 2, 6), gemme((210, 190, 255)), lum=True), C((6, 2, 6), (4, 2, 4), gemme((240, 220, 255)), lum=True), C((7, 4, 7), (2, 1, 2), gemme((255, 255, 255)), lum=True)]
+    return l, PETIT
+
+
+OEUFS = {'oeuf_golem': ((150, 140, 170), (190, 120, 255), (200, 140, 255)), 'oeuf_bourdon': ((240, 200, 70), (60, 40, 20), (255, 230, 120)),
+         'oeuf_faucon': ((170, 200, 230), (60, 80, 120), (120, 220, 255)), 'oeuf_fee': ((250, 200, 235), (140, 230, 210), (255, 150, 230))}
+
+
+# ====================================================================== familiers (pets) : petites creatures volantes
+def golem_cristal():
+    roc, crist = (110, 104, 120), (190, 120, 255)
+    def yeux(a): P(a, 1, 2, (220, 240, 255)); P(a, 4, 2, (220, 240, 255)); P(a, 2, 4, (40, 30, 50)); P(a, 3, 4, (40, 30, 50))
+    corps = Os('corps', (0, 18, 0))
+    corps.c((-3, -3, -3), (6, 6, 6), metal(roc, rivets=True, reflet=False), deco={'avant': yeux})
+    corps.c((-2, -6, -1), (2, 3, 2), gemme(crist), lum=True).c((0.5, -5, 0), (2, 2, 2), gemme(crist), lum=True).c((-1, -8, -0.5), (1, 2, 1), gemme((230, 200, 255)), lum=True)
+    bg = Os('aile_g', (4, 18, 0)); bg.c((0, -1, -1), (2, 3, 2), metal(roc))
+    bd = Os('aile_d', (-4, 18, 0)); bd.c((-2, -1, -1), (2, 3, 2), metal(roc))
+    return [corps, bg, bd]
+
+
+def bourdon_dore():
+    def rayures(a):
+        for y in range(1, a.shape[0], 2): a[y, :, :3] = (50, 34, 20)
+    def yeux(a): P(a, 0, 1, (20, 20, 30)); P(a, 3, 1, (20, 20, 30)); P(a, 0, 0, (255, 255, 255))
+    corps = Os('corps', (0, 17, 0))
+    corps.c((-2.5, -2, -3), (5, 4, 6), uni((240, 190, 50)), deco={'droite': rayures, 'gauche': rayures, 'haut': rayures})
+    corps.c((-2, -2, -5), (4, 3, 2), uni((60, 40, 24)), deco={'avant': yeux}).c((-0.5, -0.5, 3), (1, 1, 2), uni((40, 30, 20)))
+    corps.c((-1.5, -4, -4.5), (1, 2, 1), uni((40, 30, 20))).c((0.5, -4, -4.5), (1, 2, 1), uni((40, 30, 20)))
+    ag = Os('aile_g', (1, 15, -0.5)); ag.c((0, 0, -1), (5, 1, 4), uni((220, 240, 255)))
+    ad = Os('aile_d', (-1, 15, -0.5)); ad.c((-5, 0, -1), (5, 1, 4), uni((220, 240, 255)))
+    return [corps, ag, ad]
+
+
+def faucon_spectral():
+    sp = (150, 200, 240)
+    def yeux(a): P(a, 0, 1, (255, 255, 255)); P(a, 2, 1, (255, 255, 255))
+    corps = Os('corps', (0, 17, 0))
+    corps.c((-2, -2, -3), (4, 4, 6), tissu(sp, motif='etoiles', mc=(230, 245, 255), dens=.08))
+    corps.c((-1.5, -4, -5), (3, 3, 3), uni(clair(sp, 1.1)), deco={'avant': yeux}).c((-0.5, -2.5, -6), (1, 1, 1), dore())
+    corps.c((-1.5, -1, 3), (3, 1, 3), uni(clair(sp, .85))).c((-1, 2, -1), (1, 1, 1), dore()).c((0, 2, -1), (1, 1, 1), dore())
+    ag = Os('aile_g', (2, 15.5, -1)); ag.c((0, 0, -2), (6, 1, 5), tissu(sp, plis=False))
+    ad = Os('aile_d', (-2, 15.5, -1)); ad.c((-6, 0, -2), (6, 1, 5), tissu(sp, plis=False))
+    return [corps, ag, ad]
+
+
+def fee_ether():
+    pc, ch, robe = (250, 220, 200), (200, 140, 255), (120, 230, 210)
+    def visage_fee(a): P(a, 0, 1, (60, 40, 120)); P(a, 2, 1, (60, 40, 120)); P(a, 1, 2, (230, 120, 150))
+    corps = Os('corps', (0, 16, 0))
+    corps.c((-1.5, -6, -1.5), (3, 3, 3), tete(pc, ch, 1, 1), deco={'avant': visage_fee}, contour=False)
+    corps.c((-2, -6.5, -2), (4, 1, 4), cheveux(ch)).c((-1, -3, -1), (2, 3, 2), tissu(robe)).c((-1.5, 0, -1.5), (3, 2, 3), tissu(clair(robe, .9)), dechire=1)
+    corps.c((-0.5, -8, -0.5), (1, 1, 1), gemme((255, 240, 150)), lum=True)
+    ag = Os('aile_g', (1, 13, 1)); ag.c((0, -3, 0), (4, 5, 1), gemme((180, 240, 255)), lum=True)
+    ad = Os('aile_d', (-1, 13, 1)); ad.c((-4, -3, 0), (4, 5, 1), gemme((255, 190, 240)), lum=True)
+    return [corps, ag, ad]
+
+
+FAMILIERS = {'golem_cristal': golem_cristal, 'bourdon_dore': bourdon_dore, 'faucon_spectral': faucon_spectral, 'fee_ether': fee_ether}
 
 # ====================================================================== principal
 if __name__ == '__main__':
@@ -877,13 +1018,45 @@ if __name__ == '__main__':
         json.dump(mb, open(f'{bb}/objets/{nom}.json', 'w'), indent=1)
         Image.fromarray(img, 'RGBA').save(f'{bb}/objets/{nom}.png')
         planche.append(img)
-    cubes, _ = caisse()
-    m, img = modele_json(cubes, 'astralyscarte:block/caisse_astrale_3d', 64, parent='minecraft:block/block')
-    Image.fromarray(img, 'RGBA').save(f'{A}/textures/block/caisse_astrale_3d.png')
-    json.dump(m, open(f'{A}/models/block/caisse_astrale.json', 'w'), indent=1)
-    mb = json.loads(json.dumps(m)); mb['textures'] = {'t': 'caisse_astrale', 'particle': 'caisse_astrale'}
-    json.dump(mb, open(f'{bb}/objets/caisse_astrale.json', 'w'), indent=1)
-    Image.fromarray(img, 'RGBA').save(f'{bb}/objets/caisse_astrale.png')
+    OBJETS.update({k: oeuf(*v) for k, v in OEUFS.items()})
+    for nom, f in {'foreuse_celeste': foreuse_celeste, 'arrosoir_enchante': arrosoir_enchante, 'poussiere_etoile': poussiere_etoile, **{k: oeuf(*v) for k, v in OEUFS.items()}}.items():
+        cubes, disp = f()
+        m, img = modele_json(cubes, f'astralyscarte:item/3d/{nom}', 64, display=disp)
+        Image.fromarray(img, 'RGBA').save(f'{A}/textures/item/3d/{nom}.png')
+        json.dump(m, open(f'{A}/models/item/{nom}.json', 'w'), indent=1)
+        Image.fromarray(img, 'RGBA').save(f'{bb}/objets/{nom}.png'); json.dump(m, open(f'{bb}/objets/{nom}.json', 'w'), indent=1)
+    os.makedirs(f'{A}/blockstates', exist_ok=True)
+    for nom, f in BLOCS3D.items():
+        cubes, _ = f()
+        m, img = modele_json(cubes, f'astralyscarte:block/{nom}_3d', 64, parent='minecraft:block/block')
+        Image.fromarray(img, 'RGBA').save(f'{A}/textures/block/{nom}_3d.png')
+        json.dump(m, open(f'{A}/models/block/{nom}.json', 'w'), indent=1)
+        json.dump({'parent': f'astralyscarte:block/{nom}'}, open(f'{A}/models/item/{nom}.json', 'w'), indent=1)
+        if nom != 'caisse_astrale':
+            json.dump({'variants': {'': {'model': f'astralyscarte:block/{nom}'}}} if nom != 'broyeur_astral' else
+                      {'variants': {'lit=false': {'model': f'astralyscarte:block/{nom}'}, 'lit=true': {'model': f'astralyscarte:block/{nom}'}}},
+                      open(f'{A}/blockstates/{nom}.json', 'w'), indent=1)
+        mb = json.loads(json.dumps(m)); mb['textures'] = {'t': nom, 'particle': nom}
+        json.dump(mb, open(f'{bb}/objets/{nom}.json', 'w'), indent=1); Image.fromarray(img, 'RGBA').save(f'{bb}/objets/{nom}.png')
+    # familiers : geometrie Java + texture + .bbmodel
+    os.makedirs(f'{A}/textures/entity/familier', exist_ok=True); os.makedirs(f'{bb}/pets', exist_ok=True)
+    javaf = []
+    for nom, f in FAMILIERS.items():
+        racine = f()
+        cubes = [c for o in racine for c in o.tous()]
+        pos, img = atlas(cubes, 64, 64)
+        pos_de = {id(c): pos[i] for i, c in enumerate(cubes)}
+        Image.fromarray(img, 'RGBA').save(f'{A}/textures/entity/familier/{nom}.png'); Image.fromarray(img, 'RGBA').save(f'{bb}/pets/{nom}.png')
+        json.dump(bbmodel_entite(nom, racine, pos_de, img), open(f'{bb}/pets/{nom}.bbmodel', 'w'))
+        javaf.append(java_modele(nom, racine, pos_de, 64, 64))
+    srcf = ('package fr.astralys.carte;\n\nimport net.minecraft.client.model.geom.PartPose;\nimport net.minecraft.client.model.geom.builders.CubeListBuilder;\n'
+            'import net.minecraft.client.model.geom.builders.LayerDefinition;\nimport net.minecraft.client.model.geom.builders.MeshDefinition;\n'
+            'import net.minecraft.client.model.geom.builders.PartDefinition;\n\n'
+            '/** Geometrie des familiers. FICHIER GENERE par outils_modeles.py : ne pas modifier a la main. */\nfinal class FamilierModeles {\n'
+            '    static LayerDefinition couche(String id) {\n        return switch (id) {\n'
+            + ''.join(f'            case "{n}" -> {n}();\n' for n in FAMILIERS)
+            + '            default -> throw new IllegalArgumentException(id);\n        };\n    }\n\n' + '\n'.join(javaf) + '\n    private FamilierModeles() {}\n}\n')
+    open(f'{mod}/src/main/java/fr/astralys/carte/FamilierModeles.java', 'w').write(srcf)
     if apercus:
         for nom in PNJ:
             Image.open(f'{A}/textures/entity/pnj/{nom}.png').resize((512, 512), Image.NEAREST).save(f'{apercus}/tex_{nom}.png')

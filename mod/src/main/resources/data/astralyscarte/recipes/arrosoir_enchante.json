@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "C  ",
+    "IWI",
+    " I "
+  ],
+  "key": {
+    "C": {
+      "item": "astralyscarte:cristal_astral"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "W": {
+      "item": "minecraft:water_bucket"
+    }
+  },
+  "result": {
+    "item": "astralyscarte:arrosoir_enchante",
+    "count": 1
+  }
+}

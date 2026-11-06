@@ -50,7 +50,7 @@ final class Metiers {
     static final String[] NOMS = {"MINEUR", "FARMEUR", "HUNTER", "ALCHIMISTE"};
     static final int MINEUR = 0, FARMEUR = 1, HUNTER = 2, ALCHIMISTE = 3, NIVEAU_MAX = 100;
     private static final ZoneId PARIS = ZoneId.of("Europe/Paris");
-    private static final String VERSION = "4";   // a changer a chaque modification d'un paquet : client et serveur doivent avoir le meme mod
+    private static final String VERSION = "5";   // a changer a chaque modification d'un paquet : client et serveur doivent avoir le meme mod
     // Les joueurs sans le mod peuvent toujours se connecter (ils n'ont simplement pas l'ecran).
     static final SimpleChannel CANAL = NetworkRegistry.newSimpleChannel(new ResourceLocation(AstralysCarte.MODID, "metiers"),
             () -> VERSION, NetworkRegistry.acceptMissingOr(VERSION), NetworkRegistry.acceptMissingOr(VERSION));
@@ -167,6 +167,8 @@ final class Metiers {
 
     private static long aujourdhui() { return LocalDate.now(PARIS).toEpochDay(); }
 
+    static int niveau(ServerPlayer p, int metier) { return niveau(joueur(p).xp[metier]); }
+
     private static Joueur joueur(ServerPlayer p) {
         Donnees d = donnees(p.server);
         Joueur j = d.joueurs.computeIfAbsent(p.getUUID(), k -> new Joueur());
@@ -183,7 +185,7 @@ final class Metiers {
         if (p.isCreative() || p.isSpectator() || base <= 0) return;
         Joueur j = joueur(p);
         long avant = j.xp[metier];
-        j.xp[metier] += Math.max(1, Math.round(base * (1 + bonus(j.xp) / 100)));
+        j.xp[metier] += Math.max(1, Math.round(base * (1 + bonus(j.xp) / 100) * Familiers.bonusXp(p, metier)));
         donnees(p.server).setDirty();
         int nv = niveau(j.xp[metier]);
         if (nv > niveau(avant)) {

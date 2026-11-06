@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "GCG",
+    "G G",
+    "OOO"
+  ],
+  "key": {
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "C": {
+      "item": "astralyscarte:cristal_astral"
+    },
+    "O": {
+      "item": "minecraft:gold_block"
+    }
+  },
+  "result": {
+    "item": "astralyscarte:incubateur_astral",
+    "count": 1
+  }
+}

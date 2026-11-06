@@ -153,7 +153,44 @@ final class Captures {
             }
             if (phase == 2 && attenteMonde == 905 + g * 50) Screenshot.grab(mc.gameDirectory, "astralys_pnj_proche" + g + ".png", mc.getMainRenderTarget(), c -> {});
         }
-        if (phase == 2 && attenteMonde > 1030) mc.stop();
+        // ecran des pets, ecran du broyeur, puis machines et pets poses dans le monde
+        if (phase == 2 && attenteMonde == 1040) {
+            ClientMetiers.vue = new Metiers.Vue(new long[] {250000, 9100, 2300, 450}, 4.6f, List.of()); Verrous.xpClient = ClientMetiers.vue.xp();
+            mc.setScreen(new PetsScreen());
+        }
+        if (phase == 2 && attenteMonde == 1050) PetsScreen.vue = new Familiers.Vue(0b0001, 0);
+        if (phase == 2 && attenteMonde == 1090) Screenshot.grab(mc.gameDirectory, "astralys_pets.png", mc.getMainRenderTarget(), c -> {});
+        if (phase == 2 && attenteMonde == 1100) {
+            var cont = new net.minecraft.world.SimpleContainer(3);
+            cont.setItem(0, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.RAW_IRON, 12));
+            cont.setItem(1, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_INGOT, 20));
+            cont.setItem(2, Metiers.pile("astralyscarte:poussiere_etoile"));
+            var data = new net.minecraft.world.inventory.SimpleContainerData(2); data.set(0, 95); data.set(1, 160);
+            mc.setScreen(new BroyeurScreen(new Machines.BroyeurMenu(0, mc.player.getInventory(), cont, data), mc.player.getInventory(), net.minecraft.network.chat.Component.literal("Broyeur astral")));
+        }
+        if (phase == 2 && attenteMonde == 1130) Screenshot.grab(mc.gameDirectory, "astralys_broyeur.png", mc.getMainRenderTarget(), c -> {});
+        if (phase == 2 && attenteMonde == 1140) {
+            mc.setScreen(null);
+            var srv = mc.getSingleplayerServer();
+            srv.execute(() -> {
+                var l = srv.overworld();
+                var o = net.minecraft.core.BlockPos.containing(origine.x, origine.y, origine.z - 6);
+                var inc = o.offset(0, 0, 3);
+                for (int x = -1; x <= 1; x++) for (int z = -1; z <= 1; z++) l.setBlockAndUpdate(inc.offset(x, -1, z), net.minecraft.world.level.block.Blocks.HAY_BLOCK.defaultBlockState());
+                for (int x = -1; x <= 1; x += 2) for (int z = -1; z <= 1; z += 2) l.setBlockAndUpdate(inc.offset(x, 0, z), net.minecraft.world.level.block.Blocks.COMPOSTER.defaultBlockState());
+                l.setBlockAndUpdate(inc, Objets.INCUBATEUR.get().defaultBlockState());
+                l.setBlockAndUpdate(inc.offset(-3, 0, 0), Objets.BROYEUR.get().defaultBlockState().setValue(Machines.Broyeur.LIT, true));
+                l.setBlockAndUpdate(inc.offset(3, 0, 0), Objets.PIEGE.get().defaultBlockState());
+                for (int k = 0; k < Familiers.IDS.length; k++) {
+                    var p = Objets.PET.get().create(l);
+                    p.sorte(k); p.moveTo(o.getX() + .5 + (k - 1.5) * 1.1, o.getY() + 1.6, o.getZ() + 1.8, 180, 0);
+                    l.addFreshEntity(p);
+                }
+                srv.getPlayerList().getPlayers().get(0).connection.teleport(o.getX() + .5, o.getY(), o.getZ() - .5, 0, 22);
+            });
+        }
+        if (phase == 2 && attenteMonde == 1200) Screenshot.grab(mc.gameDirectory, "astralys_machines_pets.png", mc.getMainRenderTarget(), c -> {});
+        if (phase == 2 && attenteMonde > 1220) mc.stop();
     }
 
     private Captures() {}

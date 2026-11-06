@@ -1,0 +1,10 @@
+{
+ "variants": {
+  "lit=false": {
+   "model": "astralyscarte:block/broyeur_astral"
+  },
+  "lit=true": {
+   "model": "astralyscarte:block/broyeur_astral"
+  }
+ }
+}

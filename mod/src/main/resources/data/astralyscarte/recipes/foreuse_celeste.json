@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "DTD",
+    " N ",
+    " S "
+  ],
+  "key": {
+    "D": {
+      "item": "minecraft:diamond_block"
+    },
+    "T": {
+      "item": "astralyscarte:coeur_titan"
+    },
+    "N": {
+      "item": "minecraft:netherite_pickaxe"
+    },
+    "S": {
+      "item": "minecraft:stick"
+    }
+  },
+  "result": {
+    "item": "astralyscarte:foreuse_celeste",
+    "count": 1
+  }
+}

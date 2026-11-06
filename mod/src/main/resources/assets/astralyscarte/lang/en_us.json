@@ -56,5 +56,16 @@
   "item.astralyscarte.coffre_special": "Special Chest",
   "itemGroup.astralys": "Astralys",
   "item.astralyscarte.cle_commun": "Common Key",
-  "item.astralyscarte.cle_special": "Special Key"
+  "item.astralyscarte.cle_special": "Special Key",
+  "block.astralyscarte.broyeur_astral": "Astral Grinder",
+  "block.astralyscarte.incubateur_astral": "Astral Incubator",
+  "block.astralyscarte.piege_runique": "Runic Trap",
+  "item.astralyscarte.oeuf_golem": "Crystal Golem Egg",
+  "item.astralyscarte.oeuf_bourdon": "Golden Bumblebee Egg",
+  "item.astralyscarte.oeuf_faucon": "Spectral Hawk Egg",
+  "item.astralyscarte.oeuf_fee": "Ether Fairy Egg",
+  "item.astralyscarte.poussiere_etoile": "Stardust",
+  "item.astralyscarte.foreuse_celeste": "Celestial Drill",
+  "item.astralyscarte.arrosoir_enchante": "Enchanted Watering Can",
+  "entity.astralyscarte.pet": "Pet"
 }

@@ -132,6 +132,12 @@ final class Objets {
         // ---------------------------------------------------------------- coffres et cles
         for (int r = 0; r < Coffres.RARETES.length; r++) { int rr = r; objet("coffre_" + Coffres.RARETES[r], () -> new Coffres.CoffreItem(rr)); }
         for (int r = 0; r < Coffres.RARETES.length; r++) { int rr = r; objet("cle_" + Coffres.RARETES[r], () -> new Coffres.Cle(rr)); }
+
+        // ---------------------------------------------------------------- pets, machines, objets de metier
+        for (String o : Familiers.OEUFS) objet(o, () -> new Item(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC)) { @Override public boolean isFoil(ItemStack s) { return true; } });
+        objet("poussiere_etoile", () -> new Item(new Item.Properties().rarity(Rarity.RARE)));
+        objet("foreuse_celeste", () -> new PickaxeItem(new Rang(5000, 12, 5, 4, 20), 1, -2.8f, p(Rarity.EPIC)) { @Override public boolean isFoil(ItemStack s) { return true; } });
+        objet("arrosoir_enchante", () -> new Sort(p(Rarity.RARE), 3, false, SoundEvents.BUCKET_EMPTY, Verrous::arroser));
     }
 
     // ------------------------------------------------------------------ blocs
@@ -141,6 +147,13 @@ final class Objets {
             .strength(1f).sound(SoundType.AMETHYST).lightLevel(s -> 15)), Rarity.UNCOMMON);
     static final RegistryObject<Block> CAISSE = bloc("caisse_astrale", () -> new Coffres.Caisse(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_PURPLE)
             .strength(-1, 3600000).sound(SoundType.WOOD).noLootTable().noOcclusion().lightLevel(s -> 7)), Rarity.EPIC);
+
+    static final RegistryObject<Block> BROYEUR = bloc("broyeur_astral", () -> new Machines.Broyeur(BlockBehaviour.Properties.of().mapColor(MapColor.METAL)
+            .strength(4f, 8f).sound(SoundType.METAL).noOcclusion().lightLevel(s -> s.getValue(Machines.Broyeur.LIT) ? 10 : 2)), Rarity.RARE);
+    static final RegistryObject<Block> INCUBATEUR = bloc("incubateur_astral", () -> new Machines.Incubateur(BlockBehaviour.Properties.of().mapColor(MapColor.GOLD)
+            .strength(3f, 8f).sound(SoundType.GLASS).noOcclusion().lightLevel(s -> 12)), Rarity.EPIC);
+    static final RegistryObject<Block> PIEGE = bloc("piege_runique", () -> new Machines.Piege(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_RED)
+            .strength(2f).sound(SoundType.METAL).noCollission().noOcclusion().lightLevel(s -> 6)), Rarity.RARE);
 
     private static RegistryObject<Block> bloc(String id, Supplier<Block> f, Rarity r) {
         RegistryObject<Block> b = BLOCS.register(id, f);
@@ -154,16 +167,21 @@ final class Objets {
 
     static final RegistryObject<EntityType<PnjEntity>> PNJ = ENTITES.register("pnj", () -> EntityType.Builder.<PnjEntity>of(PnjEntity::new, MobCategory.MISC)
             .sized(.6f, 1.8f).clientTrackingRange(10).build("pnj"));
+    static final RegistryObject<EntityType<Familiers.Pet>> PET = ENTITES.register("pet", () -> EntityType.Builder.<Familiers.Pet>of(Familiers.Pet::new, MobCategory.MISC)
+            .sized(.4f, .4f).clientTrackingRange(8).noSave().build("pet"));
 
     static void init() {
         IEventBus mod = FMLJavaModLoadingContext.get().getModEventBus();
         BLOCS.register(mod); ITEMS.register(mod); ENTITES.register(mod); ONGLETS.register(mod);
-        mod.addListener((EntityAttributeCreationEvent e) -> e.put(PNJ.get(), Mob.createMobAttributes().build()));
+        Machines.init(mod);
+        mod.addListener((EntityAttributeCreationEvent e) -> { e.put(PNJ.get(), Mob.createMobAttributes().build()); e.put(PET.get(), Mob.createMobAttributes().build()); });
         MinecraftForge.EVENT_BUS.addListener(Objets::commandes);
         MinecraftForge.EVENT_BUS.addListener(Objets::ensembles);
         Coffres.init();
         Bosses.init();
         Cosmetiques.init();
+        Familiers.init();
+        Verrous.init();
     }
 
     // ------------------------------------------------------------------ sorts
