@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "side": "astralyscarte:block/caisse_astrale_side",
+    "top": "astralyscarte:block/caisse_astrale_top",
+    "bottom": "astralyscarte:block/caisse_astrale_bottom"
+  }
+}

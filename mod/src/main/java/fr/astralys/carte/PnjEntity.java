@@ -15,18 +15,17 @@ import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 
-/** PNJ du spawn : immobile, invulnerable ; clic droit = ouvre son ecran (boutique, metiers, faction, hotel des ventes, carte). */
+/** PNJ du spawn : immobile, invulnerable ; clic droit = ouvre son ecran (boutique, metiers, faction, hotel des ventes, carte) ou donne sa quete. */
 public class PnjEntity extends PathfinderMob {
-    static final String[] SKINS = {"marchand", "maitre_metiers", "heraut", "commissaire", "guide"};
-    static final String[] NOMS = {"Marchand", "Maître des métiers", "Héraut des factions", "Commissaire-priseur", "Guide d'Astralys"};
-    static final int[] COULEURS = {0xF0B429, 0xE8322B, 0xB46CFF, 0x3DD6C5, 0x5AA8FF};
-    static final int[] ECRANS = {0, 2, 1, 4, 5};   // codes de Economie.Ouvrir
-    private static final ItemStack[] EN_MAIN = {new ItemStack(Items.EMERALD), new ItemStack(Items.GOLDEN_PICKAXE), new ItemStack(Items.WHITE_BANNER),
-            new ItemStack(Items.BELL), new ItemStack(Items.FILLED_MAP)};
+    static final String[] SKINS = {"marchand", "maitre_metiers", "heraut", "commissaire", "guide", "archimage", "maitre_forge", "enchanteresse"};
+    static final String[] NOMS = {"Marchand", "Maître des métiers", "Héraut des factions", "Commissaire-priseur", "Guide d'Astralys",
+            "Archimage Elyndor", "Forgeronne Brunhild", "Enchanteresse Sylène"};
+    static final int[] COULEURS = {0xF0B429, 0xE8322B, 0xB46CFF, 0x3DD6C5, 0x5AA8FF, 0x8FB8FF, 0xFF8A3D, 0x3DE0A0};
+    static final int[] ECRANS = {0, 2, 1, 4, 5, -1, -1, -1};   // codes de Economie.Ouvrir ; -1 = PNJ a quetes
+    private static final String[] EN_MAIN = {"minecraft:emerald", "minecraft:golden_pickaxe", "minecraft:white_banner", "minecraft:bell", "minecraft:filled_map",
+            "astralyscarte:baton_foudre", "astralyscarte:marteau_forgeron", "astralyscarte:grimoire_astralys"};
     private static final EntityDataAccessor<Integer> SORTE = SynchedEntityData.defineId(PnjEntity.class, EntityDataSerializers.INT);
 
     public PnjEntity(EntityType<? extends PnjEntity> t, Level l) {
@@ -43,7 +42,7 @@ public class PnjEntity extends PathfinderMob {
         entityData.set(SORTE, t);
         setCustomName(Component.literal(NOMS[t]).withStyle(st -> st.withColor(COULEURS[t]).withBold(true)));
         setCustomNameVisible(true);
-        setItemSlot(EquipmentSlot.MAINHAND, EN_MAIN[t].copy());
+        setItemSlot(EquipmentSlot.MAINHAND, Metiers.pile(EN_MAIN[t]));
         setDropChance(EquipmentSlot.MAINHAND, 0);
     }
 
@@ -55,7 +54,7 @@ public class PnjEntity extends PathfinderMob {
 
     @Override
     protected InteractionResult mobInteract(Player j, InteractionHand main) {
-        if (main == InteractionHand.MAIN_HAND && j instanceof ServerPlayer sp) Economie.ouvrir(sp, ECRANS[sorte()]);
+        if (main == InteractionHand.MAIN_HAND && j instanceof ServerPlayer sp) { if (ECRANS[sorte()] < 0) QuetesPnj.parler(sp, this); else Economie.ouvrir(sp, ECRANS[sorte()]); }
         return InteractionResult.sidedSuccess(level().isClientSide);
     }
 

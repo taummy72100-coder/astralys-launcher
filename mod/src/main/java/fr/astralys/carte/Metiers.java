@@ -50,7 +50,7 @@ final class Metiers {
     static final String[] NOMS = {"MINEUR", "FARMEUR", "HUNTER", "ALCHIMISTE"};
     static final int MINEUR = 0, FARMEUR = 1, HUNTER = 2, ALCHIMISTE = 3, NIVEAU_MAX = 100;
     private static final ZoneId PARIS = ZoneId.of("Europe/Paris");
-    private static final String VERSION = "3";   // a changer a chaque modification d'un paquet : client et serveur doivent avoir le meme mod
+    private static final String VERSION = "4";   // a changer a chaque modification d'un paquet : client et serveur doivent avoir le meme mod
     // Les joueurs sans le mod peuvent toujours se connecter (ils n'ont simplement pas l'ecran).
     static final SimpleChannel CANAL = NetworkRegistry.newSimpleChannel(new ResourceLocation(AstralysCarte.MODID, "metiers"),
             () -> VERSION, NetworkRegistry.acceptMissingOr(VERSION), NetworkRegistry.acceptMissingOr(VERSION));
@@ -198,14 +198,14 @@ final class Metiers {
     // ------------------------------------------------------------------ paliers (niveaux 10, 20 ... 100)
     // shortcut: objets du jeu en attendant les recompenses custom faites avec Blockbench, a remplacer palier par palier.
     static final String[][] PALIERS = {
-            {"minecraft:iron_pickaxe", "minecraft:iron_ingot*16", "minecraft:diamond_pickaxe", "minecraft:diamond*8", "astralyscarte:pioche_cristal",
-             "minecraft:diamond_block*2", "minecraft:emerald_block*4", "minecraft:netherite_scrap*4", "minecraft:netherite_ingot", "astralyscarte:pioche_celeste"},
-            {"minecraft:iron_hoe", "minecraft:bone_meal*32", "minecraft:golden_carrot*16", "minecraft:diamond_hoe", "astralyscarte:houe_doree",
-             "minecraft:hay_block*32", "minecraft:enchanted_golden_apple", "minecraft:golden_apple*16", "minecraft:netherite_ingot", "astralyscarte:faux_moissons"},
-            {"minecraft:iron_sword", "minecraft:bow", "minecraft:arrow*64", "minecraft:diamond_sword", "astralyscarte:dague_chasseur",
-             "minecraft:golden_apple*4", "minecraft:totem_of_undying", "minecraft:totem_of_undying*2", "minecraft:trident", "astralyscarte:lame_lunaire"},
-            {"minecraft:brewing_stand", "minecraft:blaze_powder*16", "minecraft:nether_wart*16", "minecraft:glowstone_dust*32", "astralyscarte:fiole_eternelle",
-             "minecraft:experience_bottle*16", "minecraft:experience_bottle*32", "minecraft:dragon_breath*4", "minecraft:enchanting_table", "astralyscarte:grimoire_astralys"}};
+            {"minecraft:iron_pickaxe", "astralyscarte:elixir_mineur*3", "astralyscarte:coffre_rare", "minecraft:diamond*8", "astralyscarte:pioche_cristal",
+             "astralyscarte:coffre_epique", "astralyscarte:marteau_forgeron", "astralyscarte:coffre_legendaire", "astralyscarte:coeur_titan", "astralyscarte:pioche_celeste"},
+            {"minecraft:iron_hoe", "astralyscarte:elixir_celerite*3", "astralyscarte:coffre_rare", "minecraft:diamond_hoe", "astralyscarte:houe_doree",
+             "astralyscarte:coffre_epique", "astralyscarte:baguette_soins", "astralyscarte:coffre_legendaire", "astralyscarte:elixir_vie*8", "astralyscarte:faux_moissons"},
+            {"minecraft:iron_sword", "astralyscarte:elixir_force*3", "astralyscarte:coffre_rare", "minecraft:diamond_sword", "astralyscarte:dague_chasseur",
+             "astralyscarte:coffre_epique", "astralyscarte:hache_titan", "astralyscarte:coffre_legendaire", "astralyscarte:essence_ombre", "astralyscarte:lame_lunaire"},
+            {"minecraft:brewing_stand", "astralyscarte:elixir_phenix*3", "astralyscarte:coffre_rare", "astralyscarte:orbe_transfert", "astralyscarte:fiole_eternelle",
+             "astralyscarte:coffre_epique", "astralyscarte:sceptre_givre", "astralyscarte:coffre_legendaire", "astralyscarte:tome_tempete", "astralyscarte:grimoire_astralys"}};
 
     static long argentPalier(int palier) { return 1000L * palier * 10; }
 

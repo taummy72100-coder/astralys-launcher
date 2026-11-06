@@ -96,7 +96,7 @@ final class Captures {
         if (phase == 2 && attenteMonde == 110) Screenshot.grab(mc.gameDirectory, "astralys_inventaire_survol.png", mc.getMainRenderTarget(), c -> {});
         // barre d'action seule, puis inventaire creatif
         if (phase == 2 && attenteMonde == 140) { mc.setScreen(null); var objets = Objets.ITEMS.getEntries().stream().toList();
-            for (int k = 0; k < objets.size(); k++) mc.player.getInventory().items.set(k, new net.minecraft.world.item.ItemStack(objets.get(k).get())); }
+            for (int k = 0; k < Math.min(36, objets.size()); k++) mc.player.getInventory().items.set(k, new net.minecraft.world.item.ItemStack(objets.get(k).get())); }
         if (phase == 2 && attenteMonde == 190) Screenshot.grab(mc.gameDirectory, "astralys_barre.png", mc.getMainRenderTarget(), c -> {});
         if (phase == 2 && attenteMonde == 200) mc.player.connection.sendCommand("gamemode creative");
         if (phase == 2 && attenteMonde == 240) mc.setScreen(new net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen(mc.player, mc.player.connection.enabledFeatures(), true));
@@ -110,13 +110,32 @@ final class Captures {
                 srv.getPlayerList().getPlayers().get(0).connection.teleport(pos.x, pos.y, pos.z, 0, 8);
                 for (int k = 0; k < PnjEntity.SKINS.length; k++) {
                     var e = Objets.PNJ.get().create(lvl);
-                    e.moveTo(pos.x + (k - 2) * 1.5, pos.y, pos.z + 5, 180, 0); e.setYHeadRot(180); e.sorte(k);
+                    e.moveTo(pos.x + (k - 3.5) * 1.6, pos.y, pos.z + 8, 180, 0); e.setYHeadRot(180); e.sorte(k);
                     lvl.addFreshEntity(e);
                 }
             });
         }
         if (phase == 2 && attenteMonde == 420) Screenshot.grab(mc.gameDirectory, "astralys_pnj.png", mc.getMainRenderTarget(), c -> {});
-        if (phase == 2 && attenteMonde > 440) mc.stop();
+        // garde-robe (cosmetiques) avec un exemple, puis ouverture d'un coffre legendaire, puis le joueur vu de face
+        if (phase == 2 && attenteMonde == 440) mc.setScreen(new CosmetiqueScreen());
+        if (phase == 2 && attenteMonde == 460) ClientCosm.vue = new Cosmetiques.Vue(1250, List.of("couronne_astrale", "robe_etoilee", "pans_astraux", "bottes_comete"),
+                List.of("couronne_astrale", "robe_etoilee", "pans_astraux", "bottes_comete"));
+        if (phase == 2 && attenteMonde == 520) Screenshot.grab(mc.gameDirectory, "astralys_cosmetiques.png", mc.getMainRenderTarget(), c -> {});
+        if (phase == 2 && attenteMonde == 540) {
+            var rnd = net.minecraft.util.RandomSource.create(3);
+            List<net.minecraft.world.item.ItemStack> bande = new ArrayList<>(); List<Integer> rar = new ArrayList<>();
+            for (int k = 0; k < Coffres.TAILLE; k++) { var lot = Coffres.tirer(3, rnd); bande.add(Metiers.pile(lot.objet())); rar.add(lot.rarete()); }
+            mc.setScreen(new CoffreScreen(new Coffres.Roulette(3, bande, rar, Coffres.GAGNANT)));
+        }
+        if (phase == 2 && attenteMonde == 580) Screenshot.grab(mc.gameDirectory, "astralys_coffre_roulette.png", mc.getMainRenderTarget(), c -> {});
+        if (phase == 2 && attenteMonde == 760) Screenshot.grab(mc.gameDirectory, "astralys_coffre_gain.png", mc.getMainRenderTarget(), c -> {});
+        if (phase == 2 && attenteMonde == 780) {
+            mc.setScreen(null);
+            ClientCosm.portes = java.util.Map.of(mc.player.getUUID(), ClientCosm.vue.portes());
+            mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
+        }
+        if (phase == 2 && attenteMonde == 830) Screenshot.grab(mc.gameDirectory, "astralys_cosmetiques_porte.png", mc.getMainRenderTarget(), c -> {});
+        if (phase == 2 && attenteMonde > 850) mc.stop();
     }
 
     private Captures() {}

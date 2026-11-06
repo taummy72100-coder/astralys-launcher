@@ -40,6 +40,10 @@ public class ShopScreen extends EcranAstralys {
     @Override
     void contenu(GuiGraphics g) {
         texte(g, "✦ " + Economie.format(ClientEco.solde) + " $", 596, 40, 1.4f, OR, 1, true);
+        boolean sc = dans(300, 30, 440, 52);
+        rect(g, 299, 29, 441, 53, argb(0x0A0714, a));
+        g.fillGradient(300, 30, 440, 52, argb(sc ? 0xFF6FE0 : 0xD23CB4, a), argb(0x6E1E64, a));
+        texte(g, "✧ COSMÉTIQUES", 370, 37, .85f, 0xFFFFFF, 0, true);
         // categories
         for (int i = 0; i < cats().size(); i++) {
             float y = 70 + i * PAS;
@@ -93,6 +97,7 @@ public class ShopScreen extends EcranAstralys {
 
     @Override
     boolean clic(int b, boolean maj) {
+        if (dans(300, 30, 440, 52)) { minecraft.setScreen(new CosmetiqueScreen()); return true; }
         for (int i = 0; i < cats().size(); i++)
             if (dans(30, 70 + i * PAS, 152, 95 + i * PAS)) { categorie = i; defile = 0; son(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.value(), 1.2f); return true; }
         if (survol == null || (b != 0 && b != 1)) return false;

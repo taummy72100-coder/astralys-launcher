@@ -235,7 +235,7 @@ final class Economie {
         }
     }
 
-    private static MinecraftServer serveur;
+    static MinecraftServer serveur;
 
     static Donnees d() { return serveur.overworld().getDataStorage().computeIfAbsent(Donnees::lire, Donnees::new, "astralys_economie"); }
 

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "astralyscarte:item/bottes_celeste"
+  }
+}

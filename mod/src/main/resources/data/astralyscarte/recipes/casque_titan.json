@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "MNM",
+    "M M"
+  ],
+  "key": {
+    "M": {
+      "item": "astralyscarte:coeur_titan"
+    },
+    "N": {
+      "item": "minecraft:netherite_ingot"
+    }
+  },
+  "result": {
+    "item": "astralyscarte:casque_titan"
+  }
+}
