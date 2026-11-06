@@ -1,0 +1,42 @@
+name: Geometrie des interfaces
+# Releve la position des cases et des zones des interfaces de la 1.20.1 (formes seulement) pour dessiner les versions Astralys.
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  geometrie:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Relever
+        run: |
+          pip install pillow > /dev/null
+          V=$(curl -s https://piston-meta.mojang.com/mc/game/version_manifest_v2.json | python3 -c "import json,sys;print([v['url'] for v in json.load(sys.stdin)['versions'] if v['id']=='1.20.1'][0])")
+          J=$(curl -s $V | python3 -c "import json,sys;print(json.load(sys.stdin)['downloads']['client']['url'])")
+          curl -sLo client.jar $J
+          mkdir -p /tmp/g && cd /tmp/g
+          python3 - <<'P'
+          import zipfile, io, json
+          from PIL import Image
+          z = zipfile.ZipFile(__import__('glob').glob('/home/runner/work/**/client.jar', recursive=True)[0])
+          noms = ['assets/minecraft/textures/gui/container/inventory.png', 'assets/minecraft/textures/gui/container/creative_inventory/tab_inventory.png',
+                  'assets/minecraft/textures/gui/container/creative_inventory/tab_items.png', 'assets/minecraft/textures/gui/container/creative_inventory/tab_item_search.png',
+                  'assets/minecraft/textures/gui/container/creative_inventory/tabs.png']
+          classes = {(0, 0, 0): 'k', (55, 55, 55): 'd', (139, 139, 139): 's', (198, 198, 198): 'p', (255, 255, 255): 'w', (85, 85, 85): 'g', (160, 160, 160): 'l'}
+          out = {}
+          for n in noms:
+              im = Image.open(io.BytesIO(z.read(n))).convert('RGBA')
+              w, h = im.size
+              lignes = []
+              for y in range(h):
+                  l = ''
+                  for x in range(w):
+                      r, g, b, a = im.getpixel((x, y))
+                      l += '.' if a == 0 else classes.get((r, g, b), 'o')
+                  lignes.append(l.rstrip('.'))
+              while lignes and not lignes[-1]: lignes.pop()
+              out[n.split('/')[-1]] = {'taille': [w, h], 'carte': lignes}
+          open('geometrie.json', 'w').write(json.dumps(out))
+          P
+          git init -q -b geometrie && git config user.name "github-actions[bot]" && git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add geometrie.json && git commit -qm "Geometrie 1.20.1"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" geometrie
